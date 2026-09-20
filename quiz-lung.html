@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>肺癌(NSCLC/SCLC)理解度クイズ 全26問</title>
+<title>肺癌(NSCLC/SCLC)理解度クイズ 全50問(ランダム10問出題)</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
 :root, .viz-root {
@@ -31,6 +31,7 @@ body { background: var(--page-plane); color: var(--text-primary); font-family: s
 .secondary { color: var(--text-secondary); }
 .muted { color: var(--text-muted); }
 .cat-badge { display:inline-flex; align-items:center; padding:3px 10px; border-radius:9999px; font-size:0.72rem; font-weight:700; background: color-mix(in srgb, var(--series-new) 14%, transparent); color: var(--series-new); }
+.type-badge { display:inline-flex; align-items:center; padding:3px 10px; border-radius:9999px; font-size:0.68rem; font-weight:700; background: color-mix(in srgb, var(--warning) 16%, transparent); color: var(--warning); margin-left:6px; }
 .progress-track { background: var(--gridline); border-radius: 9999px; height: 8px; overflow: hidden; }
 .progress-fill { background: var(--series-new); height: 100%; border-radius: 9999px; transition: width .25s; }
 .quiz-choice { display:block; width:100%; text-align:left; background: var(--page-plane); border: 1.5px solid var(--gridline); border-radius: 10px; padding: 12px 16px; font-size: 0.92rem; cursor: pointer; transition: border-color .12s, background .12s; margin-bottom: 10px; }
@@ -39,9 +40,12 @@ body { background: var(--page-plane); color: var(--text-primary); font-family: s
 .quiz-choice:disabled { cursor: default; }
 .quiz-choice.correct { border-color: var(--good); background: color-mix(in srgb, var(--good) 12%, transparent); font-weight: 700; }
 .quiz-choice.wrong { border-color: var(--critical); background: color-mix(in srgb, var(--critical) 10%, transparent); }
+.quiz-choice.selected { border-color: var(--series-new); background: color-mix(in srgb, var(--series-new) 10%, transparent); }
+.quiz-choice-check { display:inline-block; width:16px; }
 .quiz-explain { background: var(--page-plane); border: 1px solid var(--gridline); border-radius: 10px; padding: 14px 16px; margin-top: 14px; font-size: 0.85rem; line-height: 1.7; }
 .quiz-btn { background: var(--series-new); color: #fff; border: none; border-radius: 8px; padding: 10px 22px; font-size: 0.88rem; font-weight: 700; cursor: pointer; }
 .quiz-btn:hover { opacity: 0.9; }
+.quiz-btn:disabled { opacity: 0.4; cursor: default; }
 .quiz-btn-outline { background: transparent; color: var(--series-new); border: 1.5px solid var(--series-new); border-radius: 8px; padding: 9px 20px; font-size: 0.88rem; font-weight: 700; cursor: pointer; }
 .quiz-btn-outline:hover { background: color-mix(in srgb, var(--series-new) 10%, transparent); }
 .score-ring-num { font-size: 2.6rem; font-weight: 800; }
@@ -65,24 +69,27 @@ body { background: var(--page-plane); color: var(--text-primary); font-family: s
     <div class="flex items-center justify-between gap-2 flex-wrap">
       <div>
         <h1 class="text-xl font-bold">🧠 肺癌(NSCLC/SCLC)理解度クイズ</h1>
-        <p class="text-sm mt-1 secondary">全26問・4択・医療従事者向け(治療ライン選択・用法用量・投与スケジュール・用量規制因子/モニタリング・特徴的な副作用・バイオマーカー・コスト制度)</p>
+        <p class="text-sm mt-1 secondary">全50問のプールからランダムに10問出題・4択/複数選択混在・医療従事者向け(治療ライン選択・用法用量・投与スケジュール・用量規制因子/モニタリング・添付文書の警告/禁忌/重大な副作用・バイオマーカー・コスト制度)</p>
       </div>
       <a href="lung.html" class="text-xs" style="color:var(--series-new); text-decoration:none; font-weight:600;">← レポート本文に戻る</a>
     </div>
-    <p class="text-xs mt-3 muted">出題内容はすべて <a href="lung.html" style="color:var(--series-new);">肺癌薬物治療レポート</a> に記載の情報に基づきます。臨床試験の効果指標(PFS/OS/HR等)の暗記ではなく、治療選択・用法用量・安全性管理の理解を問う内容です。臨床判断には利用せず、学習・自己点検の目的でご利用ください。</p>
+    <p class="text-xs mt-3 muted">出題内容はすべて <a href="lung.html" style="color:var(--series-new);">肺癌薬物治療レポート</a>(本文および「7. 主要薬剤の添付文書情報」)に記載の情報に基づきます。臨床判断には利用せず、学習・自己点検の目的でご利用ください。ページを再読み込みする、または結果画面の「シャッフルしてもう一度」を押すたびに、新しい10問がランダムに選ばれます。</p>
   </header>
 
   <!-- Quiz card -->
   <section class="card" id="quiz-card">
     <div class="flex items-center justify-between mb-2">
       <span id="quiz-progress-text" class="text-xs font-semibold muted"></span>
-      <span id="quiz-cat-badge" class="cat-badge"></span>
+      <span><span id="quiz-cat-badge" class="cat-badge"></span><span id="quiz-type-badge" class="type-badge" style="display:none;">複数選択</span></span>
     </div>
     <div class="progress-track mb-5"><div class="progress-fill" id="quiz-progress-fill" style="width:0%"></div></div>
 
     <div id="quiz-question-area">
       <div id="quiz-question-text" class="text-base font-semibold mb-4" style="line-height:1.6;"></div>
       <div id="quiz-choices"></div>
+      <div id="quiz-submit-row" style="display:none;" class="mt-3">
+        <button type="button" class="quiz-btn" id="quiz-submit-btn" onclick="quizSubmitMulti()">この内容で回答する</button>
+      </div>
       <div id="quiz-explain-area" style="display:none;"></div>
       <div class="mt-5 flex justify-end">
         <button type="button" id="quiz-next-btn" class="quiz-btn" style="display:none;" onclick="quizNext()">次の問題 →</button>
@@ -96,110 +103,185 @@ body { background: var(--page-plane); color: var(--text-primary); font-family: s
 
 <script>
   var QUIZ = [
-    // ── 治療ライン・アルゴリズム(どの局面でどの選択肢を使うか) ──
-    { category: "治療ライン選択", q: "Stage IB期(腫瘍径2cm超)肺腺癌の術後補助療法として日本独自に用いられてきた薬剤は?",
+    // ══════════ 治療ライン選択(どの局面でどの選択肢を使うか) ══════════
+    { category: "治療ライン選択", type: "single", q: "Stage IB期(腫瘍径2cm超)肺腺癌の術後補助療法として日本独自に用いられてきた薬剤は?",
       choices: ["UFT(テガフール・ウラシル)", "S-1(テガフール・ギメラシル・オテラシルカリウム)", "ゲムシタビン単剤", "ドセタキセル単剤"], correct: 0,
       explain: "JLCRG試験(Kato H, et al. NEJM 2004)に基づき、完全切除Stage I肺腺癌(特に腫瘍径2cm超)に対しUFTを用いる日本独自の術後補助療法です。プラチナ併用化学療法の適応とならない早期腺癌が対象です。" },
-    { category: "治療ライン選択", q: "EGFR変異陽性NSCLCの術後補助療法として承認されている標準治療は?",
+    { category: "治療ライン選択", type: "single", q: "EGFR変異陽性NSCLCの術後補助療法として承認されている標準治療は?",
       choices: ["術後オシメルチニブの単独投与", "術前オシメルチニブ+化学療法併用後に手術", "術後ゲフィチニブ+化学療法の併用", "術後オシメルチニブ+免疫療法の併用"], correct: 0,
       explain: "ADAURA試験に基づく標準治療で、DFS・OSともに有意改善を示しました。術前化学療法・免疫療法とは併用せず単独で施行する点がポイントです。" },
-    { category: "治療ライン選択", q: "CheckMate 816試験とCheckMate 77T試験の周術期ニボルマブ+化学療法の主な設計上の違いは?",
-      choices: ["77Tは術後ニボルマブ単剤投与が試験プロトコル上必須だが、816では任意", "816の方がコース数が多い", "77TはEGFR変異陽性例が対象", "816は放射線療法を併用する"], correct: 0,
-      explain: "CheckMate 816は術前ニボルマブ+化学療法→手術で術後投与は試験デザイン上任意です。CheckMate 77Tは術前→手術→術後ニボルマブ単剤(最大1年)が必須です。米国・欧州・韓国・台湾で承認済みですが、日本は2026年9月時点で承認情報未確認です。" },
-    { category: "治療ライン選択", q: "III期切除不能局所進行NSCLCで、化学放射線療法後の地固め療法として確立されている薬剤は?",
+    { category: "治療ライン選択", type: "single", q: "EGFR変異陰性・術前療法非施行例における、Stage II-IIIA期NSCLC術後補助療法の基本骨格は?",
+      choices: ["術後プラチナ製剤併用化学療法(シスプラチン+ビノレルビン等、4サイクル)", "術後オシメルチニブ単独", "術後UFT単独", "術後放射線療法単独"], correct: 0,
+      explain: "肺癌診療ガイドラインで、この化学療法が術後補助療法の基本骨格とされています。完遂後、PD-L1発現状況に応じてアテゾリズマブまたはペムブロリズマブによる維持療法の追加を検討します。" },
+    { category: "治療ライン選択", type: "single", q: "III期切除不能局所進行NSCLCで、化学放射線療法後の地固め療法として確立されている薬剤は?",
       choices: ["デュルバルマブ", "ペムブロリズマブ", "ニボルマブ", "アテゾリズマブ"], correct: 0,
       explain: "PACIFIC試験に基づく地固め療法です。" },
-    { category: "治療ライン選択", q: "PD-L1 TPS≥50%のドライバー遺伝子陰性NSCLCにおける1次治療の標準は?",
+    { category: "治療ライン選択", type: "single", q: "PD-L1 TPS≥50%のドライバー遺伝子陰性NSCLCにおける1次治療の標準は?",
       choices: ["ペムブロリズマブ単剤", "化学療法単独", "オシメルチニブ単剤", "ソトラシブ単剤"], correct: 0,
       explain: "KEYNOTE-024試験に基づく標準治療です。病勢が急速な場合等はペムブロリズマブ+化学療法(KEYNOTE-189/407試験に準拠)も選択肢になります。" },
-    { category: "治療ライン選択", q: "扁平上皮NSCLCの1次治療(ドライバー遺伝子陰性)でペムブロリズマブと併用される化学療法が、非扁平上皮癌の標準(ペメトレキセド中心)と異なる理由は?",
+    { category: "治療ライン選択", type: "single", q: "扁平上皮NSCLCの1次治療(ドライバー遺伝子陰性)でペムブロリズマブと併用される化学療法が、非扁平上皮癌の標準(ペメトレキセド中心)と異なる理由は?",
       choices: ["扁平上皮癌ではペメトレキセドの有効性が乏しいため", "扁平上皮癌は薬価が異なるため", "扁平上皮癌ではプラチナ製剤が使えないため", "特に理由はなく歴史的経緯による"], correct: 0,
       explain: "扁平上皮癌ではペムブロリズマブ+カルボプラチン+パクリタキセル(またはnabパクリタキセル、KEYNOTE-407試験)を使用します。" },
-    { category: "治療ライン選択", q: "進展型SCLCの1次治療における標準治療の骨格は?",
+    { category: "治療ライン選択", type: "single", q: "進展型SCLCの1次治療における標準治療の骨格は?",
       choices: ["プラチナ+エトポシド+免疫チェックポイント阻害薬→ICI単剤維持", "プラチナ+パクリタキセル単独", "タルラタマブ単剤", "トポテカン単独"], correct: 0,
       explain: "IMpower133試験(アテゾリズマブ)、CASPIAN試験(デュルバルマブ)がそれぞれの根拠試験です。" },
-    { category: "治療ライン選択", q: "SCLCのプラチナ製剤治療後増悪(2次治療)に対し2024年12月に国内承認された新規薬剤は?",
+    { category: "治療ライン選択", type: "single", q: "SCLCのプラチナ製剤治療後増悪(2次治療)に対し2024年12月に国内承認された新規薬剤は?",
       choices: ["タルラタマブ", "ソトラシブ", "アミバンタマブ", "ロルラチニブ"], correct: 0,
       explain: "DLL3標的の二重特異性T細胞誘導抗体(商品名イムデトラ)です。" },
+    { category: "治療ライン選択", type: "single", q: "EGFR Exon20挿入変異陽性NSCLCの1次治療で、通常のEGFR-TKI(オシメルチニブ等)ではなく専用レジメンが必要とされる理由は?",
+      choices: ["Exon20挿入変異は従来のEGFR-TKIに対する感受性が乏しいため", "Exon20挿入変異は稀にしか存在しないため検査自体が不要", "Exon19欠失/L858Rと全く同じ治療で対応可能", "Exon20挿入変異は化学療法が無効のため"], correct: 0,
+      explain: "PAPILLON試験に基づき、アミバンタマブ+カルボプラチン+ペメトレキセドが専用の1次治療となります。" },
+    { category: "治療ライン選択", type: "single", q: "MET exon14スキッピング変異陽性NSCLCの治療選択肢として本レポートに挙げられている薬剤は?",
+      choices: ["カプマチニブまたはテポチニブ", "ソトラシブまたはアダグラシブ", "ダブラフェニブ+トラメチニブ", "トラスツズマブ デルクステカン"], correct: 0,
+      explain: "GEOMETRY mono-1試験(カプマチニブ)、VISION試験(テポチニブ)がそれぞれの根拠試験です。" },
+    { category: "治療ライン選択", type: "single", q: "HER2変異陽性NSCLCで、1次治療薬が未確立とされる中、2次治療以降の選択肢として挙げられている薬剤は?",
+      choices: ["トラスツズマブ デルクステカン", "ソトラシブ", "ダブラフェニブ+トラメチニブ", "カプマチニブ"], correct: 0,
+      explain: "DESTINY-Lung02試験に基づく選択肢です。" },
+    { category: "治療ライン選択", type: "single", q: "SCLCの限局型に対する標準治療は?",
+      choices: ["化学放射線療法(プラチナ+エトポシド併用放射線)", "タルラタマブ単剤", "免疫チェックポイント阻害薬単剤", "外科的切除のみ"], correct: 0,
+      explain: "根治的治療として位置づけられ、再発時は進展型に準じた治療となります。" },
+    { category: "治療ライン選択", type: "single", q: "BRAF V600E変異陽性NSCLCの治療選択肢として本レポートに挙げられている薬剤の組み合わせは?",
+      choices: ["ダブラフェニブ+トラメチニブ", "オシメルチニブ単剤", "クリゾチニブ単剤", "カプマチニブ単剤"], correct: 0 },
+    { category: "治療ライン選択", type: "single", q: "進展型SCLCで、化学療法+免疫チェックポイント阻害薬併用後の維持療法として行われるのは?",
+      choices: ["ICI単剤による維持療法", "化学療法を継続", "タルラタマブによる維持療法", "維持療法は行わない"], correct: 0 },
 
-    // ── 用法用量・投与スケジュール ──
-    { category: "用法用量・投与スケジュール", q: "EGFR変異陽性の術後補助療法としてのオシメルチニブの用法用量・投与期間は?",
+    // ══════════ 用法用量・投与スケジュール ══════════
+    { category: "用法用量・投与スケジュール", type: "single", q: "EGFR変異陽性の術後補助療法としてのオシメルチニブの用法用量・投与期間は?",
       choices: ["80mg 1日1回、3年間", "40mg 1日2回、1年間", "80mg 1日2回、2年間", "160mg 1日1回、6ヶ月間"], correct: 0,
       explain: "ADAURA試験に基づく用法用量です。" },
-    { category: "用法用量・投与スケジュール", q: "完全切除Stage I肺腺癌(腫瘍径2cm超)に対するUFT術後補助療法の投与期間は?",
+    { category: "用法用量・投与スケジュール", type: "single", q: "完全切除Stage I肺腺癌(腫瘍径2cm超)に対するUFT術後補助療法の投与期間は?",
       choices: ["2年間内服", "6ヶ月間内服", "1年間内服", "生涯継続"], correct: 0,
       explain: "JLCRG試験に基づく投与期間です。" },
-    { category: "用法用量・投与スケジュール", q: "III期切除不能局所進行NSCLCの地固め療法(デュルバルマブ)の投与間隔は?",
+    { category: "用法用量・投与スケジュール", type: "single", q: "III期切除不能局所進行NSCLCの地固め療法(デュルバルマブ)の投与間隔は?",
       choices: ["10mg/kg 2週毎", "10mg/kg 4週毎", "1500mg 3週毎", "500mg 1週毎"], correct: 0,
       explain: "PACIFIC試験に基づく用法です。" },
-    { category: "用法用量・投与スケジュール", q: "PD-L1 TPS≥50%に対するペムブロリズマブ単剤の投与スケジュールとして本レポートに記載されているものは?",
-      choices: ["200mg 3週毎、または400mg 6週毎", "100mg 2週毎のみ", "50mg 1週毎", "3ヶ月に1回の単回投与"], correct: 0,
-      explain: "KEYNOTE-024試験に基づく標準治療の投与スケジュールです。" },
-    { category: "用法用量・投与スケジュール", q: "術後補助化学療法後のアテゾリズマブ維持療法・ペムブロリズマブ維持療法の投与期間の上限は?",
+    { category: "用法用量・投与スケジュール", type: "single", q: "術後補助化学療法後のアテゾリズマブ維持療法において、添付文書上の主要な適応対象となるPD-L1発現条件は?",
+      choices: ["PD-L1発現≥1%", "PD-L1発現を問わず全例", "PD-L1発現≥50%のみ", "PD-L1陰性例のみ"], correct: 0,
+      explain: "IMpower010試験の結果に基づき、PD-L1≥1%集団が主要な適応対象です。一方、同じ場面で使われるペムブロリズマブ維持療法(KEYNOTE-091試験)はPD-L1発現を問わず適応となる点が異なります。" },
+    { category: "用法用量・投与スケジュール", type: "single", q: "術後補助化学療法後のアテゾリズマブ維持療法・ペムブロリズマブ維持療法の投与期間の上限は?",
       choices: ["最大1年間", "最大3年間", "最大6ヶ月間", "無期限に継続"], correct: 0,
       explain: "IMpower010(アテゾリズマブ、PD-L1≥1%)、KEYNOTE-091(ペムブロリズマブ、PD-L1問わず)ともに最大1年間です。" },
-    { category: "用法用量・投与スケジュール", q: "CheckMate 816試験とCheckMate 77T試験で、術前ニボルマブ+化学療法のコース数はそれぞれ何コースか?",
-      choices: ["816は3コース、77Tは4コース", "816は4コース、77Tは3コース", "両方とも3コース", "両方とも6コース"], correct: 0,
-      explain: "77Tはさらに術後ニボルマブ単剤を最大1年間継続する点が816(術後投与は任意)と異なります。" },
-    { category: "用法用量・投与スケジュール", q: "アレクチニブ(アレセンサ)150mgカプセルの通常投与量(1日あたり)は?",
+    { category: "用法用量・投与スケジュール", type: "single", q: "ROS1融合遺伝子陽性NSCLCの1次治療における第1世代ROS1-TKIとして確立されている標準治療薬は?",
+      choices: ["クリゾチニブ", "レポトレクチニブ", "エヌトレクチニブ", "セルペルカチニブ"], correct: 0,
+      explain: "クリゾチニブが第1世代ROS1-TKIとして確立された標準治療です。レポトレクチニブ(頭蓋内効果も報告)・エヌトレクチニブは代替・新規選択肢として位置づけられます。" },
+    { category: "用法用量・投与スケジュール", type: "single", q: "アレクチニブ(アレセンサ)150mgカプセルの、添付文書上の通常投与量(進行・再発NSCLC、1日あたり)は?",
       choices: ["1日4カプセル(600mg/日)", "1日1カプセル(150mg/日)", "1日2カプセル(300mg/日)", "1日8カプセル(1200mg/日)"], correct: 0,
-      explain: "本レポートのコスト表に記載されている通常投与量です。" },
+      explain: "添付文書に基づく通常投与量です。" },
+    { category: "用法用量・投与スケジュール", type: "single", q: "アレクチニブの術後補助療法における用法用量は、進行・再発NSCLCに対する用法用量と比べてどう異なるか?",
+      choices: ["用量が2倍(600mg 1日2回、食後)", "用量は同じ(300mg 1日2回)", "1日1回投与に変更される", "術後補助療法での承認はない"], correct: 0,
+      explain: "進行・再発は300mg1日2回、術後補助療法は600mg1日2回・食後投与です(添付文書)。" },
+    { category: "用法用量・投与スケジュール", type: "single", q: "ペムブロリズマブの用法用量で、術後補助療法における投与期間の上限は添付文書上何ヶ月とされているか?",
+      choices: ["12ヶ月間", "24ヶ月間", "6ヶ月間", "上限なく継続"], correct: 0 },
 
-    // ── 用量規制因子・モニタリング ──
-    { category: "用量規制因子・モニタリング", q: "アダグラシブ投与中に、用量調整・投与継続の判断に特に関わる循環器系のモニタリング項目は?",
+    // ══════════ 用量規制因子・モニタリング ══════════
+    { category: "用量規制因子・モニタリング", type: "multi", q: "オシメルチニブ投与中、添付文書上「初期症状」としてモニタリングすべき症状の組み合わせとして正しいものをすべて選べ(2つ選択)",
+      choices: ["息切れ・呼吸困難・咳・発熱(間質性肺疾患)", "動悸・めまい・ふらつき・失神(QT延長)", "多飲・多尿(1型糖尿病)", "視覚障害(網膜症)"], correct: [0, 1],
+      explain: "添付文書に記載された間質性肺疾患・QT延長それぞれの初期症状パターンです。1型糖尿病は主にアテゾリズマブ等ICIクラスに特徴的で、オシメルチニブでは特に強調されていません。" },
+    { category: "用量規制因子・モニタリング", type: "single", q: "アテゾリズマブ(テセントリク)で1型糖尿病が疑われた場合、添付文書上求められる対応は?",
+      choices: ["直ちに投与を中止しインスリン製剤投与等の適切な処置を行う", "減量して投与を継続する", "経過観察のみで投与継続する", "ステロイド投与のみで対応可能"], correct: 0,
+      explain: "劇症1型糖尿病を含み糖尿病性ケトアシドーシスに至る恐れがあるため、投与中止とインスリン製剤等の適切な処置が必要です。" },
+    { category: "用量規制因子・モニタリング", type: "single", q: "デュルバルマブ投与中に間質性肺疾患Grade3以上が発現した場合の添付文書上の対応は?",
+      choices: ["投与を中止する", "Grade1以下に回復するまで休薬し再開する", "減量して継続する", "特に対応は不要"], correct: 0,
+      explain: "Grade2は休薬(Grade1以下に回復するまで)、Grade3・4は投与中止という基準です。" },
+    { category: "用量規制因子・モニタリング", type: "single", q: "2025年9月17日、厚生労働省がタルラタマブの添付文書「警告」項の改訂を指示した理由は?",
+      choices: ["サイトカイン放出症候群(CRS)による死亡例が3例報告されたため", "間質性肺疾患による死亡例が増加したため", "QT延長による不整脈死が報告されたため", "肝機能障害による死亡例が報告されたため"], correct: 0 },
+    { category: "用量規制因子・モニタリング", type: "single", q: "ソトラシブで副作用が発現した場合の減量ステップとして添付文書に記載されているものは?",
+      choices: ["960mg→480mg→240mg/日の順に減量", "960mg→720mg→480mg/日の順に減量", "減量規定はなく中止のみ", "500mg固定用量への変更のみ"], correct: 0 },
+    { category: "用量規制因子・モニタリング", type: "single", q: "ソトラシブ投与患者で、投与開始前3ヶ月以内に免疫チェックポイント阻害薬治療歴がある場合に発現頻度が高まるとされる有害事象は?",
+      choices: ["肝機能障害・間質性肺疾患", "QT延長", "末梢神経障害", "重度の骨髄抑制"], correct: 0 },
+    { category: "用量規制因子・モニタリング", type: "single", q: "アダグラシブ投与中に、用量調整・投与継続の判断に特に関わる循環器系のモニタリング項目は?",
       choices: ["QT延長(心電図モニタリング)", "血圧上昇のみ", "徐脈のみ", "モニタリング項目は特にない"], correct: 0,
-      explain: "アダグラシブは下痢・悪心に加えQT延長のモニタリングが必要です。ソトラシブでは主に肝機能検査(AST/ALT)によるモニタリングが中心です。" },
-    { category: "用量規制因子・モニタリング", q: "オシメルチニブ投与中に、早期発見のためのモニタリングが特に重要とされる、重篤化しうる有害事象は?",
+      explain: "アダグラシブは下痢・悪心に加えQT延長のモニタリングが必要です。ただし2026年9月時点で日本国内は未承認のため、この情報は海外臨床試験データに基づきます。" },
+    { category: "用量規制因子・モニタリング", type: "single", q: "オシメルチニブ投与中に、早期発見のためのモニタリングが特に重要とされる、重篤化しうる有害事象は?",
       choices: ["間質性肺疾患", "手足症候群", "重度の脱毛", "急性膵炎"], correct: 0,
       explain: "実臨床では肺臓炎Grade≥3の報告もあり、呼吸器症状(咳嗽・呼吸困難等)の早期発見が重要です。QT延長にも注意が必要です。" },
-    { category: "用量規制因子・モニタリング", q: "タルラタマブ投与で、初回投与時に入院管理等の慎重なモニタリングが必要とされる理由は?",
+    { category: "用量規制因子・モニタリング", type: "single", q: "タルラタマブ投与で、初回投与時に入院管理等の慎重なモニタリングが必要とされる理由は?",
       choices: ["サイトカイン放出症候群(CRS)・免疫エフェクター細胞関連神経毒性(ICANS)のリスクがあるため", "重度の骨髄抑制が必発のため", "間質性肺疾患の急性増悪リスクのため", "アナフィラキシーが高頻度のため"], correct: 0,
       explain: "二重特異性T細胞誘導抗体(BiTE)に特有のリスク管理です。" },
 
-    // ── 特徴的な副作用(薬剤ごとの識別) ──
-    { category: "特徴的な副作用", q: "ロルラチニブに特徴的な有害事象として本レポートに記載されているものは?",
-      choices: ["高脂血症・体重増加・中枢神経系有害事象(認知機能変化・気分変化)", "間質性肺疾患", "手足症候群", "発熱性好中球減少症"], correct: 0,
-      explain: "アレクチニブは比較的忍容性良好(筋肉痛、肝機能障害、貧血が主)であるのと対照的です。" },
-    { category: "特徴的な副作用", q: "アダグラシブとソトラシブの副作用プロファイルの違いとして本レポートに記載されているものは?",
-      choices: ["アダグラシブは下痢・悪心・QT延長が問題となりやすく、ソトラシブは肝機能障害(AST/ALT上昇)が主体", "アダグラシブは間質性肺疾患のみが問題となる", "両者の副作用プロファイルは実質的に同一", "ソトラシブのみ重度の骨髄抑制がある"], correct: 0,
-      explain: "同じKRAS G12C阻害薬クラスでも副作用の重心が異なります。" },
-    { category: "特徴的な副作用", q: "タルラタマブに特有の有害事象として本レポートに記載されているものは?",
-      choices: ["サイトカイン放出症候群(CRS)・免疫エフェクター細胞関連神経毒性(ICANS)", "間質性肺疾患", "高血圧クリーゼ", "重度の下痢のみ"], correct: 0,
-      explain: "二重特異性T細胞誘導抗体(BiTE)に特有の有害事象です。" },
-    { category: "特徴的な副作用", q: "免疫チェックポイント阻害薬で、投与1〜3ヶ月以降に多いとされる有害事象は?",
+    // ══════════ 特徴的な副作用(添付文書の警告・禁忌・重大な副作用) ══════════
+    { category: "特徴的な副作用", type: "multi", q: "免疫チェックポイント阻害薬(ICI)クラスに共通して報告される免疫関連有害事象として、添付文書情報のまとめに記載されているものをすべて選べ(3つ選択)",
+      choices: ["間質性肺疾患", "大腸炎・重度下痢", "内分泌障害(甲状腺・下垂体・副腎等)", "手足症候群"], correct: [0, 1, 2],
+      explain: "手足症候群は分子標的薬(マルチキナーゼ阻害薬等)に特徴的で、ICIクラスの免疫関連有害事象としては記載されていません。" },
+    { category: "特徴的な副作用", type: "single", q: "ニボルマブの添付文書で、2016年に厚生労働省の指示により追記された重大な副作用は?",
+      choices: ["重症筋無力症、筋炎、大腸炎・重度の下痢", "間質性肺疾患", "QT延長", "手足症候群"], correct: 0,
+      explain: "直近3年で複数患者に発現し、重症筋無力症による呼吸不全等の重篤事例が報告されたため追記されました。" },
+    { category: "特徴的な副作用", type: "single", q: "アレクチニブ(アレセンサ)の添付文書上の禁忌に該当するのは?",
+      choices: ["本剤成分に対する過敏症の既往歴、妊婦又は妊娠している可能性のある婦人", "間質性肺疾患の既往歴がある患者すべて", "70歳以上の高齢者", "肝機能障害のある患者すべて"], correct: 0 },
+    { category: "特徴的な副作用", type: "single", q: "ロルラチニブで報告されている有害事象の中で、添付文書上最も高頻度(約27%)とされるものは?",
+      choices: ["末梢性ニューロパチー(感覚鈍麻、筋力低下等)", "QT間隔延長", "間質性肺疾患", "膵炎"], correct: 0,
+      explain: "末梢性ニューロパチーは27.1%と報告されており、中枢神経系障害(20.8%)・精神障害(15.8%)より高頻度です。" },
+    { category: "特徴的な副作用", type: "multi", q: "タルラタマブの添付文書「警告」欄に記載されている内容として正しいものをすべて選べ(2つ選択)",
+      choices: ["重度のサイトカイン放出症候群(CRS)・神経学的事象のリスク", "治療初期は入院管理等の体制下での投与が推奨される", "妊婦への投与は禁忌ではない", "経口投与のみで点滴は不要"], correct: [0, 1],
+      explain: "タルラタマブは皮下投与の二重特異性抗体で、CRS・神経学的事象のリスクから特に治療初期の入院管理が警告欄に明記されています。" },
+    { category: "特徴的な副作用", type: "single", q: "タルラタマブに特有の有害事象として、添付文書上特に注意喚起されているものは?",
+      choices: ["サイトカイン放出症候群(CRS)・免疫エフェクター細胞関連神経毒性(ICANS)", "間質性肺疾患", "高血圧クリーゼ", "重度の下痢のみ"], correct: 0 },
+    { category: "特徴的な副作用", type: "multi", q: "エンハーツ(トラスツズマブ デルクステカン)投与にあたり、添付文書上「投与開始前」に確認すべき事項として正しいものをすべて選べ(2つ選択)",
+      choices: ["胸部CT検査・問診による間質性肺疾患の合併・既往歴の有無", "患者・家族への有効性・危険性の十分な説明と同意", "遺伝子パネル検査の再実施", "QT間隔の測定"], correct: [0, 1],
+      explain: "間質性肺疾患による死亡例があるため、投与前の胸部CT・問診と患者への十分な説明・同意が添付文書上必須とされています。" },
+    { category: "特徴的な副作用", type: "single", q: "エンハーツ投与中、骨髄抑制のモニタリングとして添付文書上求められる対応は?",
+      choices: ["投与開始前及び投与中に定期的な血液検査を行う", "血液検査は投与終了後のみでよい", "骨髄抑制のリスクはないため検査不要", "月1回のみの検査で十分"], correct: 0 },
+    { category: "特徴的な副作用", type: "single", q: "脂質異常症(高コレステロール血症)の既往がある患者にALK-TKIを選択する際、添付文書上特に注意が必要なのはどれか?",
+      choices: ["ロルラチニブ", "アレクチニブ", "クリゾチニブ", "いずれも脂質への影響に関する注意喚起はない"], correct: 0,
+      explain: "ロルラチニブは高脂血症(高コレステロール・高トリグリセリド血症)、体重増加、中枢神経系有害事象(認知機能変化・気分変化)が添付文書上の特徴的な有害事象です。アレクチニブは比較的忍容性良好(筋肉痛、肝機能障害、貧血が主)です。" },
+    { category: "特徴的な副作用", type: "single", q: "アダグラシブとソトラシブ(いずれもKRAS G12C阻害薬)を比較した場合、消化器症状(下痢・悪心)への注意がより必要とされるのはどちらか?",
+      choices: ["アダグラシブ", "ソトラシブ", "両者とも同程度で区別されない", "消化器症状は両薬剤とも稀である"], correct: 0,
+      explain: "アダグラシブは下痢・悪心の頻度がソトラシブより高い傾向が指摘されており、QT延長のモニタリングも必要です。ソトラシブは下痢はあるが比較的軽度で、主な注意点は肝機能検査(AST/ALT)によるモニタリングです。" },
+    { category: "特徴的な副作用", type: "multi", q: "KRAS G12C阻害薬(ソトラシブ・アダグラシブ)クラスに共通して注意が必要な有害事象をすべて選べ(2つ選択)",
+      choices: ["下痢・消化器症状", "肝機能障害", "重度の骨髄抑制", "手足症候群"], correct: [0, 1],
+      explain: "両薬剤とも下痢等の消化器症状と肝機能障害(AST/ALT)のモニタリングが重要です。重度の骨髄抑制・手足症候群はこのクラスの特徴的AEとしては記載されていません。" },
+    { category: "特徴的な副作用", type: "single", q: "免疫チェックポイント阻害薬で、投与1〜3ヶ月以降に多いとされる有害事象は?",
       choices: ["大腸炎・重度下痢", "間質性肺炎(投与14日目以降に出現しうる)", "甲状腺機能障害", "下垂体炎"], correct: 0,
       explain: "抗PD-1/PD-L1薬は甲状腺疾患・肺炎が、抗CTLA-4薬(イピリムマブ)は大腸炎・下垂体炎が特徴的とされています。" },
 
-    // ── バイオマーカー ──
-    { category: "バイオマーカー", q: "BRAF V600E変異の検査について、本レポートに記載されている重要な注意点は?",
+    // ══════════ バイオマーカー ══════════
+    { category: "バイオマーカー", type: "single", q: "BRAF V600E変異のコンパニオン診断について、検査の運用上重要な注意点は?",
       choices: ["マルチ遺伝子検査のみコンパニオン診断として承認されており、単独検査は非対応", "血液検査のみで診断可能", "検査は不要", "PD-L1検査と同時にしか実施できない"], correct: 0,
-      explain: "EGFR・ALK・ROS1・METは単独検査も可能ですが、BRAF・KRAS・RETはマルチ遺伝子パネルでのみコンパニオン診断が承認されています。" },
-    { category: "バイオマーカー", q: "「肺がん コンパクトパネル®Dxマルチコンパニオン診断システム」に2024年2月に追加された3遺伝子は?",
+      explain: "マルチコンパニオン診断システムの保険適用上のルールとして、EGFR・ALK・ROS1・METは単独検査も可能ですが、BRAF・KRAS・RETはマルチ遺伝子パネルでのみコンパニオン診断が承認されています。" },
+    { category: "バイオマーカー", type: "single", q: "「肺がん コンパクトパネル®Dxマルチコンパニオン診断システム」に2024年2月に追加された3遺伝子は?",
       choices: ["BRAF、KRAS、RET", "EGFR、ALK、ROS1", "MET、HER2、PD-L1", "TP53、RB1、STK11"], correct: 0,
       explain: "2023年2月に先行保険適用された4遺伝子(EGFR、ALK、ROS1、MET)に続く追加です。" },
-    { category: "バイオマーカー", q: "PD-L1発現の評価に必須とされる検査法は?",
+    { category: "バイオマーカー", type: "single", q: "PD-L1発現の評価に必須とされる検査法は?",
       choices: ["IHC法によるTPS測定(22C3等)", "FISH法", "血中ctDNA解析", "次世代シークエンサーのみ"], correct: 0,
-      explain: "FISH法は本レポートではALK融合遺伝子の検査法として記載されています。" },
+      explain: "FISH法はALK融合遺伝子の検査法として広く用いられます。" },
+    { category: "バイオマーカー", type: "single", q: "RET融合遺伝子は、肺がんコンパクトパネル®Dxマルチコンパニオン診断システムにいつ追加されたか?",
+      choices: ["2024年2月(BRAF・KRASと共に)", "2023年2月(EGFR・ALK等と共に)", "2025年以降で未追加", "RET融合遺伝子は対象外"], correct: 0 },
 
-    // ── コスト制度 ──
-    { category: "コスト制度", q: "69歳以下の一般的な所得区分(年収約370万〜770万円)における高額療養費制度の自己負担限度額の計算式は?",
+    // ══════════ コスト制度 ══════════
+    { category: "コスト制度", type: "single", q: "69歳以下の一般的な所得区分(年収約370万〜770万円)における高額療養費制度の自己負担限度額の計算式は?",
       choices: ["80,100円+(総医療費-267,000円)×1%", "医療費の3割を上限なく負担", "月額一律5万円", "医療費の10%を上限なく負担"], correct: 0,
-      explain: "「限度額適用認定証」を事前提示すれば窓口負担自体をこの上限額までに抑えられます。" }
+      explain: "「限度額適用認定証」を事前提示すれば窓口負担自体をこの上限額までに抑えられます。" },
+    { category: "コスト制度", type: "single", q: "高額療養費制度で「多数回該当」となるのはどのような場合か?",
+      choices: ["直近12ヶ月に3回以上高額療養費に該当した場合、4回目以降さらに上限が下がる", "70歳以上のみに適用される特別枠", "手術を伴う治療のみに適用される", "初回の高額療養費申請時から適用される"], correct: 0 }
   ];
 
-  var quizOrder = QUIZ.map(function (_, i) { return i; });
+  var QUIZ_SESSION_SIZE = 10;
+  var quizOrder = [];     // indices into QUIZ for THIS session (random subset)
   var quizIndex = 0;
-  var quizAnswers = []; // per-question: selected choice index or null
-  var quizFeedback = {}; // { [questionIndex]: 'good' | 'bad' }
+  var quizAnswers = [];   // per-question(by original index): selected choice index (single) or array of indices (multi)
+  var quizFeedback = {};  // { [questionIndex]: 'good' | 'bad' }
+
+  function quizPickSession() {
+    var all = QUIZ.map(function (_, i) { return i; });
+    quizShuffle(all);
+    quizOrder = all.slice(0, QUIZ_SESSION_SIZE);
+  }
+  function quizShuffle(arr) {
+    for (var i = arr.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = arr[i]; arr[i] = arr[j]; arr[j] = t;
+    }
+    return arr;
+  }
 
   function quizLoadFeedback() {
     try {
-      var raw = localStorage.getItem('lungQuizFeedback_v1');
+      var raw = localStorage.getItem('lungQuizFeedback_v2');
       quizFeedback = raw ? JSON.parse(raw) : {};
     } catch (e) { quizFeedback = {}; }
   }
   function quizSaveFeedback() {
-    try { localStorage.setItem('lungQuizFeedback_v1', JSON.stringify(quizFeedback)); } catch (e) {}
+    try { localStorage.setItem('lungQuizFeedback_v2', JSON.stringify(quizFeedback)); } catch (e) {}
   }
   function quizBuildRatingRow(qi) {
     var row = document.createElement('div');
@@ -237,6 +319,13 @@ body { background: var(--page-plane); color: var(--text-primary); font-family: s
     document.body.removeChild(ta);
     done();
   }
+  function quizChoiceLabel(item) {
+    return item.choices.join(' / ');
+  }
+  function quizCorrectLabel(item) {
+    if (item.type === 'multi') return item.correct.map(function (i) { return item.choices[i]; }).join(' ＋ ');
+    return item.choices[item.correct];
+  }
   function quizExportFeedback() {
     var ratedIdx = Object.keys(quizFeedback);
     if (ratedIdx.length === 0) {
@@ -248,15 +337,15 @@ body { background: var(--page-plane); color: var(--text-primary); font-family: s
       var idx = parseInt(idxStr, 10);
       var item = QUIZ[idx];
       if (!item) return;
-      var entry = '・[' + item.category + '] ' + item.q + '\n  選択肢: ' + item.choices.join(' / ') + '\n  正解: ' + item.choices[item.correct];
+      var entry = '・[' + item.category + (item.type === 'multi' ? '/複数選択' : '') + '] ' + item.q + '\n  選択肢: ' + quizChoiceLabel(item) + '\n  正解: ' + quizCorrectLabel(item);
       if (quizFeedback[idx] === 'good') goodList.push(entry);
       else if (quizFeedback[idx] === 'bad') badList.push(entry);
     });
-    var text = '【肺癌クイズ(quiz-lung.html)フィードバック】\n\n' +
+    var text = '【肺癌クイズ(quiz-lung.html、全50問プール)フィードバック】\n\n' +
       '良問と評価された問題(' + goodList.length + '件):\n' + (goodList.length ? goodList.join('\n\n') : '(なし)') + '\n\n' +
       '悪問と評価された問題(' + badList.length + '件) — 改善・差し替えを検討してください:\n' + (badList.length ? badList.join('\n\n') : '(なし)') + '\n\n' +
       '参照ファイル: artifacts/html/oncology-reports/quiz-lung.html\n\n' +
-      '上記フィードバックを踏まえて、「悪問」と評価された問題をレポート本文(artifacts/html/oncology-reports/lung.html)の内容に基づいて改善・差し替えてください。「良問」と評価された問題は現状を維持してください。';
+      '上記フィードバックを踏まえて、「悪問」と評価された問題をレポート本文(artifacts/html/oncology-reports/lung.html、添付文書情報セクション含む)の内容に基づいて改善・差し替えてください。「良問」と評価された問題は現状を維持してください。';
     var notify = function () { alert('フィードバックをコピーしました。MulmoClaudeのチャットに貼り付けて送信してください。問題の改善に使います。'); };
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(text).then(notify).catch(function () { quizFallbackCopy(text, notify); });
@@ -269,40 +358,70 @@ body { background: var(--page-plane); color: var(--text-primary); font-family: s
     alert('評価をリセットしました。');
   }
 
-  function quizShuffle(arr) {
-    for (var i = arr.length - 1; i > 0; i--) {
-      var j = Math.floor(Math.random() * (i + 1));
-      var t = arr[i]; arr[i] = arr[j]; arr[j] = t;
-    }
-    return arr;
-  }
-
   function quizRenderQuestion() {
     document.getElementById('quiz-result-area').style.display = 'none';
     document.getElementById('quiz-question-area').style.display = 'block';
     var qi = quizOrder[quizIndex];
     var item = QUIZ[qi];
-    document.getElementById('quiz-progress-text').textContent = '問 ' + (quizIndex + 1) + ' / ' + QUIZ.length;
+    document.getElementById('quiz-progress-text').textContent = '問 ' + (quizIndex + 1) + ' / ' + quizOrder.length + '(全' + QUIZ.length + '問中からランダム出題)';
     document.getElementById('quiz-cat-badge').textContent = item.category;
-    document.getElementById('quiz-progress-fill').style.width = Math.round((quizIndex / QUIZ.length) * 100) + '%';
+    document.getElementById('quiz-type-badge').style.display = (item.type === 'multi') ? 'inline-flex' : 'none';
+    document.getElementById('quiz-progress-fill').style.width = Math.round((quizIndex / quizOrder.length) * 100) + '%';
     document.getElementById('quiz-question-text').textContent = item.q;
     document.getElementById('quiz-explain-area').style.display = 'none';
     document.getElementById('quiz-explain-area').innerHTML = '';
     document.getElementById('quiz-next-btn').style.display = 'none';
+    document.getElementById('quiz-submit-row').style.display = 'none';
 
     var wrap = document.getElementById('quiz-choices');
     wrap.innerHTML = '';
-    item.choices.forEach(function (choiceText, idx) {
-      var btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'quiz-choice';
-      btn.textContent = choiceText;
-      btn.onclick = function () { quizAnswer(idx); };
-      wrap.appendChild(btn);
-    });
+
+    if (item.type === 'multi') {
+      var selected = {};
+      item.choices.forEach(function (choiceText, idx) {
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'quiz-choice';
+        btn.innerHTML = '<span class="quiz-choice-check">☐</span> ' + choiceText.replace(/</g, '&lt;');
+        btn.onclick = function () {
+          selected[idx] = !selected[idx];
+          btn.classList.toggle('selected', !!selected[idx]);
+          btn.querySelector('.quiz-choice-check').textContent = selected[idx] ? '☑' : '☐';
+        };
+        wrap.appendChild(btn);
+      });
+      document.getElementById('quiz-submit-row').style.display = 'block';
+      document.getElementById('quiz-submit-btn').onclick = function () {
+        var chosen = Object.keys(selected).filter(function (k) { return selected[k]; }).map(Number);
+        quizAnswerMulti(chosen);
+      };
+    } else {
+      item.choices.forEach(function (choiceText, idx) {
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'quiz-choice';
+        btn.textContent = choiceText;
+        btn.onclick = function () { quizAnswerSingle(idx); };
+        wrap.appendChild(btn);
+      });
+    }
   }
 
-  function quizAnswer(selectedIdx) {
+  function quizFinishQuestion(qi, isCorrect, correctText) {
+    var item = QUIZ[qi];
+    var explainArea = document.getElementById('quiz-explain-area');
+    explainArea.className = 'quiz-explain';
+    explainArea.style.display = 'block';
+    explainArea.innerHTML = '<div style="font-weight:700; margin-bottom:4px; color:' + (isCorrect ? 'var(--good)' : 'var(--critical)') + ';">' +
+      (isCorrect ? '✅ 正解' : '❌ 不正解(正解: ' + correctText + ')') + '</div>' +
+      '<div>' + (item.explain || '') + '</div>';
+    explainArea.appendChild(quizBuildRatingRow(qi));
+    document.getElementById('quiz-submit-row').style.display = 'none';
+    document.getElementById('quiz-next-btn').style.display = 'inline-block';
+    document.getElementById('quiz-next-btn').textContent = (quizIndex === quizOrder.length - 1) ? '結果を見る →' : '次の問題 →';
+  }
+
+  function quizAnswerSingle(selectedIdx) {
     var qi = quizOrder[quizIndex];
     var item = QUIZ[qi];
     quizAnswers[qi] = selectedIdx;
@@ -312,20 +431,40 @@ body { background: var(--page-plane); color: var(--text-primary); font-family: s
       if (idx === item.correct) btn.classList.add('correct');
       else if (idx === selectedIdx) btn.classList.add('wrong');
     });
-    var explainArea = document.getElementById('quiz-explain-area');
-    var isCorrect = selectedIdx === item.correct;
-    explainArea.className = 'quiz-explain';
-    explainArea.style.display = 'block';
-    explainArea.innerHTML = '<div style="font-weight:700; margin-bottom:4px; color:' + (isCorrect ? 'var(--good)' : 'var(--critical)') + ';">' +
-      (isCorrect ? '✅ 正解' : '❌ 不正解(正解: ' + item.choices[item.correct] + ')') + '</div>' +
-      '<div>' + item.explain + '</div>';
-    explainArea.appendChild(quizBuildRatingRow(qi));
-    document.getElementById('quiz-next-btn').style.display = 'inline-block';
-    document.getElementById('quiz-next-btn').textContent = (quizIndex === QUIZ.length - 1) ? '結果を見る →' : '次の問題 →';
+    quizFinishQuestion(qi, selectedIdx === item.correct, item.choices[item.correct]);
+  }
+
+  function quizSubmitMulti() {
+    var qi = quizOrder[quizIndex];
+    var item = QUIZ[qi];
+    var buttons = document.getElementById('quiz-choices').querySelectorAll('.quiz-choice');
+    var chosen = [];
+    buttons.forEach(function (btn, idx) {
+      if (btn.classList.contains('selected')) chosen.push(idx);
+    });
+    quizAnswerMulti(chosen, buttons, item, qi);
+  }
+
+  function quizAnswerMulti(chosen, buttons, item, qi) {
+    qi = (qi === undefined) ? quizOrder[quizIndex] : qi;
+    item = item || QUIZ[qi];
+    buttons = buttons || document.getElementById('quiz-choices').querySelectorAll('.quiz-choice');
+    quizAnswers[qi] = chosen;
+    var correctSet = item.correct.slice().sort();
+    var chosenSet = chosen.slice().sort();
+    var isCorrect = correctSet.length === chosenSet.length && correctSet.every(function (v, i) { return v === chosenSet[i]; });
+    buttons.forEach(function (btn, idx) {
+      btn.disabled = true;
+      var isRight = item.correct.indexOf(idx) !== -1;
+      var wasChosen = chosen.indexOf(idx) !== -1;
+      if (isRight) btn.classList.add('correct');
+      else if (wasChosen) btn.classList.add('wrong');
+    });
+    quizFinishQuestion(qi, isCorrect, quizCorrectLabel(item));
   }
 
   function quizNext() {
-    if (quizIndex < QUIZ.length - 1) {
+    if (quizIndex < quizOrder.length - 1) {
       quizIndex++;
       quizRenderQuestion();
     } else {
@@ -335,18 +474,29 @@ body { background: var(--page-plane); color: var(--text-primary); font-family: s
 
   function quizShowResult() {
     document.getElementById('quiz-progress-fill').style.width = '100%';
-    document.getElementById('quiz-progress-text').textContent = '完了 ' + QUIZ.length + ' / ' + QUIZ.length;
+    document.getElementById('quiz-progress-text').textContent = '完了 ' + quizOrder.length + ' / ' + quizOrder.length;
     document.getElementById('quiz-cat-badge').textContent = '';
+    document.getElementById('quiz-type-badge').style.display = 'none';
     document.getElementById('quiz-question-area').style.display = 'none';
 
     var correctCount = 0;
     var byCategory = {};
-    QUIZ.forEach(function (item, i) {
+    quizOrder.forEach(function (qi) {
+      var item = QUIZ[qi];
       if (!byCategory[item.category]) byCategory[item.category] = { correct: 0, total: 0 };
       byCategory[item.category].total++;
-      if (quizAnswers[i] === item.correct) { correctCount++; byCategory[item.category].correct++; }
+      var ans = quizAnswers[qi];
+      var isCorrect;
+      if (item.type === 'multi') {
+        var correctSet = item.correct.slice().sort();
+        var chosenSet = (ans || []).slice().sort();
+        isCorrect = correctSet.length === chosenSet.length && correctSet.every(function (v, i) { return v === chosenSet[i]; });
+      } else {
+        isCorrect = ans === item.correct;
+      }
+      if (isCorrect) { correctCount++; byCategory[item.category].correct++; }
     });
-    var pct = Math.round((correctCount / QUIZ.length) * 100);
+    var pct = Math.round((correctCount / quizOrder.length) * 100);
 
     var catHtml = '';
     Object.keys(byCategory).forEach(function (cat) {
@@ -358,12 +508,25 @@ body { background: var(--page-plane); color: var(--text-primary); font-family: s
     });
 
     var reviewHtml = '';
-    QUIZ.forEach(function (item, i) {
-      if (quizAnswers[i] !== item.correct) {
+    quizOrder.forEach(function (qi) {
+      var item = QUIZ[qi];
+      var ans = quizAnswers[qi];
+      var isCorrect;
+      var yourAnswerText;
+      if (item.type === 'multi') {
+        var correctSet = item.correct.slice().sort();
+        var chosenSet = (ans || []).slice().sort();
+        isCorrect = correctSet.length === chosenSet.length && correctSet.every(function (v, i) { return v === chosenSet[i]; });
+        yourAnswerText = (ans && ans.length) ? ans.map(function (i) { return item.choices[i]; }).join(' ＋ ') : '(未回答)';
+      } else {
+        isCorrect = ans === item.correct;
+        yourAnswerText = (ans != null) ? item.choices[ans] : '(未回答)';
+      }
+      if (!isCorrect) {
         reviewHtml += '<div class="review-item">' +
           '<div class="text-sm font-semibold mb-1">' + item.q + '</div>' +
-          '<div class="text-xs muted mb-2">あなたの回答: ' + (quizAnswers[i] != null ? item.choices[quizAnswers[i]] : '(未回答)') + ' / 正解: ' + item.choices[item.correct] + '</div>' +
-          '<div class="text-xs" style="line-height:1.6;">' + item.explain + '</div>' +
+          '<div class="text-xs muted mb-2">あなたの回答: ' + yourAnswerText + ' / 正解: ' + quizCorrectLabel(item) + '</div>' +
+          '<div class="text-xs" style="line-height:1.6;">' + (item.explain || '') + '</div>' +
           '</div>';
       }
     });
@@ -379,35 +542,35 @@ body { background: var(--page-plane); color: var(--text-primary); font-family: s
     resultArea.style.display = 'block';
     resultArea.innerHTML =
       '<div class="text-center mb-6">' +
-        '<div class="score-ring-num" style="color:var(--series-new);">' + correctCount + ' / ' + QUIZ.length + '</div>' +
-        '<div class="text-sm muted mt-1">正答率 ' + pct + '%</div>' +
+        '<div class="score-ring-num" style="color:var(--series-new);">' + correctCount + ' / ' + quizOrder.length + '</div>' +
+        '<div class="text-sm muted mt-1">正答率 ' + pct + '%(全' + QUIZ.length + '問プールから今回ランダム抽出された' + quizOrder.length + '問)</div>' +
       '</div>' +
-      '<div class="mb-6"><div class="text-sm font-semibold mb-3">カテゴリ別正答率</div>' + catHtml + '</div>' +
+      '<div class="mb-6"><div class="text-sm font-semibold mb-3">カテゴリ別正答率(今回出題分)</div>' + catHtml + '</div>' +
       '<div class="mb-2 text-sm font-semibold">見直し(不正解・未回答の問題)</div>' +
       '<div class="mb-6">' + reviewHtml + '</div>' +
       '<div class="mb-6 pt-4 border-t" style="border-color:var(--gridline);">' +
-        '<div class="text-sm font-semibold mb-2">問題の評価状況</div>' +
-        '<div class="text-xs muted mb-3">👍 良問 ' + goodCount + '件 ・ 👎 悪問 ' + badCount + '件(全' + QUIZ.length + '問中、未評価は反映されません)</div>' +
+        '<div class="text-sm font-semibold mb-2">問題の評価状況(全50問プール通算)</div>' +
+        '<div class="text-xs muted mb-3">👍 良問 ' + goodCount + '件 ・ 👎 悪問 ' + badCount + '件</div>' +
         '<div class="flex flex-wrap gap-3">' +
           '<button type="button" class="quiz-btn-outline" onclick="quizExportFeedback()">📋 フィードバックをエクスポート(チャットに貼り付け用)</button>' +
           '<button type="button" class="quiz-btn-outline" onclick="quizResetFeedback()" style="border-color:var(--critical); color:var(--critical);">🗑 評価をリセット</button>' +
         '</div>' +
       '</div>' +
       '<div class="flex flex-wrap gap-3 justify-center">' +
-        '<button type="button" class="quiz-btn" onclick="quizRestart(true)">🔀 シャッフルしてもう一度</button>' +
+        '<button type="button" class="quiz-btn" onclick="quizRestart()">🔀 新しい10問でもう一度</button>' +
         '<a href="lung.html" class="quiz-btn-outline" style="text-decoration:none; display:inline-block;">レポート本文に戻る</a>' +
       '</div>';
   }
 
-  function quizRestart(shuffle) {
-    quizOrder = QUIZ.map(function (_, i) { return i; });
-    if (shuffle) quizShuffle(quizOrder);
+  function quizRestart() {
+    quizPickSession();
     quizIndex = 0;
     quizAnswers = [];
     quizRenderQuestion();
   }
 
   quizLoadFeedback();
+  quizPickSession();
   quizRenderQuestion();
 </script>
 
