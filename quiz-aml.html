@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>急性骨髄性白血病(AML)理解度クイズ 全50問(ランダム10問出題)</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+:root, .viz-root {
+  color-scheme: light;
+  --surface-1: #fcfcfb; --page-plane: #f9f9f7;
+  --text-primary: #0b0b0b; --text-secondary: #52514e; --text-muted: #898781;
+  --gridline: #e1e0d9; --baseline: #c3c2b7;
+  --series-new: #2a78d6; --series-control: #b9b7ae;
+  --good: #0ca30c; --warning: #b9790a; --critical: #d03b3b;
+  --border: rgba(11,11,11,0.10);
+}
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) {
+    color-scheme: dark;
+    --surface-1: #1a1a19; --page-plane: #0d0d0d;
+    --text-primary: #ffffff; --text-secondary: #c3c2b7; --text-muted: #898781;
+    --gridline: #2c2c2a; --baseline: #383835;
+    --series-new: #3987e5; --series-control: #55534c;
+    --good: #0ca30c; --warning: #eab116; --critical: #e66767;
+    --border: rgba(255,255,255,0.10);
+  }
+}
+body { background: var(--page-plane); color: var(--text-primary); font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+.card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+.secondary { color: var(--text-secondary); }
+.muted { color: var(--text-muted); }
+.cat-badge { display:inline-flex; align-items:center; padding:3px 10px; border-radius:9999px; font-size:0.72rem; font-weight:700; background: color-mix(in srgb, var(--series-new) 14%, transparent); color: var(--series-new); }
+.type-badge { display:inline-flex; align-items:center; padding:3px 10px; border-radius:9999px; font-size:0.68rem; font-weight:700; background: color-mix(in srgb, var(--warning) 16%, transparent); color: var(--warning); margin-left:6px; }
+.progress-track { background: var(--gridline); border-radius: 9999px; height: 8px; overflow: hidden; }
+.progress-fill { background: var(--series-new); height: 100%; border-radius: 9999px; transition: width .25s; }
+.quiz-choice { display:block; width:100%; text-align:left; background: var(--page-plane); border: 1.5px solid var(--gridline); border-radius: 10px; padding: 12px 16px; font-size: 0.92rem; cursor: pointer; transition: border-color .12s, background .12s; margin-bottom: 10px; }
+.quiz-choice:last-child { margin-bottom: 0; }
+.quiz-choice:hover:not(:disabled) { border-color: var(--series-new); }
+.quiz-choice:disabled { cursor: default; }
+.quiz-choice.correct { border-color: var(--good); background: color-mix(in srgb, var(--good) 12%, transparent); font-weight: 700; }
+.quiz-choice.wrong { border-color: var(--critical); background: color-mix(in srgb, var(--critical) 10%, transparent); }
+.quiz-choice.selected { border-color: var(--series-new); background: color-mix(in srgb, var(--series-new) 10%, transparent); }
+.quiz-choice-check { display:inline-block; width:16px; }
+.quiz-explain { background: var(--page-plane); border: 1px solid var(--gridline); border-radius: 10px; padding: 14px 16px; margin-top: 14px; font-size: 0.85rem; line-height: 1.7; }
+.quiz-btn { background: var(--series-new); color: #fff; border: none; border-radius: 8px; padding: 10px 22px; font-size: 0.88rem; font-weight: 700; cursor: pointer; }
+.quiz-btn:hover { opacity: 0.9; }
+.quiz-btn:disabled { opacity: 0.4; cursor: default; }
+.quiz-btn-outline { background: transparent; color: var(--series-new); border: 1.5px solid var(--series-new); border-radius: 8px; padding: 9px 20px; font-size: 0.88rem; font-weight: 700; cursor: pointer; }
+.quiz-btn-outline:hover { background: color-mix(in srgb, var(--series-new) 10%, transparent); }
+.score-ring-num { font-size: 2.6rem; font-weight: 800; }
+.cat-result-row { display:flex; align-items:center; gap:10px; margin-bottom: 8px; }
+.cat-result-bar { flex:1; background: var(--gridline); border-radius: 9999px; height: 10px; overflow:hidden; }
+.cat-result-fill { background: var(--series-new); height:100%; border-radius: 9999px; }
+.review-item { border: 1px solid var(--gridline); border-radius: 10px; padding: 12px 14px; margin-bottom: 10px; }
+.review-item:last-child { margin-bottom: 0; }
+.rate-row { display:flex; align-items:center; gap:8px; margin-top:14px; flex-wrap:wrap; }
+.rate-label { font-size:0.75rem; color: var(--text-muted); }
+.rate-btn { background: var(--page-plane); border: 1.5px solid var(--gridline); border-radius: 8px; padding: 6px 12px; font-size: 0.78rem; font-weight:600; cursor:pointer; color: var(--text-secondary); }
+.rate-btn:hover { border-color: var(--series-new); }
+.rate-btn.active-good { border-color: var(--good); background: color-mix(in srgb, var(--good) 14%, transparent); color: var(--good); }
+.rate-btn.active-bad { border-color: var(--critical); background: color-mix(in srgb, var(--critical) 12%, transparent); color: var(--critical); }
+</style>
+</head>
+<body class="viz-root">
+<div class="max-w-3xl mx-auto px-4 py-8 space-y-5">
+
+  <header class="card">
+    <div class="flex items-center justify-between gap-2 flex-wrap">
+      <div>
+        <h1 class="text-xl font-bold">🧠 急性骨髄性白血病(AML)理解度クイズ</h1>
+        <p class="text-sm mt-1 secondary">全50問のプールからランダムに10問出題・4択/複数選択混在・医療従事者向け(治療ライン選択・用法用量・投与スケジュール・用量規制因子/モニタリング・特徴的な副作用・バイオマーカー・コスト制度)</p>
+      </div>
+      <a href="aml.html" class="text-xs" style="color:var(--series-new); text-decoration:none; font-weight:600;">← レポート本文に戻る</a>
+    </div>
+    <p class="text-xs mt-3 muted">出題内容はすべて <a href="aml.html" style="color:var(--series-new);">急性骨髄性白血病(AML)患者説明用レポート</a>(本文および「8. 主要薬剤の添付文書情報」)に記載の情報に基づきます。ミドスタウリン・エナシデニブは日本国内未承認のため、その未承認である事実そのものを問う設問のみを含み、添付文書の用法用量等に基づく設問には使用していません。臨床判断には利用せず、学習・自己点検の目的でご利用ください。ページを再読み込みする、または結果画面の「シャッフルしてもう一度」を押すたびに、新しい10問がランダムに選ばれます。</p>
+  </header>
+
+  <!-- Quiz card -->
+  <section class="card" id="quiz-card">
+    <div class="flex items-center justify-between mb-2">
+      <span id="quiz-progress-text" class="text-xs font-semibold muted"></span>
+      <span><span id="quiz-cat-badge" class="cat-badge"></span><span id="quiz-type-badge" class="type-badge" style="display:none;">複数選択</span></span>
+    </div>
+    <div class="progress-track mb-5"><div class="progress-fill" id="quiz-progress-fill" style="width:0%"></div></div>
+
+    <div id="quiz-question-area">
+      <div id="quiz-question-text" class="text-base font-semibold mb-4" style="line-height:1.6;"></div>
+      <div id="quiz-choices"></div>
+      <div id="quiz-submit-row" style="display:none;" class="mt-3">
+        <button type="button" class="quiz-btn" id="quiz-submit-btn" onclick="quizSubmitMulti()">この内容で回答する</button>
+      </div>
+      <div id="quiz-explain-area" style="display:none;"></div>
+      <div class="mt-5 flex justify-end">
+        <button type="button" id="quiz-next-btn" class="quiz-btn" style="display:none;" onclick="quizNext()">次の問題 →</button>
+      </div>
+    </div>
+
+    <div id="quiz-result-area" style="display:none;"></div>
+  </section>
+
+</div>
+
+<script>
+  var QUIZ = [
+    // ══════════ 治療ライン選択(どの局面でどの選択肢を使うか) ══════════
+    { category: "治療ライン選択", type: "single", q: "PML-RARA陽性(APL)・初診時WBC 10,000/μL以下(低〜中間リスク)の国際標準1次治療は?",
+      choices: ["トレチノイン(ATRA)+亜ヒ酸(ATO)", "7+3標準化学療法", "アザシチジン+ベネトクラクス", "ギルテリチニブ単剤"], correct: 0,
+      explain: "APL0406試験に基づき、低〜中間リスクAPLではATRA+ATOにより化学療法を回避できる国際標準治療です。ただし亜ヒ酸(トリセノックス)の国内添付文書上の適応は「再発又は難治性」に限定されており、初発APLへの使用は国内では保険適用外です(日本血液学会ガイドラインも明記)。国内の保険診療上の標準治療はATRA+アントラサイクリン系化学療法(JALSG APL204等)です。" },
+    { category: "治療ライン選択", type: "single", q: "PML-RARA陽性(APL)・初診時WBC 10,000/μL超(高リスク)の1次治療で、AML17試験に基づき上乗せが検討される薬剤は?",
+      choices: ["ゲムツズマブ オゾガマイシンの単回投与", "ギルテリチニブの継続投与", "ベネトクラクスの併用", "イボシデニブの併用"], correct: 0,
+      explain: "AML17試験(Lancet Oncol 2015、PMID 26384238)では、高リスク(WBC>10×10⁹/L)の患者にゲムツズマブ オゾガマイシン6mg/m²の初回単回投与が任意で可能とされました(ATRA+ATO群・比較対照のATRA+イダルビシン群のいずれでも許容)。この試験内用量は日本添付文書上の通常用量(9mg/m²×最大2回)とは異なります。また日本のマイロターグ添付文書上の適応は「再発又は難治性のCD33陽性AML」に限定されており、初発APLへの投与は適応外使用となる可能性がある点に留意が必要です。" },
+    { category: "治療ライン選択", type: "single", q: "予後良好群(NPM1変異陽性・FLT3-ITDなし、またはCBF転座)の初発AMLが寛解した後の移植方針は?",
+      choices: ["地固め化学療法を継続し、同種移植は原則保留する", "全例に同種造血幹細胞移植を行う", "維持療法としてギルテリチニブを開始する", "経過観察のみとし追加治療は行わない"], correct: 0,
+      explain: "予後良好群は化学療法のみで良好な転帰が期待できるため、同種移植は原則保留されます。" },
+    { category: "治療ライン選択", type: "single", q: "FLT3-ITD変異陽性(予後中間群)・強力化学療法適応の初発AML患者に対する、日本国内で実施可能な標準治療は?",
+      choices: ["7+3標準化学療法単独", "7+3+ミドスタウリン", "ギルテリチニブ単剤", "アザシチジン+ベネトクラクス"], correct: 0,
+      explain: "RATIFY試験に基づく7+3+ミドスタウリンは欧米・国際ガイドラインの標準治療ですが、ミドスタウリンは2026年9月時点で日本国内未承認(国立がん研究センター「国内未承認薬リスト」に掲載)のため、国内では7+3単独が実質的な標準治療です。" },
+    { category: "治療ライン選択", type: "single", q: "FLT3-ITD変異陽性AMLが再発した場合、日本国内で承認されているFLT3阻害薬は?",
+      choices: ["ギルテリチニブ単剤", "ミドスタウリン単剤", "エナシデニブ単剤", "レブメニブ単剤"], correct: 0,
+      explain: "ADMIRAL試験に基づき国内承認されている、再発・難治性FLT3変異陽性AMLに対するFLT3阻害薬はギルテリチニブのみです。" },
+    { category: "治療ライン選択", type: "single", q: "予後不良群(TP53変異、複雑核型、MDS関連変異、KMT2A再構成等)の初発AMLが寛解した後の方針は?",
+      choices: ["同種造血幹細胞移植を積極的に検討する", "移植は原則保留し経過観察とする", "維持療法としてアザシチジン単独を継続する", "追加治療は不要である"], correct: 0,
+      explain: "予後不良群は再発リスクが高いため、寛解後は同種造血幹細胞移植が積極的に検討されます。" },
+    { category: "治療ライン選択", type: "single", q: "治療関連AML(t-AML)やAML-MRC(骨髄異形成関連変化を伴うAML)等の二次性AMLで、強力化学療法適応の場合に優先される選択肢は?",
+      choices: ["CPX-351(ビキセオス配合静注用)", "アザシチジン+ベネトクラクス", "イボシデニブ+アザシチジン", "亜ヒ酸単剤"], correct: 0,
+      explain: "CPX-351(リポソーム化ダウノルビシン+シタラビン配合剤)は2024年に国内承認され、二次性AMLを含む「高リスク急性骨髄性白血病」が適応です。7+3標準用量と比較しOS改善が示されています。" },
+    { category: "治療ライン選択", type: "single", q: "強力化学療法非適応(高齢・PS不良・臓器機能低下)の初発AML全般に対する標準治療は?",
+      choices: ["アザシチジン+ベネトクラクス、または低用量シタラビン+ベネトクラクス", "7+3標準化学療法", "ギルテリチニブ単剤", "亜ヒ酸単剤"], correct: 0,
+      explain: "VIALE-A試験(アザシチジン+ベネトクラクス)、VIALE-C試験(低用量シタラビン+ベネトクラクス)がそれぞれの根拠となる第III相試験です。" },
+    { category: "治療ライン選択", type: "single", q: "強力化学療法非適応・IDH1変異陽性の初発AML患者に対して、2025年3月に国内承認されたレジメンは?",
+      choices: ["アザシチジン+イボシデニブ", "イボシデニブ単剤", "アザシチジン+エナシデニブ", "アザシチジン+ギルテリチニブ"], correct: 0,
+      explain: "AGILE試験(OS中央値24.0 vs 7.9ヶ月、HR 0.44)に基づき、強度非適応の未治療IDH1変異陽性AML患者を対象にアザシチジン+イボシデニブが国内承認されました。" },
+    { category: "治療ライン選択", type: "single", q: "イボシデニブ+アザシチジンは、強力な寛解導入療法の適応となる初発AML患者にも使用できるか?",
+      choices: ["できない。添付文書に当該患者集団での有効性及び安全性は確立していないと明記されている", "できる。むしろ強度適応患者が優先対象である", "できるが保険適用外である", "強力化学療法と併用することが標準である"], correct: 0,
+      explain: "ティブソボの添付文書には「強力な寛解導入療法の適応となる急性骨髄性白血病患者における本剤の有効性及び安全性は確立していない」と明記されており、対象は強度非適応の未治療患者に限られます。" },
+    { category: "治療ライン選択", type: "single", q: "IDH2変異陽性の再発・難治AMLに対して、日本国内で承認されている分子標的薬は?",
+      choices: ["国内承認薬はない(エナシデニブは国内未承認)", "エナシデニブ単剤", "イボシデニブ単剤", "ギルテリチニブ単剤"], correct: 0,
+      explain: "エナシデニブ(IDHIFA)は2026年9月時点で日本国内未承認であり(国立がん研究センター「国内未承認薬リスト」に掲載)、国内にIDH2変異陽性AMLに承認された分子標的薬はありません。" },
+    { category: "治療ライン選択", type: "single", q: "標的となる遺伝子変異(FLT3、IDH1/2、KMT2A等)を持たない再発・難治AMLの治療選択肢は?",
+      choices: ["サルベージ化学療法、または治験", "全例にゲムツズマブ オゾガマイシンを投与する", "アザシチジン+イボシデニブを投与する", "経過観察のみとする"], correct: 0,
+      explain: "標的変異がない場合は、分子標的薬単剤の選択肢がないため、サルベージ化学療法や臨床試験への参加が検討されます。" },
+    { category: "治療ライン選択", type: "multi", q: "予後中間群(FLT3-ITD変異陽性)・強力化学療法適応の初発AML患者について、日本国内の実情として正しいものをすべて選べ(2つ選択)",
+      choices: ["国内の実質的な標準治療は7+3単独である", "ミドスタウリンは日本国内未承認である", "ミドスタウリンは国内承認済みで7+3に併用できる", "国内で承認されたFLT3阻害薬は初発患者にも使用できる"], correct: [0, 1],
+      explain: "ミドスタウリンは国立がん研究センター「国内未承認薬リスト」に掲載される未承認薬であり、日本国内では7+3単独が実質的な標準治療です。国内承認されたFLT3阻害薬(ギルテリチニブ)は再発・難治例が適応で、初発患者には使用できません。" },
+    { category: "治療ライン選択", type: "multi", q: "強力化学療法非適応の初発AML患者に対する国内承認レジメンとして正しいものをすべて選べ(3つ選択)",
+      choices: ["アザシチジン+ベネトクラクス", "低用量シタラビン+ベネトクラクス", "アザシチジン+イボシデニブ(IDH1変異陽性)", "7+3+ミドスタウリン"], correct: [0, 1, 2],
+      explain: "アザシチジン+ベネトクラクス(VIALE-A試験)、低用量シタラビン+ベネトクラクス(VIALE-C試験)、IDH1変異陽性例へのアザシチジン+イボシデニブ(AGILE試験)はいずれも強度非適応の初発AML患者を対象とした国内承認レジメンです。7+3+ミドスタウリンは強力化学療法適応患者向けであり、かつミドスタウリンは日本未承認です。" },
+
+    // ══════════ 用法用量・投与スケジュール ══════════
+    { category: "用法用量・投与スケジュール", type: "single", q: "ギルテリチニブ(ゾスパタ)の再発・難治性FLT3変異陽性AMLにおける標準用量は?",
+      choices: ["120mgを1日1回経口投与(最大200mg/日)", "40mgを1日1回経口投与", "9mg/m²を2時間かけて点滴静注", "500mgを1日1回経口投与"], correct: 0,
+      explain: "患者の状態により減量・増量するが、1日1回200mgを超えないこととされています。" },
+    { category: "用法用量・投与スケジュール", type: "single", q: "ベネトクラクス+アザシチジンによるAML治療の用量漸増スケジュールは?",
+      choices: ["1日目100mg→2日目200mg→3日目400mgと漸増後、400mgを維持投与", "初日から400mgを固定投与", "1日目400mg→2日目200mg→3日目100mgと漸減", "週1回400mgを投与"], correct: 0,
+      explain: "3日間かけて用量漸増した後、400mgを1日1回食後経口投与で維持します(少量シタラビン併用時は600mgまで漸増)。" },
+    { category: "用法用量・投与スケジュール", type: "single", q: "イボシデニブ(ティブソボ)のAMLにおける用法用量は?",
+      choices: ["500mgを1日1回経口投与(アザシチジンと併用)", "250mgを1日2回経口投与", "9mg/m²を2時間かけて点滴静注", "0.15mg/kgを1〜2時間かけて点滴静注"], correct: 0,
+      explain: "空腹時(食後の場合は高脂肪食を避ける)に経口投与します。強いCYP3A阻害剤併用時は250mgに減量します。" },
+    { category: "用法用量・投与スケジュール", type: "single", q: "ゲムツズマブ オゾガマイシン(マイロターグ)の用法用量は?",
+      choices: ["9mg/m²を2時間かけて点滴静注し、14日以上あけて最大2回投与", "6mg/m²を週1回、4週連続投与", "1日1回経口投与を継続", "3週間ごとに200mgを点滴静注"], correct: 0,
+      explain: "3回以上投与した場合の有効性・安全性は確立していないとされています。" },
+    { category: "用法用量・投与スケジュール", type: "single", q: "トレチノイン(ベサノイド、ATRA)のAPL寛解導入療法における用法用量は?",
+      choices: ["1日60〜80mg(45mg/m²)を3回に分けて食後経口投与", "1日1回500mgを経口投与", "1回0.15mg/kgを点滴静注", "1日1回120mgを経口投与"], correct: 0,
+      explain: "16週間投与しても寛解に到達しない場合は投与を中止することとされています。" },
+    { category: "用法用量・投与スケジュール", type: "single", q: "亜ヒ酸(トリセノックス、ATO)の用法用量は?",
+      choices: ["0.15mg/kgを1〜2時間かけて点滴静注し、寛解まで連日(最大60回)投与", "1日1回500mgを経口投与", "9mg/m²を2週間隔で点滴静注", "週1回120mgを皮下投与"], correct: 0,
+      explain: "地固め療法は寛解後3〜6週間の休薬を経て、5週間で25回投与します。" },
+    { category: "用法用量・投与スケジュール", type: "single", q: "CPX-351(ビキセオス配合静注用)の寛解導入療法における用法用量は?",
+      choices: ["100単位/m²を1、3、5日目に90分かけて点滴静注、最大2サイクル", "65単位/m²を1日1回、5日間連続点滴静注", "12mg/m²を1日1回、3日間連日静脈内投与", "2g/m²を12時間毎に6日間投与"], correct: 0,
+      explain: "地固め療法では65単位/m²を最大2サイクル投与し、最後の寛解導入療法から5〜8週間後に開始します。" },
+    { category: "用法用量・投与スケジュール", type: "single", q: "イダルビシン(イダマイシン)の急性骨髄性白血病における用法用量は?",
+      choices: ["12mg/m²を1日1回、3日間連日静脈内投与", "9mg/m²を2時間かけて2週間隔で投与", "1日60〜80mgを3回に分けて経口投与", "0.15mg/kgを連日投与"], correct: 0,
+      explain: "骨髄機能の回復を確認して投与を繰り返します。" },
+    { category: "用法用量・投与スケジュール", type: "single", q: "シタラビン大量療法によるAML寛解導入療法の用法用量は?",
+      choices: ["2g/m²を3時間かけて12時間毎に投与し、最大6日間", "100mg/m²を24時間持続静注で7日間", "2g/m²を週1回、4週連続投与", "500mg/m²を1日1回、3日間投与"], correct: 0,
+      explain: "地固め療法では2g/m²又は3g/m²を12時間毎に3〜5日間投与します。点滴時間の短縮は中枢神経系毒性増加、延長は感染症リスク増加につながるため規定の投与時間を遵守することが重要です。" },
+
+    // ══════════ 用量規制因子・モニタリング ══════════
+    { category: "用量規制因子・モニタリング", type: "single", q: "亜ヒ酸(トリセノックス)投与中に、警告に基づき必須とされる心臓関連モニタリングは?",
+      choices: ["少なくとも週2回の心電図検査及び電解質(カリウム・マグネシウム)の維持", "月1回の心エコー検査のみ", "モニタリングは不要", "投与開始前の1回のみの心電図検査"], correct: 0,
+      explain: "QT間隔延長は49.9%と高頻度で、致死的な不整脈のリスクがあるため、投与中は少なくとも週2回の心電図検査とカリウム4mEq/L以上・マグネシウム1.8mg/dL以上の維持が必須です。" },
+    { category: "用量規制因子・モニタリング", type: "single", q: "ベネトクラクスの用量漸増期に併用禁忌となる薬剤クラスは?",
+      choices: ["強いCYP3A阻害剤(リトナビル、イトラコナゾール等)", "強いCYP3A誘導剤", "H2受容体拮抗薬", "アスピリン系抗血小板薬"], correct: 0,
+      explain: "腫瘍崩壊症候群の発現が増強されるおそれがあるため、用量漸増期は強いCYP3A阻害剤と併用しないこととされています。" },
+    { category: "用量規制因子・モニタリング", type: "single", q: "ゲムツズマブ オゾガマイシン投与後に特に注意すべき、同種造血幹細胞移植との関連が指摘される肝合併症は?",
+      choices: ["類洞閉塞症候群(VOD)/肝類洞閉塞症候群", "自己免疫性肝炎", "脂肪肝", "肝細胞癌"], correct: 0,
+      explain: "警告欄に明記されており、移植前後の使用歴を確認し肝機能を定期的にモニタリングすることが求められます。" },
+    { category: "用量規制因子・モニタリング", type: "single", q: "アザシチジン(ビダーザ)の投与経路として、添付文書上原則推奨されるのは?",
+      choices: ["皮下投与", "経口投与のみ", "髄腔内投与", "筋肉内投与"], correct: 0,
+      explain: "皮下投与又は10分かけての点滴静注が可能ですが、原則として皮下投与が推奨されています。" },
+    { category: "用量規制因子・モニタリング", type: "single", q: "イボシデニブ投与中に特に注意すべきモニタリング項目は?",
+      choices: ["分化症候群の徴候とQT間隔", "血糖値のみ", "腎機能のみ", "モニタリングは不要"], correct: 0,
+      explain: "分化症候群(11.1%)は致死的な転帰をたどることがあり、QT間隔延長(9.6%)も報告されているため、いずれも警告・重大な副作用として十分な観察が必要です。" },
+    { category: "用量規制因子・モニタリング", type: "single", q: "トレチノイン(ATRA)投与中、末梢血白血球数が30,000/mm³を超えた場合の添付文書上の対応は?",
+      choices: ["減量又は休薬を考慮する", "直ちに投与を中止し再開しない", "増量してさらに白血球を減少させる", "特に対応は不要", ], correct: 0,
+      explain: "白血球増多症は9.8%の頻度で報告されており、著明な増加時は減量又は休薬を考慮します。" },
+    { category: "用量規制因子・モニタリング", type: "single", q: "イダルビシンの添付文書上、投与を避けるべき心機能状態は?",
+      choices: ["心機能異常又はその既往歴のある患者への投与は禁忌", "軽度の高血圧のみ注意すれば投与可能", "心機能に関する規定はない", "徐脈のみが禁忌となる"], correct: 0,
+      explain: "アントラサイクリン系薬剤特有の心筋障害(3.9%)のリスクがあるため、心機能異常又はその既往のある患者は禁忌とされています。" },
+    { category: "用量規制因子・モニタリング", type: "single", q: "シタラビン大量療法で生じうる角結膜炎等の眼症状への対応として添付文書に記載されているのは?",
+      choices: ["副腎皮質ホルモン点眼薬による対応", "抗ヒスタミン薬の全身投与のみ", "対応方法の記載はない", "直ちに手術を行う"], correct: 0,
+      explain: "結膜炎・角膜潰瘍等の眼症状が報告されており、副腎皮質ホルモン点眼薬で対応することとされています。" },
+    { category: "用量規制因子・モニタリング", type: "multi", q: "ベネトクラクス投与開始前・再開前に、腫瘍崩壊症候群のリスク評価として実施すべき血液検査項目をすべて選べ(3つ選択)",
+      choices: ["カリウム", "尿酸", "クレアチニン", "総コレステロール"], correct: [0, 1, 2],
+      explain: "警告欄には、カリウム、カルシウム、リン、尿酸、クレアチニンの血液検査を投与前・再開前に実施することが明記されています。総コレステロールは含まれません。" },
+
+    // ══════════ 特徴的な副作用 ══════════
+    { category: "特徴的な副作用", type: "single", q: "ゲムツズマブ オゾガマイシン(マイロターグ)で最も高頻度に報告される重大な副作用は?",
+      choices: ["infusion reaction(88.0%)", "間質性肺疾患(13.6%)", "腫瘍崩壊症候群(1.6%)", "DIC(1.9%)"], correct: 0,
+      explain: "投与後24時間以内に重篤なinfusion reaction(アナフィラキシーを含む)があらわれることがあり、警告欄にも明記されています。" },
+    { category: "特徴的な副作用", type: "single", q: "CPX-351(ビキセオス)で最も高頻度に報告される重大な副作用は?",
+      choices: ["発熱性好中球減少症(66.2%)", "うっ血性心不全(2.3%)", "腫瘍崩壊症候群(0.5%)", "シタラビン症候群(0.9%)"], correct: 0,
+      explain: "リポソーム製剤化により骨髄抑制が遷延する傾向があり、発熱性好中球減少症が高頻度に報告されています。" },
+    { category: "特徴的な副作用", type: "single", q: "イボシデニブに特徴的な、致死的な転帰をたどることもある重大な副作用は?",
+      choices: ["分化症候群(11.1%)", "手足症候群", "低マグネシウム血症", "末梢神経障害"], correct: 0,
+      explain: "発熱・発疹・低酸素血症・呼吸機能障害・肺浸潤等を呈し、警告欄にも致死的な転帰があることが明記されています。" },
+    { category: "特徴的な副作用", type: "single", q: "亜ヒ酸(トリセノックス)に特徴的な、致死的な不整脈につながりうる心臓関連副作用は?",
+      choices: ["QT間隔延長(49.9%)", "徐脈のみ", "房室ブロック", "心筋梗塞"], correct: 0,
+      explain: "トルサード ド ポアンツ等の致死的な不整脈のリスクがあり、週2回以上の心電図モニタリングが必須です。" },
+    { category: "特徴的な副作用", type: "single", q: "トレチノイン(ATRA)に特徴的な、発熱・呼吸困難・胸水貯留等を呈しうる重篤な副作用症候群は?",
+      choices: ["レチノイン酸症候群", "セロトニン症候群", "腫瘍崩壊症候群", "サイトカイン放出症候群"], correct: 0,
+      explain: "頻度不明ながら、肝不全・腎不全・多臓器不全等重篤な転帰をたどることがある副作用として警告されています。" },
+    { category: "特徴的な副作用", type: "single", q: "イダルビシンに特徴的な、累積投与量に関連する用量制限毒性は?",
+      choices: ["心筋障害(心毒性、3.9%)", "手足症候群", "分化症候群", "低マグネシウム血症"], correct: 0,
+      explain: "アントラサイクリン系薬剤に共通する心毒性で、既に一定の累積投与量に達している患者への投与は禁忌とされています。" },
+    { category: "特徴的な副作用", type: "single", q: "ベネトクラクス投与開始・増量後1〜2日に多く発現するとされる重大な副作用は?",
+      choices: ["腫瘍崩壊症候群(2.1%)", "間質性肺疾患", "手足症候群", "低カリウム血症のみ"], correct: 0,
+      explain: "警告欄で特に投与開始・増量後1〜2日に多発するとされ、投与前のリスク評価と血液検査が必須です。" },
+    { category: "特徴的な副作用", type: "single", q: "シタラビン大量療法で生じうる、可逆性の言語障害・運動失調等を含む重大な副作用は?",
+      choices: ["中枢神経系障害", "末梢神経障害のみ", "聴覚障害", "嗅覚障害"], correct: 0,
+      explain: "構音障害(7.3%)、傾眠(12.2%)のほか、可逆性の言語障害・運動失調・昏睡・白質脳症等が報告されています。" },
+    { category: "特徴的な副作用", type: "single", q: "アザシチジンで最も高頻度に報告される重大な副作用は?",
+      choices: ["好中球減少症(発熱性含む、49.5%)", "腫瘍崩壊症候群(0.3%)", "腎不全(0.7%)", "敗血症(4.2%)"], correct: 0,
+      explain: "血小板減少症32.6%、白血球減少症20.0%と続き、骨髄抑制系の副作用が高頻度です。" },
+    { category: "特徴的な副作用", type: "single", q: "マイロターグ・イダルビシン・シタラビン大量療法等の細胞傷害性抗がん剤に共通する、警告欄で強調される致命的リスクは?",
+      choices: ["重篤な骨髄抑制による感染症・出血", "手足症候群", "分化症候群", "低マグネシウム血症"], correct: 0,
+      explain: "いずれの薬剤も強い骨髄抑制作用を有し、致命的な感染症又は出血につながるおそれがあるため、緊急時に十分対応できる医療施設での投与が警告されています。" },
+    { category: "特徴的な副作用", type: "multi", q: "APL治療薬・IDH1阻害薬のうち、分化症候群(またはレチノイン酸症候群)が重大な副作用として明記されている薬剤をすべて選べ(3つ選択)",
+      choices: ["トレチノイン(ATRA)", "亜ヒ酸(ATO)", "イボシデニブ", "ギルテリチニブ"], correct: [0, 1, 2],
+      explain: "トレチノインはレチノイン酸症候群、亜ヒ酸はAPL分化症候群(7.3%)、イボシデニブは分化症候群(11.1%)がそれぞれ添付文書の重大な副作用として明記されています。ギルテリチニブは臨床使用に基づく情報として類似の所見が触れられていますが、正式な重大な副作用としての頻度記載はありません。" },
+    { category: "特徴的な副作用", type: "multi", q: "ベネトクラクス+アザシチジン療法(VIALE-A試験)の高頻度Grade3-4有害事象として本レポートに記載されているものをすべて選べ(2つ選択)",
+      choices: ["好中球減少(42%)", "発熱性好中球減少症(42%)", "末梢神経障害", "手足症候群"], correct: [0, 1],
+      explain: "VIALE-A試験では好中球減少42%、発熱性好中球減少症42%と高頻度に報告されており、治療中断も72%に達しています。末梢神経障害・手足症候群はこのレジメンの主要な特徴的AEとしては記載されていません。" },
+
+    // ══════════ バイオマーカー ══════════
+    { category: "バイオマーカー", type: "single", q: "FLT3-ITD変異の初発AMLにおける頻度目安は?",
+      choices: ["約20-28%", "約1-3%", "約60-70%", "約90%以上"], correct: 0,
+      explain: "FLT3-TKD変異は約5-10%とされ、いずれも初診時の遺伝子パネル検査でスクリーニングされます。" },
+    { category: "バイオマーカー", type: "single", q: "IDH1変異の初発AMLにおける頻度目安は?",
+      choices: ["約6-9%", "約40-50%", "約1%未満", "約80%"], correct: 0,
+      explain: "IDH2変異は約9-12%とされ、いずれもELN分類に基づく層別化と分子標的薬の適応判定に用いられます。" },
+    { category: "バイオマーカー", type: "single", q: "NPM1変異の頻度目安と臨床的意義は?",
+      choices: ["約25-35%、FLT3-ITDを伴わない場合は予後良好群の判定に関与", "約1%、予後不良因子", "約90%、診断確定に必須", "頻度不明、治療選択への影響なし"], correct: 0,
+      explain: "FLT3-ITD変異を伴わないNPM1変異は、ELN2022分類で予後良好群の判定に用いられます。" },
+    { category: "バイオマーカー", type: "single", q: "PML-RARA遺伝子検査の急性前骨髄球性白血病(APL)診療における位置づけは?",
+      choices: ["APL診断確定に必須の検査", "予後予測にのみ用いる補助的検査", "治療終了後の経過観察のみに用いる", "健常人のスクリーニング検査"], correct: 0,
+      explain: "染色体検査t(15;17)又は遺伝子検査PML-RARAによる確認は、APLの診断確定及び亜ヒ酸(トリセノックス)等の適応判定に必須です。" },
+
+    // ══════════ コスト制度 ══════════
+    { category: "コスト制度", type: "single", q: "高額療養費制度で「限度額適用認定証」を事前に取得するメリットは?",
+      choices: ["窓口での支払いを自己負担限度額までに抑えられる", "薬剤費そのものが割引される", "保険適用外の治療が保険適用になる", "メリットは特にない"], correct: 0,
+      explain: "認定証がない場合、いったん全額を立て替えた上で後日払い戻しを受ける必要がありますが、認定証があれば窓口負担自体を上限額までに抑えられます。" },
+    { category: "コスト制度", type: "single", q: "高額療養費制度の「多数回該当」とはどのような制度か?",
+      choices: ["直近12ヶ月に3回以上該当した場合、4回目以降さらに上限額が下がる", "70歳以上のみに適用される特別枠", "初回申請時から適用される割引", "入院を伴う治療のみに適用される"], correct: 0,
+      explain: "ギルテリチニブ等の高額な分子標的薬や同種造血幹細胞移植を長期継続する患者の負担軽減に資する制度です。" }
+  ];
+
+  var QUIZ_SESSION_SIZE = 10;
+  var quizOrder = [];     // indices into QUIZ for THIS session (random subset)
+  var quizIndex = 0;
+  var quizAnswers = [];   // per-question(by original index): selected choice index (single) or array of indices (multi)
+  var quizFeedback = {};  // { [questionIndex]: 'good' | 'bad' }
+
+  function quizPickSession() {
+    var all = QUIZ.map(function (_, i) { return i; });
+    quizShuffle(all);
+    quizOrder = all.slice(0, QUIZ_SESSION_SIZE);
+  }
+  function quizShuffle(arr) {
+    for (var i = arr.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = arr[i]; arr[i] = arr[j]; arr[j] = t;
+    }
+    return arr;
+  }
+
+  function quizLoadFeedback() {
+    try {
+      var raw = localStorage.getItem('amlQuizFeedback_v2');
+      quizFeedback = raw ? JSON.parse(raw) : {};
+    } catch (e) { quizFeedback = {}; }
+  }
+  function quizSaveFeedback() {
+    try { localStorage.setItem('amlQuizFeedback_v2', JSON.stringify(quizFeedback)); } catch (e) {}
+  }
+  function quizBuildRatingRow(qi) {
+    var row = document.createElement('div');
+    row.className = 'rate-row';
+    var label = document.createElement('span');
+    label.className = 'rate-label';
+    label.textContent = 'この問題の評価:';
+    var goodBtn = document.createElement('button');
+    goodBtn.type = 'button'; goodBtn.className = 'rate-btn'; goodBtn.textContent = '👍 良問';
+    var badBtn = document.createElement('button');
+    badBtn.type = 'button'; badBtn.className = 'rate-btn'; badBtn.textContent = '👎 悪問';
+    function refresh() {
+      goodBtn.classList.toggle('active-good', quizFeedback[qi] === 'good');
+      badBtn.classList.toggle('active-bad', quizFeedback[qi] === 'bad');
+    }
+    goodBtn.onclick = function () {
+      quizFeedback[qi] = (quizFeedback[qi] === 'good') ? null : 'good';
+      if (!quizFeedback[qi]) delete quizFeedback[qi];
+      quizSaveFeedback(); refresh();
+    };
+    badBtn.onclick = function () {
+      quizFeedback[qi] = (quizFeedback[qi] === 'bad') ? null : 'bad';
+      if (!quizFeedback[qi]) delete quizFeedback[qi];
+      quizSaveFeedback(); refresh();
+    };
+    refresh();
+    row.appendChild(label); row.appendChild(goodBtn); row.appendChild(badBtn);
+    return row;
+  }
+  function quizFallbackCopy(text, done) {
+    var ta = document.createElement('textarea');
+    ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); } catch (e) {}
+    document.body.removeChild(ta);
+    done();
+  }
+  function quizChoiceLabel(item) {
+    return item.choices.join(' / ');
+  }
+  function quizCorrectLabel(item) {
+    if (item.type === 'multi') return item.correct.map(function (i) { return item.choices[i]; }).join(' ＋ ');
+    return item.choices[item.correct];
+  }
+  function quizExportFeedback() {
+    var ratedIdx = Object.keys(quizFeedback);
+    if (ratedIdx.length === 0) {
+      alert('まだ評価された問題がありません。各問題に回答した後に表示される「👍 良問」「👎 悪問」ボタンで評価してから、もう一度お試しください。');
+      return;
+    }
+    var goodList = [], badList = [];
+    ratedIdx.forEach(function (idxStr) {
+      var idx = parseInt(idxStr, 10);
+      var item = QUIZ[idx];
+      if (!item) return;
+      var entry = '・[' + item.category + (item.type === 'multi' ? '/複数選択' : '') + '] ' + item.q + '\n  選択肢: ' + quizChoiceLabel(item) + '\n  正解: ' + quizCorrectLabel(item);
+      if (quizFeedback[idx] === 'good') goodList.push(entry);
+      else if (quizFeedback[idx] === 'bad') badList.push(entry);
+    });
+    var text = '【AMLクイズ(quiz-aml.html、全50問プール)フィードバック】\n\n' +
+      '良問と評価された問題(' + goodList.length + '件):\n' + (goodList.length ? goodList.join('\n\n') : '(なし)') + '\n\n' +
+      '悪問と評価された問題(' + badList.length + '件) — 改善・差し替えを検討してください:\n' + (badList.length ? badList.join('\n\n') : '(なし)') + '\n\n' +
+      '参照ファイル: artifacts/html/oncology-reports/quiz-aml.html\n\n' +
+      '上記フィードバックを踏まえて、「悪問」と評価された問題をレポート本文(artifacts/html/oncology-reports/aml.html、添付文書情報セクション含む)の内容に基づいて改善・差し替えてください。「良問」と評価された問題は現状を維持してください。';
+    var notify = function () { alert('フィードバックをコピーしました。MulmoClaudeのチャットに貼り付けて送信してください。問題の改善に使います。'); };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(notify).catch(function () { quizFallbackCopy(text, notify); });
+    } else { quizFallbackCopy(text, notify); }
+  }
+  function quizResetFeedback() {
+    if (!confirm('すべての評価をリセットします。よろしいですか?')) return;
+    quizFeedback = {};
+    quizSaveFeedback();
+    alert('評価をリセットしました。');
+  }
+
+  function quizRenderQuestion() {
+    document.getElementById('quiz-result-area').style.display = 'none';
+    document.getElementById('quiz-question-area').style.display = 'block';
+    var qi = quizOrder[quizIndex];
+    var item = QUIZ[qi];
+    document.getElementById('quiz-progress-text').textContent = '問 ' + (quizIndex + 1) + ' / ' + quizOrder.length + '(全' + QUIZ.length + '問中からランダム出題)';
+    document.getElementById('quiz-cat-badge').textContent = item.category;
+    document.getElementById('quiz-type-badge').style.display = (item.type === 'multi') ? 'inline-flex' : 'none';
+    document.getElementById('quiz-progress-fill').style.width = Math.round((quizIndex / quizOrder.length) * 100) + '%';
+    document.getElementById('quiz-question-text').textContent = item.q;
+    document.getElementById('quiz-explain-area').style.display = 'none';
+    document.getElementById('quiz-explain-area').innerHTML = '';
+    document.getElementById('quiz-next-btn').style.display = 'none';
+    document.getElementById('quiz-submit-row').style.display = 'none';
+
+    var wrap = document.getElementById('quiz-choices');
+    wrap.innerHTML = '';
+
+    if (item.type === 'multi') {
+      var selected = {};
+      item.choices.forEach(function (choiceText, idx) {
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'quiz-choice';
+        btn.innerHTML = '<span class="quiz-choice-check">☐</span> ' + choiceText.replace(/</g, '&lt;');
+        btn.onclick = function () {
+          selected[idx] = !selected[idx];
+          btn.classList.toggle('selected', !!selected[idx]);
+          btn.querySelector('.quiz-choice-check').textContent = selected[idx] ? '☑' : '☐';
+        };
+        wrap.appendChild(btn);
+      });
+      document.getElementById('quiz-submit-row').style.display = 'block';
+      document.getElementById('quiz-submit-btn').onclick = function () {
+        var chosen = Object.keys(selected).filter(function (k) { return selected[k]; }).map(Number);
+        quizAnswerMulti(chosen);
+      };
+    } else {
+      item.choices.forEach(function (choiceText, idx) {
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'quiz-choice';
+        btn.textContent = choiceText;
+        btn.onclick = function () { quizAnswerSingle(idx); };
+        wrap.appendChild(btn);
+      });
+    }
+  }
+
+  function quizFinishQuestion(qi, isCorrect, correctText) {
+    var item = QUIZ[qi];
+    var explainArea = document.getElementById('quiz-explain-area');
+    explainArea.className = 'quiz-explain';
+    explainArea.style.display = 'block';
+    explainArea.innerHTML = '<div style="font-weight:700; margin-bottom:4px; color:' + (isCorrect ? 'var(--good)' : 'var(--critical)') + ';">' +
+      (isCorrect ? '✅ 正解' : '❌ 不正解(正解: ' + correctText + ')') + '</div>' +
+      '<div>' + (item.explain || '') + '</div>';
+    explainArea.appendChild(quizBuildRatingRow(qi));
+    document.getElementById('quiz-submit-row').style.display = 'none';
+    document.getElementById('quiz-next-btn').style.display = 'inline-block';
+    document.getElementById('quiz-next-btn').textContent = (quizIndex === quizOrder.length - 1) ? '結果を見る →' : '次の問題 →';
+  }
+
+  function quizAnswerSingle(selectedIdx) {
+    var qi = quizOrder[quizIndex];
+    var item = QUIZ[qi];
+    quizAnswers[qi] = selectedIdx;
+    var buttons = document.getElementById('quiz-choices').querySelectorAll('.quiz-choice');
+    buttons.forEach(function (btn, idx) {
+      btn.disabled = true;
+      if (idx === item.correct) btn.classList.add('correct');
+      else if (idx === selectedIdx) btn.classList.add('wrong');
+    });
+    quizFinishQuestion(qi, selectedIdx === item.correct, item.choices[item.correct]);
+  }
+
+  function quizSubmitMulti() {
+    var qi = quizOrder[quizIndex];
+    var item = QUIZ[qi];
+    var buttons = document.getElementById('quiz-choices').querySelectorAll('.quiz-choice');
+    var chosen = [];
+    buttons.forEach(function (btn, idx) {
+      if (btn.classList.contains('selected')) chosen.push(idx);
+    });
+    quizAnswerMulti(chosen, buttons, item, qi);
+  }
+
+  function quizAnswerMulti(chosen, buttons, item, qi) {
+    qi = (qi === undefined) ? quizOrder[quizIndex] : qi;
+    item = item || QUIZ[qi];
+    buttons = buttons || document.getElementById('quiz-choices').querySelectorAll('.quiz-choice');
+    quizAnswers[qi] = chosen;
+    var correctSet = item.correct.slice().sort();
+    var chosenSet = chosen.slice().sort();
+    var isCorrect = correctSet.length === chosenSet.length && correctSet.every(function (v, i) { return v === chosenSet[i]; });
+    buttons.forEach(function (btn, idx) {
+      btn.disabled = true;
+      var isRight = item.correct.indexOf(idx) !== -1;
+      var wasChosen = chosen.indexOf(idx) !== -1;
+      if (isRight) btn.classList.add('correct');
+      else if (wasChosen) btn.classList.add('wrong');
+    });
+    quizFinishQuestion(qi, isCorrect, quizCorrectLabel(item));
+  }
+
+  function quizNext() {
+    if (quizIndex < quizOrder.length - 1) {
+      quizIndex++;
+      quizRenderQuestion();
+    } else {
+      quizShowResult();
+    }
+  }
+
+  function quizShowResult() {
+    document.getElementById('quiz-progress-fill').style.width = '100%';
+    document.getElementById('quiz-progress-text').textContent = '完了 ' + quizOrder.length + ' / ' + quizOrder.length;
+    document.getElementById('quiz-cat-badge').textContent = '';
+    document.getElementById('quiz-type-badge').style.display = 'none';
+    document.getElementById('quiz-question-area').style.display = 'none';
+
+    var correctCount = 0;
+    var byCategory = {};
+    quizOrder.forEach(function (qi) {
+      var item = QUIZ[qi];
+      if (!byCategory[item.category]) byCategory[item.category] = { correct: 0, total: 0 };
+      byCategory[item.category].total++;
+      var ans = quizAnswers[qi];
+      var isCorrect;
+      if (item.type === 'multi') {
+        var correctSet = item.correct.slice().sort();
+        var chosenSet = (ans || []).slice().sort();
+        isCorrect = correctSet.length === chosenSet.length && correctSet.every(function (v, i) { return v === chosenSet[i]; });
+      } else {
+        isCorrect = ans === item.correct;
+      }
+      if (isCorrect) { correctCount++; byCategory[item.category].correct++; }
+    });
+    var pct = Math.round((correctCount / quizOrder.length) * 100);
+
+    var catHtml = '';
+    Object.keys(byCategory).forEach(function (cat) {
+      var c = byCategory[cat];
+      var p = Math.round((c.correct / c.total) * 100);
+      catHtml += '<div class="cat-result-row"><span class="text-xs" style="width:150px; flex-shrink:0;">' + cat + '</span>' +
+        '<div class="cat-result-bar"><div class="cat-result-fill" style="width:' + p + '%"></div></div>' +
+        '<span class="text-xs muted" style="width:56px; text-align:right;">' + c.correct + '/' + c.total + '</span></div>';
+    });
+
+    var reviewHtml = '';
+    quizOrder.forEach(function (qi) {
+      var item = QUIZ[qi];
+      var ans = quizAnswers[qi];
+      var isCorrect;
+      var yourAnswerText;
+      if (item.type === 'multi') {
+        var correctSet = item.correct.slice().sort();
+        var chosenSet = (ans || []).slice().sort();
+        isCorrect = correctSet.length === chosenSet.length && correctSet.every(function (v, i) { return v === chosenSet[i]; });
+        yourAnswerText = (ans && ans.length) ? ans.map(function (i) { return item.choices[i]; }).join(' ＋ ') : '(未回答)';
+      } else {
+        isCorrect = ans === item.correct;
+        yourAnswerText = (ans != null) ? item.choices[ans] : '(未回答)';
+      }
+      if (!isCorrect) {
+        reviewHtml += '<div class="review-item">' +
+          '<div class="text-sm font-semibold mb-1">' + item.q + '</div>' +
+          '<div class="text-xs muted mb-2">あなたの回答: ' + yourAnswerText + ' / 正解: ' + quizCorrectLabel(item) + '</div>' +
+          '<div class="text-xs" style="line-height:1.6;">' + (item.explain || '') + '</div>' +
+          '</div>';
+      }
+    });
+    if (!reviewHtml) reviewHtml = '<p class="text-sm secondary">全問正解です。見直しの必要な項目はありません 🎉</p>';
+
+    var goodCount = 0, badCount = 0;
+    Object.keys(quizFeedback).forEach(function (k) {
+      if (quizFeedback[k] === 'good') goodCount++;
+      else if (quizFeedback[k] === 'bad') badCount++;
+    });
+
+    var resultArea = document.getElementById('quiz-result-area');
+    resultArea.style.display = 'block';
+    resultArea.innerHTML =
+      '<div class="text-center mb-6">' +
+        '<div class="score-ring-num" style="color:var(--series-new);">' + correctCount + ' / ' + quizOrder.length + '</div>' +
+        '<div class="text-sm muted mt-1">正答率 ' + pct + '%(全' + QUIZ.length + '問プールから今回ランダム抽出された' + quizOrder.length + '問)</div>' +
+      '</div>' +
+      '<div class="mb-6"><div class="text-sm font-semibold mb-3">カテゴリ別正答率(今回出題分)</div>' + catHtml + '</div>' +
+      '<div class="mb-2 text-sm font-semibold">見直し(不正解・未回答の問題)</div>' +
+      '<div class="mb-6">' + reviewHtml + '</div>' +
+      '<div class="mb-6 pt-4 border-t" style="border-color:var(--gridline);">' +
+        '<div class="text-sm font-semibold mb-2">問題の評価状況(全50問プール通算)</div>' +
+        '<div class="text-xs muted mb-3">👍 良問 ' + goodCount + '件 ・ 👎 悪問 ' + badCount + '件</div>' +
+        '<div class="flex flex-wrap gap-3">' +
+          '<button type="button" class="quiz-btn-outline" onclick="quizExportFeedback()">📋 フィードバックをエクスポート(チャットに貼り付け用)</button>' +
+          '<button type="button" class="quiz-btn-outline" onclick="quizResetFeedback()" style="border-color:var(--critical); color:var(--critical);">🗑 評価をリセット</button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="flex flex-wrap gap-3 justify-center">' +
+        '<button type="button" class="quiz-btn" onclick="quizRestart()">🔀 新しい10問でもう一度</button>' +
+        '<a href="aml.html" class="quiz-btn-outline" style="text-decoration:none; display:inline-block;">レポート本文に戻る</a>' +
+      '</div>';
+  }
+
+  function quizRestart() {
+    quizPickSession();
+    quizIndex = 0;
+    quizAnswers = [];
+    quizRenderQuestion();
+  }
+
+  quizLoadFeedback();
+  quizPickSession();
+  quizRenderQuestion();
+</script>
+
+<footer class="text-center text-xs pb-4" style="color: var(--text-muted);">
+  本クイズは学習・自己点検を目的とした資料です。臨床判断には利用せず、最新の添付文書・ガイドライン原文を優先してください。
+</footer>
+
+</body>
+</html>

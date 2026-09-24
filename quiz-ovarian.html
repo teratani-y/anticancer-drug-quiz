@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>卵巣癌理解度クイズ 全50問(ランダム10問出題)</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+:root, .viz-root {
+  color-scheme: light;
+  --surface-1: #fcfcfb; --page-plane: #f9f9f7;
+  --text-primary: #0b0b0b; --text-secondary: #52514e; --text-muted: #898781;
+  --gridline: #e1e0d9; --baseline: #c3c2b7;
+  --series-new: #2a78d6; --series-control: #b9b7ae;
+  --good: #0ca30c; --warning: #b9790a; --critical: #d03b3b;
+  --border: rgba(11,11,11,0.10);
+}
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) {
+    color-scheme: dark;
+    --surface-1: #1a1a19; --page-plane: #0d0d0d;
+    --text-primary: #ffffff; --text-secondary: #c3c2b7; --text-muted: #898781;
+    --gridline: #2c2c2a; --baseline: #383835;
+    --series-new: #3987e5; --series-control: #55534c;
+    --good: #0ca30c; --warning: #eab116; --critical: #e66767;
+    --border: rgba(255,255,255,0.10);
+  }
+}
+body { background: var(--page-plane); color: var(--text-primary); font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+.card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+.secondary { color: var(--text-secondary); }
+.muted { color: var(--text-muted); }
+.cat-badge { display:inline-flex; align-items:center; padding:3px 10px; border-radius:9999px; font-size:0.72rem; font-weight:700; background: color-mix(in srgb, var(--series-new) 14%, transparent); color: var(--series-new); }
+.type-badge { display:inline-flex; align-items:center; padding:3px 10px; border-radius:9999px; font-size:0.68rem; font-weight:700; background: color-mix(in srgb, var(--warning) 16%, transparent); color: var(--warning); margin-left:6px; }
+.progress-track { background: var(--gridline); border-radius: 9999px; height: 8px; overflow: hidden; }
+.progress-fill { background: var(--series-new); height: 100%; border-radius: 9999px; transition: width .25s; }
+.quiz-choice { display:block; width:100%; text-align:left; background: var(--page-plane); border: 1.5px solid var(--gridline); border-radius: 10px; padding: 12px 16px; font-size: 0.92rem; cursor: pointer; transition: border-color .12s, background .12s; margin-bottom: 10px; }
+.quiz-choice:last-child { margin-bottom: 0; }
+.quiz-choice:hover:not(:disabled) { border-color: var(--series-new); }
+.quiz-choice:disabled { cursor: default; }
+.quiz-choice.correct { border-color: var(--good); background: color-mix(in srgb, var(--good) 12%, transparent); font-weight: 700; }
+.quiz-choice.wrong { border-color: var(--critical); background: color-mix(in srgb, var(--critical) 10%, transparent); }
+.quiz-choice.selected { border-color: var(--series-new); background: color-mix(in srgb, var(--series-new) 10%, transparent); }
+.quiz-choice-check { display:inline-block; width:16px; }
+.quiz-explain { background: var(--page-plane); border: 1px solid var(--gridline); border-radius: 10px; padding: 14px 16px; margin-top: 14px; font-size: 0.85rem; line-height: 1.7; }
+.quiz-btn { background: var(--series-new); color: #fff; border: none; border-radius: 8px; padding: 10px 22px; font-size: 0.88rem; font-weight: 700; cursor: pointer; }
+.quiz-btn:hover { opacity: 0.9; }
+.quiz-btn:disabled { opacity: 0.4; cursor: default; }
+.quiz-btn-outline { background: transparent; color: var(--series-new); border: 1.5px solid var(--series-new); border-radius: 8px; padding: 9px 20px; font-size: 0.88rem; font-weight: 700; cursor: pointer; }
+.quiz-btn-outline:hover { background: color-mix(in srgb, var(--series-new) 10%, transparent); }
+.score-ring-num { font-size: 2.6rem; font-weight: 800; }
+.cat-result-row { display:flex; align-items:center; gap:10px; margin-bottom: 8px; }
+.cat-result-bar { flex:1; background: var(--gridline); border-radius: 9999px; height: 10px; overflow:hidden; }
+.cat-result-fill { background: var(--series-new); height:100%; border-radius: 9999px; }
+.review-item { border: 1px solid var(--gridline); border-radius: 10px; padding: 12px 14px; margin-bottom: 10px; }
+.review-item:last-child { margin-bottom: 0; }
+.rate-row { display:flex; align-items:center; gap:8px; margin-top:14px; flex-wrap:wrap; }
+.rate-label { font-size:0.75rem; color: var(--text-muted); }
+.rate-btn { background: var(--page-plane); border: 1.5px solid var(--gridline); border-radius: 8px; padding: 6px 12px; font-size: 0.78rem; font-weight:600; cursor:pointer; color: var(--text-secondary); }
+.rate-btn:hover { border-color: var(--series-new); }
+.rate-btn.active-good { border-color: var(--good); background: color-mix(in srgb, var(--good) 14%, transparent); color: var(--good); }
+.rate-btn.active-bad { border-color: var(--critical); background: color-mix(in srgb, var(--critical) 12%, transparent); color: var(--critical); }
+</style>
+</head>
+<body class="viz-root">
+<div class="max-w-3xl mx-auto px-4 py-8 space-y-5">
+
+  <header class="card">
+    <div class="flex items-center justify-between gap-2 flex-wrap">
+      <div>
+        <h1 class="text-xl font-bold">🧠 卵巣癌理解度クイズ</h1>
+        <p class="text-sm mt-1 secondary">全50問のプールからランダムに10問出題・4択/複数選択混在・医療従事者向け(治療ライン選択・用法用量・投与スケジュール・用量規制因子/モニタリング・添付文書の警告/禁忌/重大な副作用・バイオマーカー・コスト制度)</p>
+      </div>
+      <a href="ovarian.html" class="text-xs" style="color:var(--series-new); text-decoration:none; font-weight:600;">← レポート本文に戻る</a>
+    </div>
+    <p class="text-xs mt-3 muted">出題内容はすべて <a href="ovarian.html" style="color:var(--series-new);">卵巣癌薬物治療レポート</a>(本文および「8. 主要薬剤の添付文書情報」)に記載の情報に基づきます。臨床判断には利用せず、学習・自己点検の目的でご利用ください。ページを再読み込みする、または結果画面の「シャッフルしてもう一度」を押すたびに、新しい10問がランダムに選ばれます。</p>
+  </header>
+
+  <!-- Quiz card -->
+  <section class="card" id="quiz-card">
+    <div class="flex items-center justify-between mb-2">
+      <span id="quiz-progress-text" class="text-xs font-semibold muted"></span>
+      <span><span id="quiz-cat-badge" class="cat-badge"></span><span id="quiz-type-badge" class="type-badge" style="display:none;">複数選択</span></span>
+    </div>
+    <div class="progress-track mb-5"><div class="progress-fill" id="quiz-progress-fill" style="width:0%"></div></div>
+
+    <div id="quiz-question-area">
+      <div id="quiz-question-text" class="text-base font-semibold mb-4" style="line-height:1.6;"></div>
+      <div id="quiz-choices"></div>
+      <div id="quiz-submit-row" style="display:none;" class="mt-3">
+        <button type="button" class="quiz-btn" id="quiz-submit-btn" onclick="quizSubmitMulti()">この内容で回答する</button>
+      </div>
+      <div id="quiz-explain-area" style="display:none;"></div>
+      <div class="mt-5 flex justify-end">
+        <button type="button" id="quiz-next-btn" class="quiz-btn" style="display:none;" onclick="quizNext()">次の問題 →</button>
+      </div>
+    </div>
+
+    <div id="quiz-result-area" style="display:none;"></div>
+  </section>
+
+</div>
+
+<script>
+  var QUIZ = [
+    // ══════════ 治療ライン選択 ══════════
+    { category: "治療ライン選択", type: "single", q: "gBRCA/sBRCA変異陽性の卵巣癌における初回化学療法後維持療法の第III相エビデンスに基づく標準は?",
+      choices: ["TC療法→オラパリブ単独維持療法(SOLO-1試験)", "TC療法→ニラパリブ単独維持療法のみ", "TC療法後は経過観察のみ", "TC療法→ベバシズマブ単独維持療法"], correct: 0,
+      explain: "SOLO-1試験でPFS HR 0.30、7年OS率67% vs 46.5%が示されています。ただし試験の厳格な事前規定有意水準(p<0.0001)にはp=0.0004と僅かに届きませんでした。" },
+    { category: "治療ライン選択", type: "single", q: "HRD陽性(BRCA変異含む)集団における初回治療後維持療法の第III相エビデンスに基づく標準は?",
+      choices: ["TC+ベバシズマブ→オラパリブ+ベバシズマブ併用維持療法(PAOLA-1試験)", "TC→ニラパリブ単独のみ", "TC→ペムブロリズマブ維持療法", "手術のみで薬物療法は不要"], correct: 0,
+      explain: "PAOLA-1/ENGOT-ov25試験で、HRD陽性集団のPFSは37.2 vs 17.7ヶ月と大きな改善が示されています。" },
+    { category: "治療ライン選択", type: "single", q: "バイオマーカー不問の全体集団における初回治療後維持療法の選択肢として、PRIMA試験で示された薬剤は?",
+      choices: ["ニラパリブ単独維持療法", "オラパリブ単独維持療法", "ペムブロリズマブ単独維持療法", "ミルベツキシマブ ソラブタンシン"], correct: 0,
+      explain: "PRIMA/ENGOT-OV26試験で全体PFS 13.8 vs 8.2ヶ月が示されました。国内適応上はバイオマーカーを問わず使用可能です。" },
+    { category: "治療ライン選択", type: "single", q: "PRIMA試験のニラパリブについて、HRD陰性集団における位置づけは?",
+      choices: ["効果はBRCA変異>HRD陽性>HRD陰性の順で減弱するが国内適応上はバイオマーカーを問わず使用可能", "HRD陰性には全く効果がないため禁忌", "HRD陰性では逆に効果が増強する", "HRD陰性では国内未承認である"], correct: 0,
+      explain: "HRD陰性でもPFS 8.1 vs 5.4ヶ月と一定の効果が報告されており、国内適応はバイオマーカーを問いません。" },
+    { category: "治療ライン選択", type: "single", q: "初回化学療法におけるdose-dense TC療法(週1回パクリタキセル+3週毎カルボプラチン)の位置づけは?",
+      choices: ["JGOG3016試験(日本人対象)で生存率改善を示したが、欧米試験(GOG-262・ICON8)では優越性が再現されず必須の選択肢ではない", "全世界で標準治療として確立している", "禁忌とされている", "国内未承認である"], correct: 0,
+      explain: "JGOG3016試験では5年生存率58.7% vs 51.1%と改善が示されましたが、人種差が議論されており必須ではない選択肢の一つです。" },
+    { category: "治療ライン選択", type: "single", q: "プラチナ感受性再発(前治療完了後6ヶ月以上経過)でPARP阻害薬未使用例における標準治療は?",
+      choices: ["プラチナ再導入→オラパリブ又はニラパリブ単独維持療法", "ミルベツキシマブ ソラブタンシン単独", "ペムブロリズマブ単独", "経過観察のみ"], correct: 0,
+      explain: "SOLO-2試験(BRCA変異例)、NOVA試験(全集団)がそれぞれの根拠試験です。" },
+    { category: "治療ライン選択", type: "single", q: "プラチナ感受性再発でベバシズマブ併用歴なし例における標準治療は?",
+      choices: ["ベバシズマブ併用化学療法→ベバシズマブ維持療法(OCEANS試験)", "オラパリブ単独維持療法", "ミルベツキシマブ ソラブタンシン", "ノギテカン塩酸塩単独"], correct: 0,
+      explain: "OCEANS試験に基づく選択肢です。" },
+    { category: "治療ライン選択", type: "multi", q: "プラチナ抵抗性再発における非交差耐性単剤化学療法の例として、添付文書及び本レポートに挙げられているものをすべて選べ(2つ選択)",
+      choices: ["週1回パクリタキセル", "ノギテカン塩酸塩(トポテカン)", "オラパリブ", "ミルベツキシマブ ソラブタンシン"], correct: [0, 1],
+      explain: "非交差耐性単剤化学療法として週1パクリタキセル、リポソーマルドキソルビシン(PLD)、ノギテカン塩酸塩(トポテカン)、ゲムシタビン等が挙げられます。オラパリブとミルベツキシマブ ソラブタンシンは化学療法ではありません。" },
+    { category: "治療ライン選択", type: "single", q: "プラチナ抵抗性再発でベバシズマブを化学療法に併用する根拠となった試験は?",
+      choices: ["AURELIA試験", "PAOLA-1試験", "SOLO-1試験", "PRIMA試験"], correct: 0,
+      explain: "AURELIA試験(ORR約27.3%、PFS 6.7ヶ月)、国内JGOG3023試験でも有用性が確認されています。" },
+    { category: "治療ライン選択", type: "single", q: "プラチナ抵抗性再発・FRα高発現例における、2026年9月に国内承認された新標準薬は?",
+      choices: ["ミルベツキシマブ ソラブタンシン(エラヒア)", "ペムブロリズマブ単剤", "ニラパリブ単独維持療法", "オラパリブ+ベバシズマブ"], correct: 0,
+      explain: "MIRASOL/ENGOT-ov68試験(OS 16.85 vs 13.34ヶ月、HR 0.68)に基づき、2026年9月16日付で国内承認されました(薬価収載前)。" },
+    { category: "治療ライン選択", type: "single", q: "KEYNOTE-B96/ENGOT-ov65試験(ペムブロリズマブ+週1パクリタキセル±ベバシズマブ)の、2026年9月時点における国内での位置づけは?",
+      choices: ["OS有意改善を示したがFDA/PMDAとも未承認であり国内臨床での標準治療ではない(海外データ)", "国内で承認され標準治療となっている", "国内では禁忌とされている", "ガイドラインで第一選択として推奨されている"], correct: 0,
+      explain: "初めてICIベースレジメンがOS有意改善を示した試験ですが、2026年9月時点でFDA/PMDAとも未承認であり、国内では使用できません。" },
+    { category: "治療ライン選択", type: "single", q: "MSI-H/dMMR陽性の卵巣癌(明細胞癌・類内膜癌の一部にみられる)における治療選択肢は?",
+      choices: ["臓器横断的ペムブロリズマブ適応(2018年国内承認済み)", "国内未承認のため使用できない", "オラパリブ単独", "ミルベツキシマブ ソラブタンシン"], correct: 0,
+      explain: "MSI-High/dMMRを有する固形癌への臓器横断的(tumor-agnostic)適応が既に国内承認されています。" },
+    { category: "治療ライン選択", type: "single", q: "明細胞癌の薬物治療における特徴として本レポートに記載されている内容は?",
+      choices: ["高異型度漿液性癌と比べて化学療法感受性が相対的に低いとされる", "高異型度漿液性癌より化学療法がよく効く", "BRCA/HRD関連性が非常に高い", "PARP阻害薬が禁忌である"], correct: 0,
+      explain: "明細胞癌は日本人に多く、高異型度漿液性癌(HGSOC)と比べ化学療法感受性が相対的に低いとされています。" },
+    { category: "治療ライン選択", type: "multi", q: "SOLO-1試験とPAOLA-1試験が対象としたバイオマーカー集団の組み合わせとして正しいものをすべて選べ(2つ選択)",
+      choices: ["SOLO-1試験はgBRCA/sBRCA変異陽性集団を対象とした", "PAOLA-1試験はHRD陽性(BRCA変異含む)集団を対象とした", "SOLO-1試験は全体集団(バイオマーカー不問)を対象とした", "PAOLA-1試験はHRD陰性集団のみを対象とした"], correct: [0, 1],
+      explain: "SOLO-1試験はBRCA変異陽性、PAOLA-1試験はHRD陽性(BRCA変異含む)集団がそれぞれの対象です。" },
+
+    // ══════════ 用法用量・投与スケジュール ══════════
+    { category: "用法用量・投与スケジュール", type: "single", q: "パクリタキセルの卵巣癌における添付文書上のA法の用法用量は?",
+      choices: ["210mg/m²を3時間かけて点滴静注し3週間休薬", "175mg/m²を1時間かけて投与", "80mg/m²を週1回投与のみ", "300mg/m²を1回投与"], correct: 0,
+      explain: "カルボプラチンとの併用ではC法(80mg/m²を週1回、3週連続投与)を用いることもあります。" },
+    { category: "用法用量・投与スケジュール", type: "single", q: "カルボプラチンの卵巣癌における添付文書上の用法用量は?",
+      choices: ["300~400mg/m²を1日1回投与し少なくとも4週間休薬", "50mg/m²を毎日投与", "AUC5を1回のみ投与して終了", "経口投与"], correct: 0,
+      explain: "これを1クールとして投与を繰り返します。" },
+    { category: "用法用量・投与スケジュール", type: "single", q: "ベバシズマブの卵巣癌における用法用量の組み合わせとして正しいものは?",
+      choices: ["10mg/kgを2週間間隔、又は15mg/kgを3週間間隔", "常に5mg/kgを1週間間隔", "経口1日1回投与", "3mg/kgを6週間間隔"], correct: 0,
+      explain: "併用する化学療法の投与間隔に応じて使い分けます。" },
+    { category: "用法用量・投与スケジュール", type: "single", q: "オラパリブの卵巣癌維持療法における添付文書上の用法用量は?",
+      choices: ["300mgを1日2回経口投与", "100mgを1日1回経口投与", "体重換算で点滴静注", "600mgを週1回経口投与"], correct: 0,
+      explain: "単独維持療法・ベバシズマブ併用維持療法いずれも同じ1回300mg1日2回投与です。100mg錠と150mg錠は生物学的同等性が示されていないため、300mg投与時は150mg錠を使用します。" },
+    { category: "用法用量・投与スケジュール", type: "single", q: "ニラパリブの投与開始用量を決定する添付文書上の基準は?",
+      choices: ["体重77kg以上かつ血小板数150,000/μL以上で300mg、それ未満は200mgから開始", "全例300mgから開始し漸減する", "BRCA変異の有無のみで開始用量を決定する", "年齢70歳を境に開始用量を変える"], correct: 0,
+      explain: "体重・血小板数に基づく個別化投与により、過度な血液毒性のリスクを軽減する設計です。" },
+    { category: "用法用量・投与スケジュール", type: "single", q: "ミルベツキシマブ ソラブタンシン(エラヒア)の用法用量として、公開情報(海外添付文書等)に基づき参考として示されている内容は?",
+      choices: ["6mg/kg(調整理想体重)を3週間間隔で点滴静注(国内の正式な電子添文は本稿作成時点で未公表のため要確認)", "経口1日1回投与", "体重によらず固定用量100mgを毎週投与", "1mg/kgを毎日投与"], correct: 0,
+      explain: "MIRASOL試験の用法用量に基づく参考情報であり、国内の正式な添付文書公表後に必ず確認が必要です。" },
+    { category: "用法用量・投与スケジュール", type: "single", q: "リポソーマルドキソルビシン(ドキシル)の卵巣癌における用法用量は?",
+      choices: ["50mg/m²を1mg/分の速度で投与し4週間休薬", "20mg/m²を週1回投与", "経口1日2回投与", "100mg/m²を3週間間隔で投与"], correct: 0,
+      explain: "投与速度を守ることでinfusion reactionのリスクを軽減します。" },
+    { category: "用法用量・投与スケジュール", type: "single", q: "ノギテカン塩酸塩(トポテカン、ハイカムチン)の卵巣癌における投与スケジュールは?",
+      choices: ["1.5mg/m²を5日間連日点滴静注し少なくとも16日間休薬", "週1回1回のみ投与", "1日1回経口投与を28日間", "3週間連日投与後1週間休薬"], correct: 0,
+      explain: "これを1コースとして投与を繰り返します。" },
+    { category: "用法用量・投与スケジュール", type: "single", q: "ゲムシタビンの卵巣癌における投与スケジュールは?",
+      choices: ["1,000mg/m²を週1回、3週連続投与後1週間休薬", "毎日休薬なく投与", "月1回のみ投与", "2週間に1回投与"], correct: 0,
+      explain: "週1回30分投与が原則であり、より頻回又は長時間の投与では副作用が増強するおそれがあります。" },
+
+    // ══════════ 用量規制因子・モニタリング ══════════
+    { category: "用量規制因子・モニタリング", type: "single", q: "ニラパリブ投与中に特に注意すべき、高頻度に発現する血液毒性は?",
+      choices: ["血小板減少(全Grade 62.0%)", "好中球減少のみが問題となる", "貧血のみが問題となる", "血液毒性はまれである"], correct: 0,
+      explain: "骨髄抑制全体では78.8%とされ、血小板減少が最も高頻度です。体重・血小板数に基づく個別化投与で軽減を図ります。" },
+    { category: "用量規制因子・モニタリング", type: "single", q: "オラパリブ・ニラパリブ(PARP阻害薬)の長期投与で、添付文書の「臨床使用に基づく情報」として報告されている頻度不明の重要な二次性合併症は?",
+      choices: ["骨髄異形成症候群(MDS)・急性骨髄性白血病(AML)", "糖尿病", "白内障", "高血圧のみ"], correct: 0,
+      explain: "PARP阻害薬クラス全体で、長期使用に伴う二次性血液悪性腫瘍のリスクが指摘されています。" },
+    { category: "用量規制因子・モニタリング", type: "single", q: "ベバシズマブ投与患者で手術を予定する場合の添付文書上の注意点は?",
+      choices: ["出血・創傷治癒遅延リスクのため休薬期間の調整が必要", "手術直前まで通常通り投与を継続してよい", "休薬の必要はない", "手術後は永久に再開できない"], correct: 0,
+      explain: "周術期管理における重要なポイントです。" },
+    { category: "用量規制因子・モニタリング", type: "single", q: "パクリタキセル投与前に必須とされる添付文書上の対応は?",
+      choices: ["ショックや高度過敏反応を予防するための前投薬(デキサメタゾン、ジフェンヒドラミン塩酸塩、H2ブロッカー等)", "前投薬は不要である", "抗凝固薬の予防投与が必須", "輸血の事前準備のみが必要"], correct: 0,
+      explain: "前投薬を行わないと重篤な過敏反応・死亡例のリスクが高まります。" },
+    { category: "用量規制因子・モニタリング", type: "single", q: "ゲムシタビン投与患者で禁忌とされている放射線療法の組み合わせは?",
+      choices: ["胸部放射線療法の施行中の患者(重篤な食道炎・肺臓炎のおそれ)", "頭部放射線療法", "骨盤部放射線療法", "放射線療法との併用に制限はない"], correct: 0,
+      explain: "海外試験で重篤な食道炎・肺臓炎により死亡に至った例が報告されており、併用禁忌とされています。" },
+    { category: "用量規制因子・モニタリング", type: "single", q: "ノギテカン塩酸塩(トポテカン)投与時、腎機能低下患者(クレアチニンクリアランス20~39mL/分)における添付文書上の対応は?",
+      choices: ["初回投与量を通常用量の半量とする", "通常用量のまま投与する", "投与間隔を2倍に延長するのみでよい", "腎機能に関わらず調整不要である"], correct: 0,
+      explain: "腎排泄型薬剤であるため、腎機能に応じた用量調整が必要です。" },
+    { category: "用量規制因子・モニタリング", type: "single", q: "リポソーマルドキソルビシン(ドキシル)で特に注意すべき、通常のドキソルビシンと異なる特徴的な皮膚有害事象は?",
+      choices: ["手掌・足底発赤知覚不全症候群(手足症候群、78.4%)", "脱毛のみが問題", "光線過敏症のみが問題", "皮膚症状はほとんどみられない"], correct: 0,
+      explain: "リポソーム製剤特有の薬物動態により、通常のドキソルビシンより高頻度に手足症候群が発現します。" },
+    { category: "用量規制因子・モニタリング", type: "single", q: "カルボプラチン投与で定期的モニタリングが必要な、白金製剤に特徴的な非血液毒性は?",
+      choices: ["腎機能障害・難聴", "手足症候群", "間質性肺疾患のみ", "眼障害のみ"], correct: 0,
+      explain: "急性腎障害・ファンコニー症候群、難聴が重大な副作用として報告されています。" },
+    { category: "用量規制因子・モニタリング", type: "multi", q: "ミルベツキシマブ ソラブタンシン(エラヒア)投与で特に重要とされるモニタリング項目を、公開情報に基づきすべて選べ(2つ選択)",
+      choices: ["定期的な眼科的検査(角膜症・霧視等の眼毒性)", "末梢神経症状の確認", "定期的な聴力検査", "定期的な骨密度測定"], correct: [0, 1],
+      explain: "眼毒性(角膜症28.8%、霧視38.7%等)と末梢性ニューロパチー(17.3%)が高頻度に報告されており、いずれも投与中のモニタリングが重要です。" },
+
+    // ══════════ 特徴的な副作用 ══════════
+    { category: "特徴的な副作用", type: "single", q: "オラパリブ単剤で最も高頻度に報告される血液毒性は?",
+      choices: ["貧血(30.2%)", "血小板減少が最多", "白血球減少が最多", "リンパ球減少が最多"], correct: 0,
+      explain: "悪心・疲労は主にGrade1-2にとどまります。" },
+    { category: "特徴的な副作用", type: "single", q: "ニラパリブ単剤で特に高頻度な血液毒性は?",
+      choices: ["血小板減少(62.0%)", "好中球減少が最多", "貧血のみが問題", "血液毒性はまれ"], correct: 0,
+      explain: "体重・血小板数ベースの個別化投与により軽減を図りますが、モニタリングは重要です。" },
+    { category: "特徴的な副作用", type: "single", q: "ベバシズマブに特徴的で、頻度は低いが重篤な消化管有害事象は?",
+      choices: ["消化管穿孔", "重度の下痢", "腸閉塞", "便秘"], correct: 0,
+      explain: "添付文書の警告欄に、死亡に至る例が報告されていると明記されています。" },
+    { category: "特徴的な副作用", type: "single", q: "パクリタキセルに特徴的な、蓄積性・用量依存性の神経学的有害事象は?",
+      choices: ["末梢神経障害(43.8%)", "中枢神経障害", "自律神経障害のみ", "錐体外路症状"], correct: 0,
+      explain: "投与を重ねるほど蓄積するため、長期のQOLに影響しうる有害事象です。" },
+    { category: "特徴的な副作用", type: "single", q: "ミルベツキシマブ ソラブタンシンで特徴的な、他の卵巣癌治療薬にはあまりみられない有害事象は?",
+      choices: ["眼毒性(角膜症・霧視・ドライアイ等)", "手足症候群", "心毒性", "難聴"], correct: 0,
+      explain: "ADCの構造上、眼組織への薬物蓄積が眼毒性の主な機序と考えられています。" },
+    { category: "特徴的な副作用", type: "single", q: "リポソーマルドキソルビシン(ドキシル)で高頻度(約8割)に発現する粘膜有害事象は?",
+      choices: ["口内炎(77.0%)", "間質性肺炎", "心筋障害", "難聴"], correct: 0,
+      explain: "手足症候群(78.4%)とともに、リポソーム製剤に特徴的な高頻度有害事象です。" },
+    { category: "特徴的な副作用", type: "single", q: "ノギテカン塩酸塩(トポテカン)で特徴的な、高度な骨髄抑制に関連する消化管有害事象は?",
+      choices: ["消化管出血(血小板減少に伴う)", "手足症候群", "口内炎のみ", "便秘のみ"], correct: 0,
+      explain: "血小板減少に伴う死亡例も報告されており、骨髄抑制作用の強い薬剤です。" },
+    { category: "特徴的な副作用", type: "single", q: "ゲムシタビンで死亡例も報告されている、投与中止基準に直結する重大な副作用は?",
+      choices: ["間質性肺炎(発症・急性増悪疑い時は直ちに中止)", "手足症候群", "口内炎", "脱毛"], correct: 0,
+      explain: "添付文書上、発症又は急性増悪が疑われた場合には直ちに投与を中止することとされています。" },
+    { category: "特徴的な副作用", type: "single", q: "PARP阻害薬(オラパリブ・ニラパリブ)クラス全体に共通する、投与中に特に注意すべき血液系有害事象は?",
+      choices: ["骨髄抑制(貧血・血小板減少等)", "手足症候群", "心毒性", "難聴"], correct: 0,
+      explain: "いずれの薬剤も定期的な血液検査によるモニタリングが必要です。" },
+    { category: "特徴的な副作用", type: "single", q: "カルボプラチンに特徴的な、聴覚に関連する有害事象は?",
+      choices: ["難聴", "幻聴", "中耳炎", "めまいのみ"], correct: 0,
+      explain: "白金製剤に共通する非血液毒性の一つです。" },
+    { category: "特徴的な副作用", type: "single", q: "ベバシズマブ+化学療法(AURELIA試験)とミルベツキシマブ ソラブタンシン(MIRASOL試験)を、副作用プロファイルの観点で比較した場合の特徴は?",
+      choices: ["ベバシズマブは高血圧・消化管穿孔、ミルベツキシマブ ソラブタンシンは眼毒性がそれぞれ特徴的である", "両者とも副作用プロファイルは同一である", "ベバシズマブに眼毒性がよくみられる", "ミルベツキシマブ ソラブタンシンに消化管穿孔がよくみられる"], correct: 0,
+      explain: "作用機序の違いにより、特徴的な有害事象が大きく異なります。" },
+    { category: "特徴的な副作用", type: "multi", q: "PARP阻害薬(オラパリブ・ニラパリブ)で報告されている重大な副作用として正しいものをすべて選べ(2つ選択)",
+      choices: ["間質性肺疾患", "静脈血栓塞栓症", "手足症候群", "難聴"], correct: [0, 1],
+      explain: "間質性肺疾患・静脈血栓塞栓症はいずれの薬剤の添付文書にも記載されています。手足症候群・難聴はPARP阻害薬の特徴的副作用としては記載されていません。" },
+
+    // ══════════ バイオマーカー ══════════
+    { category: "バイオマーカー", type: "multi", q: "PARP阻害薬に関連するバイオマーカーと治療選択の組み合わせとして正しいものをすべて選べ(2つ選択)",
+      choices: ["gBRCA/sBRCA病的バリアント陽性はオラパリブ単独維持療法の主要適応対象である", "HRD陽性(BRCA陰性含む)はオラパリブ+ベバシズマブ併用維持療法の適応拡大対象である", "HRD陰性ではPARP阻害薬は完全に無効であり使用できない", "PD-L1陽性はPARP阻害薬の適応判定に必須である"], correct: [0, 1],
+      explain: "gBRCA/sBRCA変異陽性はオラパリブ単独維持の主要適応対象、HRD陽性(BRCA含む)はオラパリブ+ベバシズマブ併用維持の適応拡大対象です。HRD陰性でも効果は減弱しますがニラパリブは使用可能で、PD-L1はPARP阻害薬の適応判定マーカーではありません。" },
+    { category: "バイオマーカー", type: "single", q: "HRD(相同組換え修復欠損)の判定に用いられ、日本で保険適用されているコンパニオン診断は?",
+      choices: ["myChoice CDx", "FoundationOne CDx単独", "VENTANA FOLR1単独", "MSI検査キットのみ"], correct: 0,
+      explain: "myChoice CDx(ミリアド・ジェネティクス)が2020年11月オラパリブ用、2021年3月初回治療用に保険適用されています。" },
+    { category: "バイオマーカー", type: "single", q: "ミルベツキシマブ ソラブタンシン(エラヒア)の適応判定に必須のバイオマーカーは?",
+      choices: ["FRα(葉酸受容体アルファ)高発現", "BRCA変異", "HRD", "PD-L1発現"], correct: 0,
+      explain: "免疫組織化学(VENTANA FOLR1等)による高発現判定が必須です。" },
+    { category: "バイオマーカー", type: "single", q: "卵巣癌においてPD-L1発現は治療選択マーカーとしてどのように位置づけられているか?",
+      choices: ["確立されたルーティン検査・治療選択マーカーとして未確立である", "全例で必須の検査である", "PARP阻害薬の適応判定に必須である", "保険適用外の検査は存在しない"], correct: 0,
+      explain: "KEYNOTE-B96等の新規データは今後の検査体制整備を要する可能性があります。" },
+
+    // ══════════ コスト制度 ══════════
+    { category: "コスト制度", type: "single", q: "長期のPARP阻害薬維持療法における自己負担軽減策として本レポートで挙げられている制度は?",
+      choices: ["高額療養費制度の限度額適用認定証", "生活保護のみ", "民間保険への新規加入義務", "そのような制度は存在しない"], correct: 0,
+      explain: "限度額適用認定証の事前申請で窓口負担を自己負担限度額に抑えられます。" },
+    { category: "コスト制度", type: "single", q: "高額療養費制度の「多数回該当」とはどのような仕組みか?",
+      choices: ["直近12ヶ月に3回以上該当した場合、4回目以降さらに自己負担上限額が下がる", "初回のみ適用される割引", "70歳以上のみに適用される特別枠", "手術を伴う場合のみ適用される"], correct: 0,
+      explain: "長期のPARP阻害薬維持療法や継続的なベバシズマブ投与を行う患者の負担軽減に資する制度です。" }
+  ];
+
+  var QUIZ_SESSION_SIZE = 10;
+  var quizOrder = [];     // indices into QUIZ for THIS session (random subset)
+  var quizIndex = 0;
+  var quizAnswers = [];   // per-question(by original index): selected choice index (single) or array of indices (multi)
+  var quizFeedback = {};  // { [questionIndex]: 'good' | 'bad' }
+
+  function quizPickSession() {
+    var all = QUIZ.map(function (_, i) { return i; });
+    quizShuffle(all);
+    quizOrder = all.slice(0, QUIZ_SESSION_SIZE);
+  }
+  function quizShuffle(arr) {
+    for (var i = arr.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = arr[i]; arr[i] = arr[j]; arr[j] = t;
+    }
+    return arr;
+  }
+
+  function quizLoadFeedback() {
+    try {
+      var raw = localStorage.getItem('ovarianQuizFeedback_v2');
+      quizFeedback = raw ? JSON.parse(raw) : {};
+    } catch (e) { quizFeedback = {}; }
+  }
+  function quizSaveFeedback() {
+    try { localStorage.setItem('ovarianQuizFeedback_v2', JSON.stringify(quizFeedback)); } catch (e) {}
+  }
+  function quizBuildRatingRow(qi) {
+    var row = document.createElement('div');
+    row.className = 'rate-row';
+    var label = document.createElement('span');
+    label.className = 'rate-label';
+    label.textContent = 'この問題の評価:';
+    var goodBtn = document.createElement('button');
+    goodBtn.type = 'button'; goodBtn.className = 'rate-btn'; goodBtn.textContent = '👍 良問';
+    var badBtn = document.createElement('button');
+    badBtn.type = 'button'; badBtn.className = 'rate-btn'; badBtn.textContent = '👎 悪問';
+    function refresh() {
+      goodBtn.classList.toggle('active-good', quizFeedback[qi] === 'good');
+      badBtn.classList.toggle('active-bad', quizFeedback[qi] === 'bad');
+    }
+    goodBtn.onclick = function () {
+      quizFeedback[qi] = (quizFeedback[qi] === 'good') ? null : 'good';
+      if (!quizFeedback[qi]) delete quizFeedback[qi];
+      quizSaveFeedback(); refresh();
+    };
+    badBtn.onclick = function () {
+      quizFeedback[qi] = (quizFeedback[qi] === 'bad') ? null : 'bad';
+      if (!quizFeedback[qi]) delete quizFeedback[qi];
+      quizSaveFeedback(); refresh();
+    };
+    refresh();
+    row.appendChild(label); row.appendChild(goodBtn); row.appendChild(badBtn);
+    return row;
+  }
+  function quizFallbackCopy(text, done) {
+    var ta = document.createElement('textarea');
+    ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); } catch (e) {}
+    document.body.removeChild(ta);
+    done();
+  }
+  function quizChoiceLabel(item) {
+    return item.choices.join(' / ');
+  }
+  function quizCorrectLabel(item) {
+    if (item.type === 'multi') return item.correct.map(function (i) { return item.choices[i]; }).join(' ＋ ');
+    return item.choices[item.correct];
+  }
+  function quizExportFeedback() {
+    var ratedIdx = Object.keys(quizFeedback);
+    if (ratedIdx.length === 0) {
+      alert('まだ評価された問題がありません。各問題に回答した後に表示される「👍 良問」「👎 悪問」ボタンで評価してから、もう一度お試しください。');
+      return;
+    }
+    var goodList = [], badList = [];
+    ratedIdx.forEach(function (idxStr) {
+      var idx = parseInt(idxStr, 10);
+      var item = QUIZ[idx];
+      if (!item) return;
+      var entry = '・[' + item.category + (item.type === 'multi' ? '/複数選択' : '') + '] ' + item.q + '\n  選択肢: ' + quizChoiceLabel(item) + '\n  正解: ' + quizCorrectLabel(item);
+      if (quizFeedback[idx] === 'good') goodList.push(entry);
+      else if (quizFeedback[idx] === 'bad') badList.push(entry);
+    });
+    var text = '【卵巣癌クイズ(quiz-ovarian.html、全50問プール)フィードバック】\n\n' +
+      '良問と評価された問題(' + goodList.length + '件):\n' + (goodList.length ? goodList.join('\n\n') : '(なし)') + '\n\n' +
+      '悪問と評価された問題(' + badList.length + '件) — 改善・差し替えを検討してください:\n' + (badList.length ? badList.join('\n\n') : '(なし)') + '\n\n' +
+      '参照ファイル: artifacts/html/oncology-reports/quiz-ovarian.html\n\n' +
+      '上記フィードバックを踏まえて、「悪問」と評価された問題をレポート本文(artifacts/html/oncology-reports/ovarian.html、添付文書情報セクション含む)の内容に基づいて改善・差し替えてください。「良問」と評価された問題は現状を維持してください。';
+    var notify = function () { alert('フィードバックをコピーしました。MulmoClaudeのチャットに貼り付けて送信してください。問題の改善に使います。'); };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(notify).catch(function () { quizFallbackCopy(text, notify); });
+    } else { quizFallbackCopy(text, notify); }
+  }
+  function quizResetFeedback() {
+    if (!confirm('すべての評価をリセットします。よろしいですか?')) return;
+    quizFeedback = {};
+    quizSaveFeedback();
+    alert('評価をリセットしました。');
+  }
+
+  function quizRenderQuestion() {
+    document.getElementById('quiz-result-area').style.display = 'none';
+    document.getElementById('quiz-question-area').style.display = 'block';
+    var qi = quizOrder[quizIndex];
+    var item = QUIZ[qi];
+    document.getElementById('quiz-progress-text').textContent = '問 ' + (quizIndex + 1) + ' / ' + quizOrder.length + '(全' + QUIZ.length + '問中からランダム出題)';
+    document.getElementById('quiz-cat-badge').textContent = item.category;
+    document.getElementById('quiz-type-badge').style.display = (item.type === 'multi') ? 'inline-flex' : 'none';
+    document.getElementById('quiz-progress-fill').style.width = Math.round((quizIndex / quizOrder.length) * 100) + '%';
+    document.getElementById('quiz-question-text').textContent = item.q;
+    document.getElementById('quiz-explain-area').style.display = 'none';
+    document.getElementById('quiz-explain-area').innerHTML = '';
+    document.getElementById('quiz-next-btn').style.display = 'none';
+    document.getElementById('quiz-submit-row').style.display = 'none';
+
+    var wrap = document.getElementById('quiz-choices');
+    wrap.innerHTML = '';
+
+    if (item.type === 'multi') {
+      var selected = {};
+      item.choices.forEach(function (choiceText, idx) {
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'quiz-choice';
+        btn.innerHTML = '<span class="quiz-choice-check">☐</span> ' + choiceText.replace(/</g, '&lt;');
+        btn.onclick = function () {
+          selected[idx] = !selected[idx];
+          btn.classList.toggle('selected', !!selected[idx]);
+          btn.querySelector('.quiz-choice-check').textContent = selected[idx] ? '☑' : '☐';
+        };
+        wrap.appendChild(btn);
+      });
+      document.getElementById('quiz-submit-row').style.display = 'block';
+      document.getElementById('quiz-submit-btn').onclick = function () {
+        var chosen = Object.keys(selected).filter(function (k) { return selected[k]; }).map(Number);
+        quizAnswerMulti(chosen);
+      };
+    } else {
+      item.choices.forEach(function (choiceText, idx) {
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'quiz-choice';
+        btn.textContent = choiceText;
+        btn.onclick = function () { quizAnswerSingle(idx); };
+        wrap.appendChild(btn);
+      });
+    }
+  }
+
+  function quizFinishQuestion(qi, isCorrect, correctText) {
+    var item = QUIZ[qi];
+    var explainArea = document.getElementById('quiz-explain-area');
+    explainArea.className = 'quiz-explain';
+    explainArea.style.display = 'block';
+    explainArea.innerHTML = '<div style="font-weight:700; margin-bottom:4px; color:' + (isCorrect ? 'var(--good)' : 'var(--critical)') + ';">' +
+      (isCorrect ? '✅ 正解' : '❌ 不正解(正解: ' + correctText + ')') + '</div>' +
+      '<div>' + (item.explain || '') + '</div>';
+    explainArea.appendChild(quizBuildRatingRow(qi));
+    document.getElementById('quiz-submit-row').style.display = 'none';
+    document.getElementById('quiz-next-btn').style.display = 'inline-block';
+    document.getElementById('quiz-next-btn').textContent = (quizIndex === quizOrder.length - 1) ? '結果を見る →' : '次の問題 →';
+  }
+
+  function quizAnswerSingle(selectedIdx) {
+    var qi = quizOrder[quizIndex];
+    var item = QUIZ[qi];
+    quizAnswers[qi] = selectedIdx;
+    var buttons = document.getElementById('quiz-choices').querySelectorAll('.quiz-choice');
+    buttons.forEach(function (btn, idx) {
+      btn.disabled = true;
+      if (idx === item.correct) btn.classList.add('correct');
+      else if (idx === selectedIdx) btn.classList.add('wrong');
+    });
+    quizFinishQuestion(qi, selectedIdx === item.correct, item.choices[item.correct]);
+  }
+
+  function quizSubmitMulti() {
+    var qi = quizOrder[quizIndex];
+    var item = QUIZ[qi];
+    var buttons = document.getElementById('quiz-choices').querySelectorAll('.quiz-choice');
+    var chosen = [];
+    buttons.forEach(function (btn, idx) {
+      if (btn.classList.contains('selected')) chosen.push(idx);
+    });
+    quizAnswerMulti(chosen, buttons, item, qi);
+  }
+
+  function quizAnswerMulti(chosen, buttons, item, qi) {
+    qi = (qi === undefined) ? quizOrder[quizIndex] : qi;
+    item = item || QUIZ[qi];
+    buttons = buttons || document.getElementById('quiz-choices').querySelectorAll('.quiz-choice');
+    quizAnswers[qi] = chosen;
+    var correctSet = item.correct.slice().sort();
+    var chosenSet = chosen.slice().sort();
+    var isCorrect = correctSet.length === chosenSet.length && correctSet.every(function (v, i) { return v === chosenSet[i]; });
+    buttons.forEach(function (btn, idx) {
+      btn.disabled = true;
+      var isRight = item.correct.indexOf(idx) !== -1;
+      var wasChosen = chosen.indexOf(idx) !== -1;
+      if (isRight) btn.classList.add('correct');
+      else if (wasChosen) btn.classList.add('wrong');
+    });
+    quizFinishQuestion(qi, isCorrect, quizCorrectLabel(item));
+  }
+
+  function quizNext() {
+    if (quizIndex < quizOrder.length - 1) {
+      quizIndex++;
+      quizRenderQuestion();
+    } else {
+      quizShowResult();
+    }
+  }
+
+  function quizShowResult() {
+    document.getElementById('quiz-progress-fill').style.width = '100%';
+    document.getElementById('quiz-progress-text').textContent = '完了 ' + quizOrder.length + ' / ' + quizOrder.length;
+    document.getElementById('quiz-cat-badge').textContent = '';
+    document.getElementById('quiz-type-badge').style.display = 'none';
+    document.getElementById('quiz-question-area').style.display = 'none';
+
+    var correctCount = 0;
+    var byCategory = {};
+    quizOrder.forEach(function (qi) {
+      var item = QUIZ[qi];
+      if (!byCategory[item.category]) byCategory[item.category] = { correct: 0, total: 0 };
+      byCategory[item.category].total++;
+      var ans = quizAnswers[qi];
+      var isCorrect;
+      if (item.type === 'multi') {
+        var correctSet = item.correct.slice().sort();
+        var chosenSet = (ans || []).slice().sort();
+        isCorrect = correctSet.length === chosenSet.length && correctSet.every(function (v, i) { return v === chosenSet[i]; });
+      } else {
+        isCorrect = ans === item.correct;
+      }
+      if (isCorrect) { correctCount++; byCategory[item.category].correct++; }
+    });
+    var pct = Math.round((correctCount / quizOrder.length) * 100);
+
+    var catHtml = '';
+    Object.keys(byCategory).forEach(function (cat) {
+      var c = byCategory[cat];
+      var p = Math.round((c.correct / c.total) * 100);
+      catHtml += '<div class="cat-result-row"><span class="text-xs" style="width:150px; flex-shrink:0;">' + cat + '</span>' +
+        '<div class="cat-result-bar"><div class="cat-result-fill" style="width:' + p + '%"></div></div>' +
+        '<span class="text-xs muted" style="width:56px; text-align:right;">' + c.correct + '/' + c.total + '</span></div>';
+    });
+
+    var reviewHtml = '';
+    quizOrder.forEach(function (qi) {
+      var item = QUIZ[qi];
+      var ans = quizAnswers[qi];
+      var isCorrect;
+      var yourAnswerText;
+      if (item.type === 'multi') {
+        var correctSet = item.correct.slice().sort();
+        var chosenSet = (ans || []).slice().sort();
+        isCorrect = correctSet.length === chosenSet.length && correctSet.every(function (v, i) { return v === chosenSet[i]; });
+        yourAnswerText = (ans && ans.length) ? ans.map(function (i) { return item.choices[i]; }).join(' ＋ ') : '(未回答)';
+      } else {
+        isCorrect = ans === item.correct;
+        yourAnswerText = (ans != null) ? item.choices[ans] : '(未回答)';
+      }
+      if (!isCorrect) {
+        reviewHtml += '<div class="review-item">' +
+          '<div class="text-sm font-semibold mb-1">' + item.q + '</div>' +
+          '<div class="text-xs muted mb-2">あなたの回答: ' + yourAnswerText + ' / 正解: ' + quizCorrectLabel(item) + '</div>' +
+          '<div class="text-xs" style="line-height:1.6;">' + (item.explain || '') + '</div>' +
+          '</div>';
+      }
+    });
+    if (!reviewHtml) reviewHtml = '<p class="text-sm secondary">全問正解です。見直しの必要な項目はありません 🎉</p>';
+
+    var goodCount = 0, badCount = 0;
+    Object.keys(quizFeedback).forEach(function (k) {
+      if (quizFeedback[k] === 'good') goodCount++;
+      else if (quizFeedback[k] === 'bad') badCount++;
+    });
+
+    var resultArea = document.getElementById('quiz-result-area');
+    resultArea.style.display = 'block';
+    resultArea.innerHTML =
+      '<div class="text-center mb-6">' +
+        '<div class="score-ring-num" style="color:var(--series-new);">' + correctCount + ' / ' + quizOrder.length + '</div>' +
+        '<div class="text-sm muted mt-1">正答率 ' + pct + '%(全' + QUIZ.length + '問プールから今回ランダム抽出された' + quizOrder.length + '問)</div>' +
+      '</div>' +
+      '<div class="mb-6"><div class="text-sm font-semibold mb-3">カテゴリ別正答率(今回出題分)</div>' + catHtml + '</div>' +
+      '<div class="mb-2 text-sm font-semibold">見直し(不正解・未回答の問題)</div>' +
+      '<div class="mb-6">' + reviewHtml + '</div>' +
+      '<div class="mb-6 pt-4 border-t" style="border-color:var(--gridline);">' +
+        '<div class="text-sm font-semibold mb-2">問題の評価状況(全50問プール通算)</div>' +
+        '<div class="text-xs muted mb-3">👍 良問 ' + goodCount + '件 ・ 👎 悪問 ' + badCount + '件</div>' +
+        '<div class="flex flex-wrap gap-3">' +
+          '<button type="button" class="quiz-btn-outline" onclick="quizExportFeedback()">📋 フィードバックをエクスポート(チャットに貼り付け用)</button>' +
+          '<button type="button" class="quiz-btn-outline" onclick="quizResetFeedback()" style="border-color:var(--critical); color:var(--critical);">🗑 評価をリセット</button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="flex flex-wrap gap-3 justify-center">' +
+        '<button type="button" class="quiz-btn" onclick="quizRestart()">🔀 新しい10問でもう一度</button>' +
+        '<a href="ovarian.html" class="quiz-btn-outline" style="text-decoration:none; display:inline-block;">レポート本文に戻る</a>' +
+      '</div>';
+  }
+
+  function quizRestart() {
+    quizPickSession();
+    quizIndex = 0;
+    quizAnswers = [];
+    quizRenderQuestion();
+  }
+
+  quizLoadFeedback();
+  quizPickSession();
+  quizRenderQuestion();
+</script>
+
+<footer class="text-center text-xs pb-4" style="color: var(--text-muted);">
+  本クイズは学習・自己点検を目的とした資料です。臨床判断には利用せず、最新の添付文書・ガイドライン原文を優先してください。
+</footer>
+
+</body>
+</html>

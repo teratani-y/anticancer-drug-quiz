@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>慢性骨髄性白血病(CML)理解度クイズ 全50問(ランダム10問出題)</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+:root, .viz-root {
+  color-scheme: light;
+  --surface-1: #fcfcfb; --page-plane: #f9f9f7;
+  --text-primary: #0b0b0b; --text-secondary: #52514e; --text-muted: #898781;
+  --gridline: #e1e0d9; --baseline: #c3c2b7;
+  --series-new: #2a78d6; --series-control: #b9b7ae;
+  --good: #0ca30c; --warning: #b9790a; --critical: #d03b3b;
+  --border: rgba(11,11,11,0.10);
+}
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) {
+    color-scheme: dark;
+    --surface-1: #1a1a19; --page-plane: #0d0d0d;
+    --text-primary: #ffffff; --text-secondary: #c3c2b7; --text-muted: #898781;
+    --gridline: #2c2c2a; --baseline: #383835;
+    --series-new: #3987e5; --series-control: #55534c;
+    --good: #0ca30c; --warning: #eab116; --critical: #e66767;
+    --border: rgba(255,255,255,0.10);
+  }
+}
+body { background: var(--page-plane); color: var(--text-primary); font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+.card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+.secondary { color: var(--text-secondary); }
+.muted { color: var(--text-muted); }
+.cat-badge { display:inline-flex; align-items:center; padding:3px 10px; border-radius:9999px; font-size:0.72rem; font-weight:700; background: color-mix(in srgb, var(--series-new) 14%, transparent); color: var(--series-new); }
+.type-badge { display:inline-flex; align-items:center; padding:3px 10px; border-radius:9999px; font-size:0.68rem; font-weight:700; background: color-mix(in srgb, var(--warning) 16%, transparent); color: var(--warning); margin-left:6px; }
+.progress-track { background: var(--gridline); border-radius: 9999px; height: 8px; overflow: hidden; }
+.progress-fill { background: var(--series-new); height: 100%; border-radius: 9999px; transition: width .25s; }
+.quiz-choice { display:block; width:100%; text-align:left; background: var(--page-plane); border: 1.5px solid var(--gridline); border-radius: 10px; padding: 12px 16px; font-size: 0.92rem; cursor: pointer; transition: border-color .12s, background .12s; margin-bottom: 10px; }
+.quiz-choice:last-child { margin-bottom: 0; }
+.quiz-choice:hover:not(:disabled) { border-color: var(--series-new); }
+.quiz-choice:disabled { cursor: default; }
+.quiz-choice.correct { border-color: var(--good); background: color-mix(in srgb, var(--good) 12%, transparent); font-weight: 700; }
+.quiz-choice.wrong { border-color: var(--critical); background: color-mix(in srgb, var(--critical) 10%, transparent); }
+.quiz-choice.selected { border-color: var(--series-new); background: color-mix(in srgb, var(--series-new) 10%, transparent); }
+.quiz-choice-check { display:inline-block; width:16px; }
+.quiz-explain { background: var(--page-plane); border: 1px solid var(--gridline); border-radius: 10px; padding: 14px 16px; margin-top: 14px; font-size: 0.85rem; line-height: 1.7; }
+.quiz-btn { background: var(--series-new); color: #fff; border: none; border-radius: 8px; padding: 10px 22px; font-size: 0.88rem; font-weight: 700; cursor: pointer; }
+.quiz-btn:hover { opacity: 0.9; }
+.quiz-btn:disabled { opacity: 0.4; cursor: default; }
+.quiz-btn-outline { background: transparent; color: var(--series-new); border: 1.5px solid var(--series-new); border-radius: 8px; padding: 9px 20px; font-size: 0.88rem; font-weight: 700; cursor: pointer; }
+.quiz-btn-outline:hover { background: color-mix(in srgb, var(--series-new) 10%, transparent); }
+.score-ring-num { font-size: 2.6rem; font-weight: 800; }
+.cat-result-row { display:flex; align-items:center; gap:10px; margin-bottom: 8px; }
+.cat-result-bar { flex:1; background: var(--gridline); border-radius: 9999px; height: 10px; overflow:hidden; }
+.cat-result-fill { background: var(--series-new); height:100%; border-radius: 9999px; }
+.review-item { border: 1px solid var(--gridline); border-radius: 10px; padding: 12px 14px; margin-bottom: 10px; }
+.review-item:last-child { margin-bottom: 0; }
+.rate-row { display:flex; align-items:center; gap:8px; margin-top:14px; flex-wrap:wrap; }
+.rate-label { font-size:0.75rem; color: var(--text-muted); }
+.rate-btn { background: var(--page-plane); border: 1.5px solid var(--gridline); border-radius: 8px; padding: 6px 12px; font-size: 0.78rem; font-weight:600; cursor:pointer; color: var(--text-secondary); }
+.rate-btn:hover { border-color: var(--series-new); }
+.rate-btn.active-good { border-color: var(--good); background: color-mix(in srgb, var(--good) 14%, transparent); color: var(--good); }
+.rate-btn.active-bad { border-color: var(--critical); background: color-mix(in srgb, var(--critical) 12%, transparent); color: var(--critical); }
+</style>
+</head>
+<body class="viz-root">
+<div class="max-w-3xl mx-auto px-4 py-8 space-y-5">
+
+  <header class="card">
+    <div class="flex items-center justify-between gap-2 flex-wrap">
+      <div>
+        <h1 class="text-xl font-bold">🧠 慢性骨髄性白血病(CML)理解度クイズ</h1>
+        <p class="text-sm mt-1 secondary">全50問のプールからランダムに10問出題・4択/複数選択混在・医療従事者向け(治療ライン選択・用法用量・投与スケジュール・用量規制因子/モニタリング・添付文書の警告/禁忌/重大な副作用・バイオマーカー・コスト制度)</p>
+      </div>
+      <a href="cml.html" class="text-xs" style="color:var(--series-new); text-decoration:none; font-weight:600;">← レポート本文に戻る</a>
+    </div>
+    <p class="text-xs mt-3 muted">出題内容はすべて <a href="cml.html" style="color:var(--series-new);">慢性骨髄性白血病(CML)薬物治療レポート</a>(本文および「8. 主要薬剤の添付文書情報」)に記載の情報に基づきます。臨床判断には利用せず、学習・自己点検の目的でご利用ください。ページを再読み込みする、または結果画面の「新しい10問でもう一度」を押すたびに、新しい10問がランダムに選ばれます。</p>
+  </header>
+
+  <!-- Quiz card -->
+  <section class="card" id="quiz-card">
+    <div class="flex items-center justify-between mb-2">
+      <span id="quiz-progress-text" class="text-xs font-semibold muted"></span>
+      <span><span id="quiz-cat-badge" class="cat-badge"></span><span id="quiz-type-badge" class="type-badge" style="display:none;">複数選択</span></span>
+    </div>
+    <div class="progress-track mb-5"><div class="progress-fill" id="quiz-progress-fill" style="width:0%"></div></div>
+
+    <div id="quiz-question-area">
+      <div id="quiz-question-text" class="text-base font-semibold mb-4" style="line-height:1.6;"></div>
+      <div id="quiz-choices"></div>
+      <div id="quiz-submit-row" style="display:none;" class="mt-3">
+        <button type="button" class="quiz-btn" id="quiz-submit-btn" onclick="quizSubmitMulti()">この内容で回答する</button>
+      </div>
+      <div id="quiz-explain-area" style="display:none;"></div>
+      <div class="mt-5 flex justify-end">
+        <button type="button" id="quiz-next-btn" class="quiz-btn" style="display:none;" onclick="quizNext()">次の問題 →</button>
+      </div>
+    </div>
+
+    <div id="quiz-result-area" style="display:none;"></div>
+  </section>
+
+</div>
+
+<script>
+  var QUIZ = [
+    // ══════════ 治療ライン選択(どの局面でどの選択肢を使うか) ══════════
+    { category: "治療ライン選択", type: "single", q: "慢性期CML1次治療のうち、ASC4FIRST試験に基づき2025年5月に適応拡大が承認された薬剤の作用機序は?",
+      choices: ["STAMP阻害薬(ABL myristoyl pocket特異的阻害)", "BCR-ABLキナーゼドメインの通常型ATP拮抗", "mTOR阻害", "JAK2阻害"], correct: 0,
+      explain: "アシミニブはSTAMP(ABL myristoyl pocket特異的)阻害薬という新しい作用機序を持ち、ASC4FIRST試験の結果に基づき2025年5月に1次治療への適応拡大が承認されました。" },
+    { category: "治療ライン選択", type: "multi", q: "ENESTnd試験とDASISION試験は、それぞれどの1次治療薬の根拠試験か。正しい組み合わせをすべて選べ(2つ選択)",
+      choices: ["ENESTnd試験はニロチニブ", "DASISION試験はダサチニブ", "ENESTnd試験はダサチニブ", "DASISION試験はニロチニブ"], correct: [0, 1],
+      explain: "ENESTnd試験はニロチニブ、DASISION試験はダサチニブの1次治療における根拠試験(いずれもイマチニブとの比較第III相試験)です。" },
+    { category: "治療ライン選択", type: "single", q: "第1世代TKI(イマチニブ)不応・不耐(耐性変異なし)の場合の2次治療の考え方は?",
+      choices: ["いずれの第2世代TKI(ニロチニブ、ダサチニブ、ボスチニブ)も同等に選択可", "必ずポナチニブに切り替える", "必ずアシミニブに切り替える", "同種移植以外の選択肢はない"], correct: 0,
+      explain: "耐性変異が確認されない場合、第2世代TKI(ニロチニブ、ダサチニブ、ボスチニブ)はいずれも同等に選択可能とされています。" },
+    { category: "治療ライン選択", type: "single", q: "T315I変異陽性CMLの治療選択肢は?",
+      choices: ["ポナチニブまたはアシミニブ", "イマチニブ増量", "ダサチニブ増量", "ボスチニブ単独"], correct: 0,
+      explain: "T315I変異はほとんどのTKIに抵抗性を示す変異で、ポナチニブまたはアシミニブが選択肢です。" },
+    { category: "治療ライン選択", type: "single", q: "T315I以外の変異(F317系・E255系等)への対応は?",
+      choices: ["変異プロファイルに応じてニロチニブ/ボスチニブ/ポナチニブ/アシミニブから選択", "全例で同種移植を優先する", "イマチニブを継続する", "治療選択肢はない"], correct: 0,
+      explain: "T315I以外の変異は変異プロファイルに応じてニロチニブ/ボスチニブ/ポナチニブ/アシミニブから選択します。" },
+    { category: "治療ライン選択", type: "single", q: "2GTKI以上不応後の用量最適化アプローチの根拠となった第III相試験は?",
+      choices: ["OPTIC試験(ポナチニブ)", "ASCEMBL試験(アシミニブ)", "ENESTnd試験(ニロチニブ)", "BFORE試験(ボスチニブ)"], correct: 0,
+      explain: "OPTIC試験はポナチニブの45mg/30mg/15mgによる用量最適化を検証した第III相試験です。" },
+    { category: "治療ライン選択", type: "single", q: "2GTKI以上既治療のCP-CMLにおいて、ASCEMBL試験でアシミニブと比較された対照薬は?",
+      choices: ["ボスチニブ", "イマチニブ", "ダサチニブ", "ニロチニブ"], correct: 0,
+      explain: "ASCEMBL試験はアシミニブとボスチニブを比較した第III相試験で、96週MMR率はアシミニブ群で有意に高い結果でした。" },
+    { category: "治療ライン選択", type: "single", q: "急性転化期(BP/BC)の治療の基本方針は?",
+      choices: ["強力化学療法+TKI(ダサチニブまたはポナチニブ)を行い、可能な限り速やかに同種移植へつなげる", "TKI単剤のみで管理する", "化学療法は行わずTKI単独で経過観察する", "同種移植は適応とならない"], correct: 0,
+      explain: "急性転化期では強力化学療法+TKI(ダサチニブまたはポナチニブ)を行い、可能な限り速やかに同種造血幹細胞移植につなげます。" },
+    { category: "治療ライン選択", type: "single", q: "強力化学療法非適応の急性転化期患者への対応は?",
+      choices: ["低強度化学療法+TKIの組み合わせ(臨床試験段階を含む)", "TKIは中止し緩和ケアのみ", "イマチニブ単独を標準用量で継続", "同種移植を第一選択とする"], correct: 0,
+      explain: "強力化学療法非適応例では低強度化学療法+TKIの組み合わせ(臨床試験段階を含む)が検討されます。" },
+    { category: "治療ライン選択", type: "single", q: "移行期(AP)における治療方針として挙げられているのは?",
+      choices: ["TKI強化(ポナチニブ等)、ドナー検索開始を検討", "慢性期と全く同じ治療方針でよい", "TKIは無効であり化学療法単独とする", "経過観察のみで治療介入はしない"], correct: 0,
+      explain: "移行期では芽球増加・付加的染色体異常等の高リスク指標があり、TKI強化(ポナチニブ等)とドナー検索の開始が検討されます。" },
+    { category: "治療ライン選択", type: "multi", q: "慢性期CML1次治療における第2世代TKI(ニロチニブ・ダサチニブ・ボスチニブ)に共通する特徴として正しいものをすべて選べ(2つ選択)",
+      choices: ["いずれも第III相RCTでイマチニブとの比較試験の根拠がある", "10年前後のMMR率はイマチニブ単剤より高い傾向が報告されている", "いずれも空腹時投与が必須である", "いずれもT315I変異に有効である"], correct: [0, 1],
+      explain: "ニロチニブ(ENESTnd)、ダサチニブ(DASISION)、ボスチニブ(BFORE)はいずれもイマチニブとの第III相比較試験があり、10年前後のMMR率はイマチニブより高い傾向が報告されています。空腹時投与が必須なのはニロチニブ・アシミニブであり全剤共通ではなく、いずれもT315I変異には無効です。" },
+    { category: "治療ライン選択", type: "single", q: "TKI中止(治療フリー寛解:TFR)が検討され得るのはどの病期か?",
+      choices: ["第1慢性期のみ", "移行期以降を含む全病期", "急性転化期のみ", "病期を問わず全患者"], correct: 0,
+      explain: "TFRの検討対象は第1慢性期のみで、移行期・急性転化期の既往がある患者は対象外です。" },
+    { category: "治療ライン選択", type: "single", q: "ELTSスコアは1次治療薬選択の判断において何を予測するために用いられるか?",
+      choices: ["診断時の因子に基づく長期生存の予測", "薬剤耐性変異の有無", "薬価の高低", "同種移植の適合率"], correct: 0,
+      explain: "ELTSスコアは診断時の年齢・脾腫・血小板数・芽球比率から長期生存を予測し、1次治療薬選択の参考情報として用いられます。" },
+
+    // ══════════ 用法用量・投与スケジュール ══════════
+    { category: "用法用量・投与スケジュール", type: "single", q: "イマチニブの慢性期CMLにおける添付文書上の標準用法用量は?",
+      choices: ["1日1回400mgを食後経口投与(600mgまで増量可)", "1日1回600mgを食前投与", "1日2回200mgを空腹時投与", "1日1回800mgを食後投与"], correct: 0,
+      explain: "慢性期は1日1回400mgを食後に経口投与し、血液所見等により1日1回600mgまで増量できます。" },
+    { category: "用法用量・投与スケジュール", type: "single", q: "イマチニブの移行期又は急性期における添付文書上の用法用量は?",
+      choices: ["1日1回600mg(800mgまで増量可、増量時は400mgを1日2回)", "1日1回400mgのまま変更しない", "1日1回200mgに減量する", "投与は禁忌である"], correct: 0,
+      explain: "移行期又は急性期では1日1回600mgを食後に経口投与し、1日800mg(400mgを1日2回)まで増量できます。" },
+    { category: "用法用量・投与スケジュール", type: "single", q: "ニロチニブの初発慢性期CMLにおける添付文書上の用法用量は?",
+      choices: ["1回300mgを1日2回、食事1時間以上前又は食後2時間以降", "1回400mgを1日1回、食直後", "1回150mgを1日3回", "1回600mgを1日1回"], correct: 0,
+      explain: "初発慢性期の場合は1回300mgを1日2回(12時間毎)、食事の影響を避けるため食事1時間以上前又は食後2時間以降に投与します(既治療の慢性期・移行期の通常用量は1回400mgを1日2回)。" },
+    { category: "用法用量・投与スケジュール", type: "single", q: "ニロチニブの服用タイミングに関して添付文書が特に注意を求めているのは?",
+      choices: ["食事により血中濃度が増加するため、食事1時間前から食後2時間までの服用を避ける", "食後直ちに服用しないと吸収されない", "就寝前の服用のみ有効", "水以外の飲料と一緒に服用してよい"], correct: 0,
+      explain: "食事により血中濃度が増加するため、食事1時間前から食後2時間までの間の服用は避けることとされています。" },
+    { category: "用法用量・投与スケジュール", type: "single", q: "ダサチニブの慢性期CMLにおける添付文書上の用法用量は?",
+      choices: ["1日1回100mg(140mgまで増量可)", "1回70mgを1日2回", "1日1回50mg固定", "1日1回200mg"], correct: 0,
+      explain: "慢性期は1日1回100mgを経口投与し、患者の状態により1日1回140mgまで増量できます。" },
+    { category: "用法用量・投与スケジュール", type: "single", q: "ダサチニブの移行期又は急性期における添付文書上の用法用量は?",
+      choices: ["1回70mgを1日2回(90mgを1日2回まで増量可)", "1日1回100mgのまま変更しない", "1回35mgを1日2回", "投与は適応外である"], correct: 0,
+      explain: "移行期又は急性期(および再発・難治性Ph+ALL)では1回70mgを1日2回投与し、1回90mgを1日2回まで増量できます。" },
+    { category: "用法用量・投与スケジュール", type: "single", q: "ボスチニブの初発慢性期CMLにおける添付文書上の用法用量は?",
+      choices: ["1日1回400mgを食後経口投与(固定用量)", "1日1回500mgから段階的に漸増して開始", "1日2回200mgを食前投与", "1日1回600mgで開始"], correct: 0,
+      explain: "添付文書では通常用量は500mg/日ですが、初発慢性期CMLの場合は1回投与量が400mgと規定されており、段階的な用量漸増は規定されていません(BFORE試験も400mg固定用量で実施)。前治療歴のある患者に対する通常用量は500mg/日です。" },
+    { category: "用法用量・投与スケジュール", type: "single", q: "アシミニブ(セムブリックス)の用法用量・服用条件は?",
+      choices: ["1回80mgを1日1回、空腹時に経口投与", "1回40mgを1日2回、食直後に経口投与", "1回160mgを1日1回、食後に経口投与", "週1回80mgを経口投与"], correct: 0,
+      explain: "通常、成人には1回80mgを1日1回、空腹時に経口投与し、食事の1時間前から食後2時間までの間の服用は避けます。" },
+    { category: "用法用量・投与スケジュール", type: "single", q: "ポナチニブの添付文書上の用法用量は?",
+      choices: ["45mgを1日1回経口投与(患者の状態により適宜減量)", "15mgを1日3回経口投与", "90mgを週1回経口投与", "30mgを1日2回経口投与"], correct: 0,
+      explain: "通常、成人には45mgを1日1回経口投与し、患者の状態により適宜減量します(OPTIC試験の用量最適化データもこの45mg開始を踏まえたものです)。" },
+    { category: "用法用量・投与スケジュール", type: "multi", q: "ダサチニブの服用方法・剤形の取り扱いとして添付文書に明記されている注意点をすべて選べ(2つ選択)",
+      choices: ["かまずにそのまま服用する", "PTPシートから取り出して服用する", "服用前に必ず粉砕する", "空腹時のみ服用可能"], correct: [0, 1],
+      explain: "ダサチニブは錠剤をかまずにそのまま服用し、PTPシートから取り出して服用するよう指導することが添付文書の適用上の注意に明記されています。空腹時限定の規定や粉砕指示はありません。" },
+
+    // ══════════ 用量規制因子・モニタリング ══════════
+    { category: "用量規制因子・モニタリング", type: "single", q: "イマチニブ(慢性期・GIST、初回用量400mg/日)で休薬が必要となる血球減少の基準は?",
+      choices: ["好中球数1,000/mm³未満又は血小板数50,000/mm³未満", "好中球数3,000/mm³未満又は血小板数150,000/mm³未満", "ヘモグロビン10g/dL未満のみ", "基準は設けられていない"], correct: 0,
+      explain: "慢性期・GIST(初回用量400mg/日)では、好中球数1,000/mm³未満又は血小板数50,000/mm³未満の場合、回復するまで休薬することとされています。" },
+    { category: "用量規制因子・モニタリング", type: "single", q: "ニロチニブ投与中に特に重要とされるモニタリングは?",
+      choices: ["QT間隔延長のリスクを踏まえた心電図・電解質モニタリング", "視力検査のみ", "聴力検査のみ", "モニタリングは不要"], correct: 0,
+      explain: "ニロチニブは警告にQT間隔延長・心タンポナーデによる死亡例が明記されており、心電図・電解質の定期モニタリングが重要です。" },
+    { category: "用量規制因子・モニタリング", type: "single", q: "ダサチニブ投与中に呼吸困難等の症状が出現した場合、添付文書が実施を求める検査は?",
+      choices: ["胸部X線検査", "腹部超音波検査", "骨髄穿刺", "頭部MRI"], correct: 0,
+      explain: "体液貯留(胸水等)が疑われる症状が認められた場合には胸部X線検査を実施することとされています。" },
+    { category: "用量規制因子・モニタリング", type: "single", q: "ボスチニブ投与中に肝トランスアミナーゼが施設正常値上限5倍を超えた場合の添付文書上の対応は?",
+      choices: ["施設正常値上限の2.5倍以下に回復するまで休薬し、回復後1日1回400mgで再開", "直ちに永久中止する以外の選択肢はない", "減量せず経過観察のみでよい", "抗ヒスタミン薬投与で継続する"], correct: 0,
+      explain: "肝トランスアミナーゼが施設正常値上限5倍超の場合は、2.5倍以下に回復するまで休薬し、回復後は1日1回400mgで投与を再開します。" },
+    { category: "用量規制因子・モニタリング", type: "single", q: "アシミニブ投与中に特に注意が必要な消化器系のモニタリング項目は?",
+      choices: ["リパーゼ増加・膵炎の徴候", "肝性脳症の徴候", "腹水の有無のみ", "モニタリングは不要"], correct: 0,
+      explain: "アシミニブでは膵炎(0.6%)・リパーゼ増加(6.2%)が重大な副作用として報告されており、膵酵素のモニタリングが重要です。" },
+    { category: "用量規制因子・モニタリング", type: "single", q: "ポナチニブ投与中に血管閉塞性事象又はGrade3以上の心不全が発現した場合の添付文書上の対応は?",
+      choices: ["直ちに投与を中止する", "減量のみで継続投与する", "経過観察のみでよい", "アスピリン投与を追加して継続する"], correct: 0,
+      explain: "血管閉塞性事象又はGrade3以上の心不全が発現した場合は直ちに投与を中止することが規定されています(症状消失後、治療継続が望ましい場合は減量して再開できます)。" },
+    { category: "用量規制因子・モニタリング", type: "single", q: "BCR-ABL1国際スケールにおける主要分子奏効(MMR)の基準値は?",
+      choices: ["BCR-ABL1(IS)≤0.1%", "BCR-ABL1(IS)≤1%", "BCR-ABL1(IS)≤10%", "BCR-ABL1(IS)≤0.01%"], correct: 0,
+      explain: "主要分子奏効(MMR)はBCR-ABL1国際スケールで≤0.1%と定義され、完全細胞遺伝学的奏効(CCyR)の≤1%よりさらに深い奏効を示します。" },
+    { category: "用量規制因子・モニタリング", type: "single", q: "2025年ELN推奨における12ヶ月時点の良好(favorable)な奏効マイルストーンの目安は?",
+      choices: ["BCR-ABL1(IS)≤0.1%", "BCR-ABL1(IS)≤1%", "BCR-ABL1(IS)≤10%", "BCR-ABL1が検出感度以下"], correct: 0,
+      explain: "2025年ELN推奨では3ヶ月で≤10%、6ヶ月で≤1%、12ヶ月で≤0.1%が良好(favorable)の目安とされています。" },
+    { category: "用量規制因子・モニタリング", type: "multi", q: "TKI中止(TFR)の運用として正しいものをすべて選べ(2つ選択)",
+      choices: ["中止後は6-8週ごとの分子モニタリングが必要", "第1慢性期でのTKI治療期間の最小条件(第1世代5年超・第2世代4年超等)を満たしていること", "移行期の既往があっても中止可能", "中止後のモニタリングは不要"], correct: [0, 1],
+      explain: "TFRは第1慢性期のみを対象とし、TKI治療期間・深分子奏効(MR4以上)持続の最小条件を満たした上で、中止後は6-8週ごとの分子モニタリングが必須です。移行期の既往がある場合は対象外とされます。" },
+
+    // ══════════ 特徴的な副作用(添付文書の警告・禁忌・重大な副作用) ══════════
+    { category: "特徴的な副作用", type: "single", q: "イマチニブに特徴的な、長期QOLに影響しうる副作用は?",
+      choices: ["眼窩周囲浮腫・筋痙攣", "投与初期の下痢", "胸水", "膵炎"], correct: 0,
+      explain: "イマチニブでは眼窩周囲浮腫・筋痙攣が長期QOLに影響することがある特徴的な副作用として挙げられています。" },
+    { category: "特徴的な副作用", type: "single", q: "ニロチニブに特徴的な心血管・代謝系の有害事象の組み合わせは?",
+      choices: ["QT延長・動脈血栓塞栓症・高血糖・高コレステロール血症", "胸水・肺高血圧", "投与初期の下痢のみ", "血小板減少のみ"], correct: 0,
+      explain: "ニロチニブはQT延長、動脈血栓塞栓症(2-3%)、高血糖、高コレステロール血症が特徴的で、定期的な脂質・血糖・心血管モニタリングが必要です。" },
+    { category: "特徴的な副作用", type: "single", q: "ダサチニブに特徴的な、比較的高頻度に報告される副作用は?",
+      choices: ["胸水", "手足症候群", "投与初期の下痢", "眼窩周囲浮腫"], correct: 0,
+      explain: "ダサチニブは胸水(比較的高頻度)や肺高血圧が特徴的な副作用として報告されています。" },
+    { category: "特徴的な副作用", type: "single", q: "ボスチニブに特徴的な、投与初期に多い副作用は?",
+      choices: ["下痢", "胸水", "QT延長", "眼障害"], correct: 0,
+      explain: "ボスチニブは投与初期2-4週に下痢が多いとされますが、多くは自然軽快します。" },
+    { category: "特徴的な副作用", type: "single", q: "アシミニブに特徴的な副作用の組み合わせは?",
+      choices: ["血小板減少・膵酵素上昇・頭痛", "胸水・肺高血圧", "QT延長・動脈血栓塞栓症", "眼窩周囲浮腫・筋痙攣"], correct: 0,
+      explain: "アシミニブは血小板減少、膵酵素上昇、頭痛が特徴的とされ、第2世代TKIと比べ全体にGrade3以上有害事象の頻度が低い傾向がASC4FIRST試験で示されています。" },
+    { category: "特徴的な副作用", type: "single", q: "ポナチニブの警告欄に明記されている、死亡例も報告された重篤な副作用は?",
+      choices: ["動脈閉塞性事象(心筋梗塞・脳卒中等)と重篤な肝機能障害", "間質性肺炎のみ", "重度の下痢のみ", "手足症候群のみ"], correct: 0,
+      explain: "ポナチニブの警告には、心筋梗塞・脳梗塞・網膜動脈閉塞症等の重篤な血管閉塞性事象と、肝不全に至る重篤な肝機能障害の両方が明記されています。" },
+    { category: "特徴的な副作用", type: "single", q: "イマチニブの重大な副作用として添付文書に記載されている、頻度不明ながら重篤な皮膚症状は?",
+      choices: ["中毒性表皮壊死融解症・皮膚粘膜眼症候群", "手足症候群", "ざ瘡様皮疹", "光線過敏症"], correct: 0,
+      explain: "イマチニブでは中毒性表皮壊死融解症、皮膚粘膜眼症候群(頻度不明)、多形紅斑・剥脱性皮膚炎(各1%未満)が重大な副作用として記載されています。" },
+    { category: "特徴的な副作用", type: "single", q: "ダサチニブ投与中にリスクが指摘されている感染症関連の重大な副作用は?",
+      choices: ["B型肝炎ウイルスの再活性化を含む感染症", "結核の再燃のみ", "帯状疱疹のみ", "感染症リスクの記載はない"], correct: 0,
+      explain: "ダサチニブでは肺炎・敗血症等の感染症に加え、B型肝炎ウイルスの再活性化があらわれることがあると添付文書に記載されています。" },
+    { category: "特徴的な副作用", type: "single", q: "ボスチニブの骨髄抑制(43.2%)の内訳のうち、添付文書上最も高頻度に報告されているのは?",
+      choices: ["血小板減少(33.9%)", "貧血(17.1%)", "白血球減少(8.8%)", "好中球減少(15.2%)"], correct: 0,
+      explain: "ボスチニブの骨髄抑制(43.2%)の内訳では血小板減少33.9%が最も高頻度で報告されています。" },
+    { category: "特徴的な副作用", type: "single", q: "TKI(チロシンキナーゼ阻害薬)全般で、PTP包装の取り扱いについて添付文書が共通して注意喚起している内容は?",
+      choices: ["PTPシートから取り出して服用しないと誤飲時に食道粘膜穿孔等のリスクがある", "PTP包装のまま保管すれば冷所保存は不要になる", "PTPシートは食後にまとめて廃棄すればよい", "PTP包装の薬剤は粉砕してから服用する"], correct: 0,
+      explain: "6剤いずれの添付文書にも、PTPシートから取り出して服用するよう指導すること、誤飲により食道粘膜への刺入・穿孔等の重篤な合併症を併発することがある旨が明記されています。" },
+    { category: "特徴的な副作用", type: "single", q: "アシミニブの血管閉塞性事象に関するASC4FIRST試験の報告として正しいのは?",
+      choices: ["第2世代TKIと比べ全体にGrade3以上有害事象の頻度が低い傾向が示された", "血管閉塞性事象は報告されなかった", "ポナチニブより高頻度の血管閉塞性事象が報告された", "血管閉塞性事象についての報告はない"], correct: 0,
+      explain: "ASC4FIRST試験では、アシミニブは第2世代TKIと比べ全体にGrade3以上有害事象の頻度が低い傾向が示されていますが、脳梗塞・心筋虚血等の血管閉塞性事象(各0.3%)も重大な副作用として添付文書に記載されています。" },
+    { category: "特徴的な副作用", type: "multi", q: "TKI(チロシンキナーゼ阻害薬)6剤のうち、添付文書の重大な副作用に「腫瘍崩壊症候群」が明記されているものをすべて選べ(3つ選択)",
+      choices: ["イマチニブ", "ニロチニブ", "ダサチニブ", "アシミニブ"], correct: [0, 1, 2],
+      explain: "イマチニブ、ニロチニブ、ダサチニブの添付文書にはいずれも腫瘍崩壊症候群が重大な副作用として記載されています(ボスチニブにも記載あり)。アシミニブの添付文書(本レポートで取得できた情報の範囲)には腫瘍崩壊症候群の明記は確認できませんでした。" },
+
+    // ══════════ バイオマーカー ══════════
+    { category: "バイオマーカー", type: "single", q: "BCR::ABL1定量PCR(国際標準化スケール)の主な役割は?",
+      choices: ["診断・治療反応性モニタリングの中心的指標", "手術適応の判定", "放射線治療の必要性判定", "薬価の算定根拠"], correct: 0,
+      explain: "BCR::ABL1定量PCR(IS)はCML診断および治療反応性モニタリングの中心的指標です。" },
+    { category: "バイオマーカー", type: "single", q: "TKI不応時に行う変異解析の主な目的は?",
+      choices: ["耐性変異プロファイル(T315I等)に応じた薬剤選択", "病期分類の確定", "感染症の有無の確認", "薬物代謝酵素多型の確認"], correct: 0,
+      explain: "TKI不応時はBCR-ABL1キナーゼドメイン変異(T315I等)の解析を行い、耐性変異プロファイルに応じてポナチニブ・アシミニブ等を選択します。" },
+    { category: "バイオマーカー", type: "single", q: "ELTSスコアの算出に用いられる因子の組み合わせは?",
+      choices: ["年齢・脾腫・血小板数・芽球比率", "身長・体重・BMI・喫煙歴", "薬価・保険区分・自己負担割合", "染色体異常の種類のみ"], correct: 0,
+      explain: "ELTSスコアは診断時の年齢・脾腫・血小板数・芽球比率から長期生存を予測するスコアです。" },
+    { category: "バイオマーカー", type: "single", q: "e13a2/e14a2転写産物型の臨床的意義は?",
+      choices: ["TFR(治療フリー寛解)の成功予測因子の一つ", "TKI選択に無関係な情報", "薬価算定に用いられる情報", "感染リスクの予測因子"], correct: 0,
+      explain: "e13a2/e14a2転写産物型はTFR(治療フリー寛解)の成功予測因子の一つとされています。" },
+
+    // ══════════ コスト制度 ══════════
+    { category: "コスト制度", type: "single", q: "高額療養費制度の「多数回該当」とは?",
+      choices: ["直近12ヶ月に4回目以降該当した場合、上限額がさらに引き下げられる制度", "70歳以上のみに適用される特別枠", "初回申請時から自動適用される割引", "手術を伴う治療のみに適用される"], correct: 0,
+      explain: "CMLのように長期にわたりTKI内服が必要な疾患では、直近12ヶ月で4回目以降の高額療養費該当時に上限額がさらに引き下げられる「多数回該当」の恩恵を受けやすくなります。" },
+    { category: "コスト制度", type: "single", q: "「限度額適用認定証」を事前に取得するメリットは?",
+      choices: ["窓口での支払いを自己負担限度額までに抑えられる", "薬剤費そのものが割引される", "保険適用外の治療が保険適用になる", "特にメリットはない"], correct: 0,
+      explain: "認定証がない場合はいったん全額を立て替えて後日払い戻しを受ける必要がありますが、事前取得により窓口負担自体を上限額までに抑えられます。" }
+  ];
+
+  var QUIZ_SESSION_SIZE = 10;
+  var quizOrder = [];     // indices into QUIZ for THIS session (random subset)
+  var quizIndex = 0;
+  var quizAnswers = [];   // per-question(by original index): selected choice index (single) or array of indices (multi)
+  var quizFeedback = {};  // { [questionIndex]: 'good' | 'bad' }
+
+  function quizPickSession() {
+    var all = QUIZ.map(function (_, i) { return i; });
+    quizShuffle(all);
+    quizOrder = all.slice(0, QUIZ_SESSION_SIZE);
+  }
+  function quizShuffle(arr) {
+    for (var i = arr.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = arr[i]; arr[i] = arr[j]; arr[j] = t;
+    }
+    return arr;
+  }
+
+  function quizLoadFeedback() {
+    try {
+      var raw = localStorage.getItem('cmlQuizFeedback_v2');
+      quizFeedback = raw ? JSON.parse(raw) : {};
+    } catch (e) { quizFeedback = {}; }
+  }
+  function quizSaveFeedback() {
+    try { localStorage.setItem('cmlQuizFeedback_v2', JSON.stringify(quizFeedback)); } catch (e) {}
+  }
+  function quizBuildRatingRow(qi) {
+    var row = document.createElement('div');
+    row.className = 'rate-row';
+    var label = document.createElement('span');
+    label.className = 'rate-label';
+    label.textContent = 'この問題の評価:';
+    var goodBtn = document.createElement('button');
+    goodBtn.type = 'button'; goodBtn.className = 'rate-btn'; goodBtn.textContent = '👍 良問';
+    var badBtn = document.createElement('button');
+    badBtn.type = 'button'; badBtn.className = 'rate-btn'; badBtn.textContent = '👎 悪問';
+    function refresh() {
+      goodBtn.classList.toggle('active-good', quizFeedback[qi] === 'good');
+      badBtn.classList.toggle('active-bad', quizFeedback[qi] === 'bad');
+    }
+    goodBtn.onclick = function () {
+      quizFeedback[qi] = (quizFeedback[qi] === 'good') ? null : 'good';
+      if (!quizFeedback[qi]) delete quizFeedback[qi];
+      quizSaveFeedback(); refresh();
+    };
+    badBtn.onclick = function () {
+      quizFeedback[qi] = (quizFeedback[qi] === 'bad') ? null : 'bad';
+      if (!quizFeedback[qi]) delete quizFeedback[qi];
+      quizSaveFeedback(); refresh();
+    };
+    refresh();
+    row.appendChild(label); row.appendChild(goodBtn); row.appendChild(badBtn);
+    return row;
+  }
+  function quizFallbackCopy(text, done) {
+    var ta = document.createElement('textarea');
+    ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); } catch (e) {}
+    document.body.removeChild(ta);
+    done();
+  }
+  function quizChoiceLabel(item) {
+    return item.choices.join(' / ');
+  }
+  function quizCorrectLabel(item) {
+    if (item.type === 'multi') return item.correct.map(function (i) { return item.choices[i]; }).join(' ＋ ');
+    return item.choices[item.correct];
+  }
+  function quizExportFeedback() {
+    var ratedIdx = Object.keys(quizFeedback);
+    if (ratedIdx.length === 0) {
+      alert('まだ評価された問題がありません。各問題に回答した後に表示される「👍 良問」「👎 悪問」ボタンで評価してから、もう一度お試しください。');
+      return;
+    }
+    var goodList = [], badList = [];
+    ratedIdx.forEach(function (idxStr) {
+      var idx = parseInt(idxStr, 10);
+      var item = QUIZ[idx];
+      if (!item) return;
+      var entry = '・[' + item.category + (item.type === 'multi' ? '/複数選択' : '') + '] ' + item.q + '\n  選択肢: ' + quizChoiceLabel(item) + '\n  正解: ' + quizCorrectLabel(item);
+      if (quizFeedback[idx] === 'good') goodList.push(entry);
+      else if (quizFeedback[idx] === 'bad') badList.push(entry);
+    });
+    var text = '【CML(慢性骨髄性白血病)クイズ(quiz-cml.html、全50問プール)フィードバック】\n\n' +
+      '良問と評価された問題(' + goodList.length + '件):\n' + (goodList.length ? goodList.join('\n\n') : '(なし)') + '\n\n' +
+      '悪問と評価された問題(' + badList.length + '件) — 改善・差し替えを検討してください:\n' + (badList.length ? badList.join('\n\n') : '(なし)') + '\n\n' +
+      '参照ファイル: artifacts/html/oncology-reports/quiz-cml.html\n\n' +
+      '上記フィードバックを踏まえて、「悪問」と評価された問題をレポート本文(artifacts/html/oncology-reports/cml.html、添付文書情報セクション含む)の内容に基づいて改善・差し替えてください。「良問」と評価された問題は現状を維持してください。';
+    var notify = function () { alert('フィードバックをコピーしました。MulmoClaudeのチャットに貼り付けて送信してください。問題の改善に使います。'); };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(notify).catch(function () { quizFallbackCopy(text, notify); });
+    } else { quizFallbackCopy(text, notify); }
+  }
+  function quizResetFeedback() {
+    if (!confirm('すべての評価をリセットします。よろしいですか?')) return;
+    quizFeedback = {};
+    quizSaveFeedback();
+    alert('評価をリセットしました。');
+  }
+
+  function quizRenderQuestion() {
+    document.getElementById('quiz-result-area').style.display = 'none';
+    document.getElementById('quiz-question-area').style.display = 'block';
+    var qi = quizOrder[quizIndex];
+    var item = QUIZ[qi];
+    document.getElementById('quiz-progress-text').textContent = '問 ' + (quizIndex + 1) + ' / ' + quizOrder.length + '(全' + QUIZ.length + '問中からランダム出題)';
+    document.getElementById('quiz-cat-badge').textContent = item.category;
+    document.getElementById('quiz-type-badge').style.display = (item.type === 'multi') ? 'inline-flex' : 'none';
+    document.getElementById('quiz-progress-fill').style.width = Math.round((quizIndex / quizOrder.length) * 100) + '%';
+    document.getElementById('quiz-question-text').textContent = item.q;
+    document.getElementById('quiz-explain-area').style.display = 'none';
+    document.getElementById('quiz-explain-area').innerHTML = '';
+    document.getElementById('quiz-next-btn').style.display = 'none';
+    document.getElementById('quiz-submit-row').style.display = 'none';
+
+    var wrap = document.getElementById('quiz-choices');
+    wrap.innerHTML = '';
+
+    if (item.type === 'multi') {
+      var selected = {};
+      item.choices.forEach(function (choiceText, idx) {
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'quiz-choice';
+        btn.innerHTML = '<span class="quiz-choice-check">☐</span> ' + choiceText.replace(/</g, '&lt;');
+        btn.onclick = function () {
+          selected[idx] = !selected[idx];
+          btn.classList.toggle('selected', !!selected[idx]);
+          btn.querySelector('.quiz-choice-check').textContent = selected[idx] ? '☑' : '☐';
+        };
+        wrap.appendChild(btn);
+      });
+      document.getElementById('quiz-submit-row').style.display = 'block';
+      document.getElementById('quiz-submit-btn').onclick = function () {
+        var chosen = Object.keys(selected).filter(function (k) { return selected[k]; }).map(Number);
+        quizAnswerMulti(chosen);
+      };
+    } else {
+      item.choices.forEach(function (choiceText, idx) {
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'quiz-choice';
+        btn.textContent = choiceText;
+        btn.onclick = function () { quizAnswerSingle(idx); };
+        wrap.appendChild(btn);
+      });
+    }
+  }
+
+  function quizFinishQuestion(qi, isCorrect, correctText) {
+    var item = QUIZ[qi];
+    var explainArea = document.getElementById('quiz-explain-area');
+    explainArea.className = 'quiz-explain';
+    explainArea.style.display = 'block';
+    explainArea.innerHTML = '<div style="font-weight:700; margin-bottom:4px; color:' + (isCorrect ? 'var(--good)' : 'var(--critical)') + ';">' +
+      (isCorrect ? '✅ 正解' : '❌ 不正解(正解: ' + correctText + ')') + '</div>' +
+      '<div>' + (item.explain || '') + '</div>';
+    explainArea.appendChild(quizBuildRatingRow(qi));
+    document.getElementById('quiz-submit-row').style.display = 'none';
+    document.getElementById('quiz-next-btn').style.display = 'inline-block';
+    document.getElementById('quiz-next-btn').textContent = (quizIndex === quizOrder.length - 1) ? '結果を見る →' : '次の問題 →';
+  }
+
+  function quizAnswerSingle(selectedIdx) {
+    var qi = quizOrder[quizIndex];
+    var item = QUIZ[qi];
+    quizAnswers[qi] = selectedIdx;
+    var buttons = document.getElementById('quiz-choices').querySelectorAll('.quiz-choice');
+    buttons.forEach(function (btn, idx) {
+      btn.disabled = true;
+      if (idx === item.correct) btn.classList.add('correct');
+      else if (idx === selectedIdx) btn.classList.add('wrong');
+    });
+    quizFinishQuestion(qi, selectedIdx === item.correct, item.choices[item.correct]);
+  }
+
+  function quizSubmitMulti() {
+    var qi = quizOrder[quizIndex];
+    var item = QUIZ[qi];
+    var buttons = document.getElementById('quiz-choices').querySelectorAll('.quiz-choice');
+    var chosen = [];
+    buttons.forEach(function (btn, idx) {
+      if (btn.classList.contains('selected')) chosen.push(idx);
+    });
+    quizAnswerMulti(chosen, buttons, item, qi);
+  }
+
+  function quizAnswerMulti(chosen, buttons, item, qi) {
+    qi = (qi === undefined) ? quizOrder[quizIndex] : qi;
+    item = item || QUIZ[qi];
+    buttons = buttons || document.getElementById('quiz-choices').querySelectorAll('.quiz-choice');
+    quizAnswers[qi] = chosen;
+    var correctSet = item.correct.slice().sort();
+    var chosenSet = chosen.slice().sort();
+    var isCorrect = correctSet.length === chosenSet.length && correctSet.every(function (v, i) { return v === chosenSet[i]; });
+    buttons.forEach(function (btn, idx) {
+      btn.disabled = true;
+      var isRight = item.correct.indexOf(idx) !== -1;
+      var wasChosen = chosen.indexOf(idx) !== -1;
+      if (isRight) btn.classList.add('correct');
+      else if (wasChosen) btn.classList.add('wrong');
+    });
+    quizFinishQuestion(qi, isCorrect, quizCorrectLabel(item));
+  }
+
+  function quizNext() {
+    if (quizIndex < quizOrder.length - 1) {
+      quizIndex++;
+      quizRenderQuestion();
+    } else {
+      quizShowResult();
+    }
+  }
+
+  function quizShowResult() {
+    document.getElementById('quiz-progress-fill').style.width = '100%';
+    document.getElementById('quiz-progress-text').textContent = '完了 ' + quizOrder.length + ' / ' + quizOrder.length;
+    document.getElementById('quiz-cat-badge').textContent = '';
+    document.getElementById('quiz-type-badge').style.display = 'none';
+    document.getElementById('quiz-question-area').style.display = 'none';
+
+    var correctCount = 0;
+    var byCategory = {};
+    quizOrder.forEach(function (qi) {
+      var item = QUIZ[qi];
+      if (!byCategory[item.category]) byCategory[item.category] = { correct: 0, total: 0 };
+      byCategory[item.category].total++;
+      var ans = quizAnswers[qi];
+      var isCorrect;
+      if (item.type === 'multi') {
+        var correctSet = item.correct.slice().sort();
+        var chosenSet = (ans || []).slice().sort();
+        isCorrect = correctSet.length === chosenSet.length && correctSet.every(function (v, i) { return v === chosenSet[i]; });
+      } else {
+        isCorrect = ans === item.correct;
+      }
+      if (isCorrect) { correctCount++; byCategory[item.category].correct++; }
+    });
+    var pct = Math.round((correctCount / quizOrder.length) * 100);
+
+    var catHtml = '';
+    Object.keys(byCategory).forEach(function (cat) {
+      var c = byCategory[cat];
+      var p = Math.round((c.correct / c.total) * 100);
+      catHtml += '<div class="cat-result-row"><span class="text-xs" style="width:150px; flex-shrink:0;">' + cat + '</span>' +
+        '<div class="cat-result-bar"><div class="cat-result-fill" style="width:' + p + '%"></div></div>' +
+        '<span class="text-xs muted" style="width:56px; text-align:right;">' + c.correct + '/' + c.total + '</span></div>';
+    });
+
+    var reviewHtml = '';
+    quizOrder.forEach(function (qi) {
+      var item = QUIZ[qi];
+      var ans = quizAnswers[qi];
+      var isCorrect;
+      var yourAnswerText;
+      if (item.type === 'multi') {
+        var correctSet = item.correct.slice().sort();
+        var chosenSet = (ans || []).slice().sort();
+        isCorrect = correctSet.length === chosenSet.length && correctSet.every(function (v, i) { return v === chosenSet[i]; });
+        yourAnswerText = (ans && ans.length) ? ans.map(function (i) { return item.choices[i]; }).join(' ＋ ') : '(未回答)';
+      } else {
+        isCorrect = ans === item.correct;
+        yourAnswerText = (ans != null) ? item.choices[ans] : '(未回答)';
+      }
+      if (!isCorrect) {
+        reviewHtml += '<div class="review-item">' +
+          '<div class="text-sm font-semibold mb-1">' + item.q + '</div>' +
+          '<div class="text-xs muted mb-2">あなたの回答: ' + yourAnswerText + ' / 正解: ' + quizCorrectLabel(item) + '</div>' +
+          '<div class="text-xs" style="line-height:1.6;">' + (item.explain || '') + '</div>' +
+          '</div>';
+      }
+    });
+    if (!reviewHtml) reviewHtml = '<p class="text-sm secondary">全問正解です。見直しの必要な項目はありません 🎉</p>';
+
+    var goodCount = 0, badCount = 0;
+    Object.keys(quizFeedback).forEach(function (k) {
+      if (quizFeedback[k] === 'good') goodCount++;
+      else if (quizFeedback[k] === 'bad') badCount++;
+    });
+
+    var resultArea = document.getElementById('quiz-result-area');
+    resultArea.style.display = 'block';
+    resultArea.innerHTML =
+      '<div class="text-center mb-6">' +
+        '<div class="score-ring-num" style="color:var(--series-new);">' + correctCount + ' / ' + quizOrder.length + '</div>' +
+        '<div class="text-sm muted mt-1">正答率 ' + pct + '%(全' + QUIZ.length + '問プールから今回ランダム抽出された' + quizOrder.length + '問)</div>' +
+      '</div>' +
+      '<div class="mb-6"><div class="text-sm font-semibold mb-3">カテゴリ別正答率(今回出題分)</div>' + catHtml + '</div>' +
+      '<div class="mb-2 text-sm font-semibold">見直し(不正解・未回答の問題)</div>' +
+      '<div class="mb-6">' + reviewHtml + '</div>' +
+      '<div class="mb-6 pt-4 border-t" style="border-color:var(--gridline);">' +
+        '<div class="text-sm font-semibold mb-2">問題の評価状況(全50問プール通算)</div>' +
+        '<div class="text-xs muted mb-3">👍 良問 ' + goodCount + '件 ・ 👎 悪問 ' + badCount + '件</div>' +
+        '<div class="flex flex-wrap gap-3">' +
+          '<button type="button" class="quiz-btn-outline" onclick="quizExportFeedback()">📋 フィードバックをエクスポート(チャットに貼り付け用)</button>' +
+          '<button type="button" class="quiz-btn-outline" onclick="quizResetFeedback()" style="border-color:var(--critical); color:var(--critical);">🗑 評価をリセット</button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="flex flex-wrap gap-3 justify-center">' +
+        '<button type="button" class="quiz-btn" onclick="quizRestart()">🔀 新しい10問でもう一度</button>' +
+        '<a href="cml.html" class="quiz-btn-outline" style="text-decoration:none; display:inline-block;">レポート本文に戻る</a>' +
+      '</div>';
+  }
+
+  function quizRestart() {
+    quizPickSession();
+    quizIndex = 0;
+    quizAnswers = [];
+    quizRenderQuestion();
+  }
+
+  quizLoadFeedback();
+  quizPickSession();
+  quizRenderQuestion();
+</script>
+
+<footer class="text-center text-xs pb-4" style="color: var(--text-muted);">
+  本クイズは学習・自己点検を目的とした資料です。臨床判断には利用せず、最新の添付文書・ガイドライン原文を優先してください。
+</footer>
+
+</body>
+</html>

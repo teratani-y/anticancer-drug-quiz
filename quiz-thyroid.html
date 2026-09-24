@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>甲状腺癌理解度クイズ 全50問(ランダム10問出題)</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+:root, .viz-root {
+  color-scheme: light;
+  --surface-1: #fcfcfb; --page-plane: #f9f9f7;
+  --text-primary: #0b0b0b; --text-secondary: #52514e; --text-muted: #898781;
+  --gridline: #e1e0d9; --baseline: #c3c2b7;
+  --series-new: #2a78d6; --series-control: #b9b7ae;
+  --good: #0ca30c; --warning: #b9790a; --critical: #d03b3b;
+  --border: rgba(11,11,11,0.10);
+}
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) {
+    color-scheme: dark;
+    --surface-1: #1a1a19; --page-plane: #0d0d0d;
+    --text-primary: #ffffff; --text-secondary: #c3c2b7; --text-muted: #898781;
+    --gridline: #2c2c2a; --baseline: #383835;
+    --series-new: #3987e5; --series-control: #55534c;
+    --good: #0ca30c; --warning: #eab116; --critical: #e66767;
+    --border: rgba(255,255,255,0.10);
+  }
+}
+body { background: var(--page-plane); color: var(--text-primary); font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+.card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+.secondary { color: var(--text-secondary); }
+.muted { color: var(--text-muted); }
+.cat-badge { display:inline-flex; align-items:center; padding:3px 10px; border-radius:9999px; font-size:0.72rem; font-weight:700; background: color-mix(in srgb, var(--series-new) 14%, transparent); color: var(--series-new); }
+.type-badge { display:inline-flex; align-items:center; padding:3px 10px; border-radius:9999px; font-size:0.68rem; font-weight:700; background: color-mix(in srgb, var(--warning) 16%, transparent); color: var(--warning); margin-left:6px; }
+.progress-track { background: var(--gridline); border-radius: 9999px; height: 8px; overflow: hidden; }
+.progress-fill { background: var(--series-new); height: 100%; border-radius: 9999px; transition: width .25s; }
+.quiz-choice { display:block; width:100%; text-align:left; background: var(--page-plane); border: 1.5px solid var(--gridline); border-radius: 10px; padding: 12px 16px; font-size: 0.92rem; cursor: pointer; transition: border-color .12s, background .12s; margin-bottom: 10px; }
+.quiz-choice:last-child { margin-bottom: 0; }
+.quiz-choice:hover:not(:disabled) { border-color: var(--series-new); }
+.quiz-choice:disabled { cursor: default; }
+.quiz-choice.correct { border-color: var(--good); background: color-mix(in srgb, var(--good) 12%, transparent); font-weight: 700; }
+.quiz-choice.wrong { border-color: var(--critical); background: color-mix(in srgb, var(--critical) 10%, transparent); }
+.quiz-choice.selected { border-color: var(--series-new); background: color-mix(in srgb, var(--series-new) 10%, transparent); }
+.quiz-choice-check { display:inline-block; width:16px; }
+.quiz-explain { background: var(--page-plane); border: 1px solid var(--gridline); border-radius: 10px; padding: 14px 16px; margin-top: 14px; font-size: 0.85rem; line-height: 1.7; }
+.quiz-btn { background: var(--series-new); color: #fff; border: none; border-radius: 8px; padding: 10px 22px; font-size: 0.88rem; font-weight: 700; cursor: pointer; }
+.quiz-btn:hover { opacity: 0.9; }
+.quiz-btn:disabled { opacity: 0.4; cursor: default; }
+.quiz-btn-outline { background: transparent; color: var(--series-new); border: 1.5px solid var(--series-new); border-radius: 8px; padding: 9px 20px; font-size: 0.88rem; font-weight: 700; cursor: pointer; }
+.quiz-btn-outline:hover { background: color-mix(in srgb, var(--series-new) 10%, transparent); }
+.score-ring-num { font-size: 2.6rem; font-weight: 800; }
+.cat-result-row { display:flex; align-items:center; gap:10px; margin-bottom: 8px; }
+.cat-result-bar { flex:1; background: var(--gridline); border-radius: 9999px; height: 10px; overflow:hidden; }
+.cat-result-fill { background: var(--series-new); height:100%; border-radius: 9999px; }
+.review-item { border: 1px solid var(--gridline); border-radius: 10px; padding: 12px 14px; margin-bottom: 10px; }
+.review-item:last-child { margin-bottom: 0; }
+.rate-row { display:flex; align-items:center; gap:8px; margin-top:14px; flex-wrap:wrap; }
+.rate-label { font-size:0.75rem; color: var(--text-muted); }
+.rate-btn { background: var(--page-plane); border: 1.5px solid var(--gridline); border-radius: 8px; padding: 6px 12px; font-size: 0.78rem; font-weight:600; cursor:pointer; color: var(--text-secondary); }
+.rate-btn:hover { border-color: var(--series-new); }
+.rate-btn.active-good { border-color: var(--good); background: color-mix(in srgb, var(--good) 14%, transparent); color: var(--good); }
+.rate-btn.active-bad { border-color: var(--critical); background: color-mix(in srgb, var(--critical) 12%, transparent); color: var(--critical); }
+</style>
+</head>
+<body class="viz-root">
+<div class="max-w-3xl mx-auto px-4 py-8 space-y-5">
+
+  <header class="card">
+    <div class="flex items-center justify-between gap-2 flex-wrap">
+      <div>
+        <h1 class="text-xl font-bold">🧠 甲状腺癌理解度クイズ</h1>
+        <p class="text-sm mt-1 secondary">全50問のプールからランダムに10問出題・4択/複数選択混在・医療従事者向け(治療ライン選択・用法用量・投与スケジュール・用量規制因子/モニタリング・添付文書の警告/禁忌/重大な副作用・バイオマーカー・コスト制度)</p>
+      </div>
+      <a href="thyroid.html" class="text-xs" style="color:var(--series-new); text-decoration:none; font-weight:600;">← レポート本文に戻る</a>
+    </div>
+    <p class="text-xs mt-3 muted">出題内容はすべて <a href="thyroid.html" style="color:var(--series-new);">甲状腺癌薬物治療レポート</a>(本文および「8. 主要薬剤の添付文書情報」)に記載の情報に基づきます。臨床判断には利用せず、学習・自己点検の目的でご利用ください。ページを再読み込みする、または結果画面の「シャッフルしてもう一度」を押すたびに、新しい10問がランダムに選ばれます。</p>
+  </header>
+
+  <!-- Quiz card -->
+  <section class="card" id="quiz-card">
+    <div class="flex items-center justify-between mb-2">
+      <span id="quiz-progress-text" class="text-xs font-semibold muted"></span>
+      <span><span id="quiz-cat-badge" class="cat-badge"></span><span id="quiz-type-badge" class="type-badge" style="display:none;">複数選択</span></span>
+    </div>
+    <div class="progress-track mb-5"><div class="progress-fill" id="quiz-progress-fill" style="width:0%"></div></div>
+
+    <div id="quiz-question-area">
+      <div id="quiz-question-text" class="text-base font-semibold mb-4" style="line-height:1.6;"></div>
+      <div id="quiz-choices"></div>
+      <div id="quiz-submit-row" style="display:none;" class="mt-3">
+        <button type="button" class="quiz-btn" id="quiz-submit-btn" onclick="quizSubmitMulti()">この内容で回答する</button>
+      </div>
+      <div id="quiz-explain-area" style="display:none;"></div>
+      <div class="mt-5 flex justify-end">
+        <button type="button" id="quiz-next-btn" class="quiz-btn" style="display:none;" onclick="quizNext()">次の問題 →</button>
+      </div>
+    </div>
+
+    <div id="quiz-result-area" style="display:none;"></div>
+  </section>
+
+</div>
+
+<script>
+  var QUIZ = [
+    // ══════════ 治療ライン選択(どの局面でどの選択肢を使うか) ══════════
+    { category: "治療ライン選択", type: "single", q: "RAI不応の分化型甲状腺癌(DTC)で、バイオマーカーを問わない第一選択(NCCN)は?",
+      choices: ["レンバチニブ", "セルペルカチニブ", "ダブラフェニブ+トラメチニブ", "カボザンチニブ"], correct: 0,
+      explain: "SELECT試験(PFS 18.3 vs プラセボ3.6ヶ月、HR 0.21、ORR 64.8%)に基づき、バイオマーカーを問わない第一選択として最も強いエビデンスを持ちます。" },
+    { category: "治療ライン選択", type: "single", q: "RAI不応DTCで、レンバチニブの代替となる第一選択の選択肢は?",
+      choices: ["ソラフェニブ(DECISION試験)", "バンデタニブ(ZETA試験)", "エヌトレクチニブ", "免疫チェックポイント阻害薬"], correct: 0,
+      explain: "ソラフェニブはDECISION試験(PFS 10.8 vs プラセボ5.8ヶ月)に基づき、レンバチニブの代替の第一選択として使用可能です。" },
+    { category: "治療ライン選択", type: "single", q: "RET融合遺伝子陽性のRAI不応DTCに対する治療選択は?",
+      choices: ["セルペルカチニブ", "バンデタニブ", "カボザンチニブ", "ソラフェニブ"], correct: 0,
+      explain: "LIBRETTO-001試験(バスケット試験)を根拠に承認されています(日本2022年2月承認、2024年6月腫瘍横断的適応拡大)。" },
+    { category: "治療ライン選択", type: "single", q: "NTRK融合遺伝子陽性のDTCに対応する治療選択は?",
+      choices: ["ラロトレクチニブまたはエヌトレクチニブ", "ダブラフェニブ+トラメチニブ", "バンデタニブ", "免疫チェックポイント阻害薬"], correct: 0,
+      explain: "腫瘍横断的承認のバスケット試験結果に基づき使用できます。乳頭癌での頻度は10%未満ですが、放射線関連甲状腺癌でやや高頻度です。" },
+    { category: "治療ライン選択", type: "single", q: "BRAF V600E変異陽性の乳頭癌・低分化癌に対応する治療選択は?",
+      choices: ["ダブラフェニブ+トラメチニブ", "セルペルカチニブ", "バンデタニブ", "カボザンチニブ"], correct: 0,
+      explain: "ROAR試験(バスケット試験、腫瘍横断的承認)に基づき使用できます。未分化癌(ATC)のBRAF V600E陽性例にも同レジメンが使用されます。" },
+    { category: "治療ライン選択", type: "single", q: "髄様癌(MTC)・RET遺伝子変異陽性における現在の第一選択は?",
+      choices: ["セルペルカチニブ", "バンデタニブ", "カボザンチニブ", "ソラフェニブ"], correct: 0,
+      explain: "LIBRETTO-531試験で、医師選択群(バンデタニブ/カボザンチニブ)に対しPFSで有意に優越(HR 0.28)を示しました。OSは中間解析時点でデータ未成熟のため統計学的な優越性は未確認です。" },
+    { category: "治療ライン選択", type: "single", q: "髄様癌(MTC)・RET変異の有無を問わない局所進行/転移例で、日本国内で承認されている分子標的薬は?",
+      choices: ["バンデタニブ(カプレルサ)", "カボザンチニブ(カボメティクス)", "レンバチニブ", "ソラフェニブ"], correct: 0,
+      explain: "バンデタニブは2015年9月28日に「根治切除不能な甲状腺髄様癌」で国内承認された、国内でMTCに承認されている唯一のマルチキナーゼ阻害薬です。" },
+    { category: "治療ライン選択", type: "single", q: "カボザンチニブ(カボメティクス)の日本での承認適応として正しいのはどれか?",
+      choices: ["腎細胞癌・肝細胞癌", "甲状腺髄様癌(MTC)", "甲状腺分化癌(DTC)", "未分化甲状腺癌(ATC)"], correct: 0,
+      explain: "カボメティクスは2020年3月25日に腎細胞癌、同年11月27日に肝細胞癌で国内承認されました。EXAM試験(MTC対象)は米国でのCometriq®承認(2012年)の根拠試験ですが、日本ではMTCとしての承認を取得していません。" },
+    { category: "治療ライン選択", type: "single", q: "未分化癌(ATC)・BRAF V600E陽性例における治療選択は?",
+      choices: ["ダブラフェニブ+トラメチニブ", "セルペルカチニブ", "バンデタニブ", "エヌトレクチニブ"], correct: 0,
+      explain: "ROAR試験ATCコホートで奏効率56%、12ヶ月生存率52%(ヒストリカルコントロールの中央生存期間6ヶ月未満と比較し顕著な改善)を示しています。" },
+    { category: "治療ライン選択", type: "single", q: "未分化癌(ATC)・BRAF陰性・切除不能例に対する現状の治療のエビデンスレベルは?",
+      choices: ["標準治療としてのエビデンスレベルは限定的で、臨床試験参加が推奨される", "第III相RCTで確立した標準治療がある", "免疫チェックポイント阻害薬が標準治療として承認されている", "分子標的薬の単独投与が第一選択として確立している"], correct: 0,
+      explain: "手術+化学放射線療法や緩和的化学療法等の集学的治療が行われますが、エビデンスレベルは限定的です。" },
+    { category: "治療ライン選択", type: "single", q: "ATCへの免疫チェックポイント阻害薬(単独または分子標的薬併用)の規制当局承認状況は?",
+      choices: ["FDA・PMDAいずれも承認なし(研究段階)", "FDAのみ承認済み", "PMDAのみ承認済み", "FDA・PMDAいずれも承認済み"], correct: 0,
+      explain: "第II相・単群試験やメタ解析段階に留まり、ATCとしての承認はどの規制当局からも得られていません。標準治療としての承認と誤解しないよう注意が必要です。" },
+    { category: "治療ライン選択", type: "single", q: "プラルセチニブ(RET阻害薬)の日本での承認状況は(2026年9月時点)?",
+      choices: ["米国・欧州で承認済みだが日本は未承認", "日本を含め世界的に未承認", "日本でのみ承認済み", "世界中で承認済み"], correct: 0,
+      explain: "プラルセチニブは米国・欧州では承認されていますが、2026年9月時点で日本では未承認のRET阻害薬です。" },
+    { category: "治療ライン選択", type: "multi", q: "RAI不応DTC1次治療の選択肢として、第III相RCTに基づくエビデンスを持つ薬剤をすべて選べ(2つ選択)",
+      choices: ["レンバチニブ(SELECT試験)", "ソラフェニブ(DECISION試験)", "セルペルカチニブ(LIBRETTO-001試験)", "ダブラフェニブ+トラメチニブ(ROAR試験)"], correct: [0, 1],
+      explain: "レンバチニブ(SELECT試験)とソラフェニブ(DECISION試験)はいずれもプラセボ対照の第III相RCTです。セルペルカチニブとダブラフェニブ+トラメチニブの根拠試験(LIBRETTO-001、ROAR)はいずれも単群のバスケット試験です。" },
+    { category: "治療ライン選択", type: "multi", q: "RET融合遺伝子陽性・NTRK融合遺伝子陽性それぞれに対応する治療薬の組み合わせとして正しいものをすべて選べ(2つ選択)",
+      choices: ["RET融合遺伝子陽性にはセルペルカチニブ", "NTRK融合遺伝子陽性にはラロトレクチニブ/エヌトレクチニブ", "RET融合遺伝子陽性にはラロトレクチニブ", "NTRK融合遺伝子陽性にはセルペルカチニブ"], correct: [0, 1],
+      explain: "セルペルカチニブはRET融合(点変異含む)、ラロトレクチニブ/エヌトレクチニブはNTRK融合に対応する分子標的薬です。" },
+
+    // ══════════ 用法用量・投与スケジュール ══════════
+    { category: "用法用量・投与スケジュール", type: "single", q: "レンバチニブの甲状腺癌における通常用量は?",
+      choices: ["1日1回24mgを経口投与", "1日2回150mgを経口投与", "1日1回600mgを経口投与", "1回160mgを1日2回経口投与"], correct: 0,
+      explain: "患者の状態により20mg、14mg、10mg、8mg又は4mgへの減量を検討します。" },
+    { category: "用法用量・投与スケジュール", type: "single", q: "レンバチニブカプセルの適用上の注意で重要なのは?",
+      choices: ["湿気に不安定なため、PTP包装から服用直前に取り出すこと", "冷蔵保存が必須である", "噛み砕いて服用すること", "空腹時投与が必須である"], correct: 0,
+      explain: "湿気に不安定な製剤特性があり、PTPシートの誤飲による食道穿孔等のリスクにも注意が必要です。" },
+    { category: "用法用量・投与スケジュール", type: "single", q: "ソラフェニブの標準用量は?",
+      choices: ["1回400mgを1日2回経口投与", "1回200mgを1日1回経口投与", "1日1回24mgを経口投与", "1回300mgを1日1回経口投与"], correct: 0,
+      explain: "患者の状態により適宜減量します。" },
+    { category: "用法用量・投与スケジュール", type: "single", q: "ソラフェニブ投与時の食事に関する添付文書上の注意は?",
+      choices: ["高脂肪食摂取時は、食事の1時間前から食後2時間までの間の服用を避ける", "食後30分以内に服用しなければならない", "空腹時投与は禁止されている", "食事に関する注意事項はない"], correct: 0,
+      explain: "高脂肪食摂取により吸収に影響が出る可能性があるため、この時間帯の服用は避けることとされています。" },
+    { category: "用法用量・投与スケジュール", type: "single", q: "セルペルカチニブの成人標準用量(体表面積1.6m²以上)は?",
+      choices: ["1回160mgを1日2回経口投与", "1回80mgを1日1回経口投与", "1日1回24mgを経口投与", "1回300mgを1日1回経口投与"], correct: 0,
+      explain: "体表面積1.2m²未満は80mg、1.2〜1.6m²未満は120mgを1日2回投与します。" },
+    { category: "用法用量・投与スケジュール", type: "single", q: "バンデタニブ(カプレルサ)の甲状腺髄様癌における用法用量は?",
+      choices: ["1回300mgを1日1回経口投与", "1回160mgを1日2回経口投与", "1回400mgを1日2回経口投与", "1日1回24mgを経口投与"], correct: 0,
+      explain: "患者の状態により適宜減量します。" },
+    { category: "用法用量・投与スケジュール", type: "single", q: "ダブラフェニブ+トラメチニブを甲状腺癌(固形腫瘍の腫瘍横断的適応)に使用する際の用法用量は?",
+      choices: ["ダブラフェニブ150mgを1日2回+トラメチニブ2mgを1日1回、いずれも空腹時", "ダブラフェニブ600mgを1日1回のみ", "トラメチニブのみ2mgを1日2回", "ダブラフェニブ75mgを1日1回+トラメチニブ0.5mgを1日1回"], correct: 0,
+      explain: "いずれも食事の1時間前から食後2時間までの間の服用を避け、空腹時に併用経口投与します。" },
+    { category: "用法用量・投与スケジュール", type: "single", q: "ラロトレクチニブ(ヴァイトラックビ)の成人標準用量は?",
+      choices: ["1回100mgを1日2回経口投与", "1日1回600mgを経口投与", "1回160mgを1日2回経口投与", "1回300mgを1日1回経口投与"], correct: 0,
+      explain: "患者の状態により減量可能です。小児は体表面積換算(100mg/m²、上限100mg)を1日2回投与します。" },
+    { category: "用法用量・投与スケジュール", type: "multi", q: "エヌトレクチニブ(ロズリートレク)の用法用量に関する記載として正しいものをすべて選べ(2つ選択)",
+      choices: ["NTRK融合遺伝子陽性の固形癌に成人は1日1回600mgを経口投与する", "ROS1融合遺伝子陽性の非小細胞肺癌にも同一の600mg 1日1回の用法用量が承認されている", "1回300mgを1日2回経口投与する", "小児にも成人と同じ600mg固定用量のみが承認されている"], correct: [0, 1],
+      explain: "成人はNTRK融合遺伝子陽性・ROS1融合遺伝子陽性いずれも600mg 1日1回です。小児のNTRK融合遺伝子陽性には体表面積換算(300mg/m²、上限600mg)が用いられます。" },
+
+    // ══════════ 用量規制因子・モニタリング ══════════
+    { category: "用量規制因子・モニタリング", type: "single", q: "バンデタニブ投与前・投与中に必須のモニタリングは?",
+      choices: ["定期的な心電図検査及び電解質検査(QT延長のため)", "血糖値のみの定期測定", "視力検査のみ", "聴力検査のみ"], correct: 0,
+      explain: "警告欄にQT間隔延長のリスクが明記されており、心電図検査・電解質検査(カリウム、マグネシウム、カルシウム等)が必須です。" },
+    { category: "用量規制因子・モニタリング", type: "single", q: "バンデタニブ投与中にQTcBが500msecを超えた場合の添付文書上の対応は?",
+      choices: ["480msec以下に軽快するまで休薬し、再開時は休薬前の投与量から減量する", "直ちに永久中止する以外の選択肢はない", "経過観察のみで投与を継続する", "用量を増量して経過をみる"], correct: 0,
+      explain: "6週間以内に480msec以下に軽快しない場合は投与を中止することとされています。" },
+    { category: "用量規制因子・モニタリング", type: "single", q: "セルペルカチニブで高頻度(37.8%)に報告される重大な副作用のモニタリング項目は?",
+      choices: ["肝機能検査", "聴力検査", "骨密度検査", "視野検査"], correct: 0,
+      explain: "肝機能障害が37.8%と高頻度で報告されており、定期的な肝機能モニタリングが重要です。" },
+    { category: "用量規制因子・モニタリング", type: "single", q: "レンバチニブ投与中に特に注意すべきモニタリング項目は?",
+      choices: ["血圧(高血圧56.8%と高頻度)", "聴力", "骨密度", "視野"], correct: 0,
+      explain: "高血圧はレンバチニブで最も高頻度に報告される重大な副作用であり、定期的な血圧測定が重要です。" },
+    { category: "用量規制因子・モニタリング", type: "single", q: "カボザンチニブ(国内承認適応:腎細胞癌・肝細胞癌)投与時の食事に関する添付文書上の注意は?",
+      choices: ["食事の1時間前から食後2時間までの間の服用を避ける", "高脂肪食と一緒に服用することが推奨される", "食事に関する制限はない", "空腹時投与は禁忌である"], correct: 0,
+      explain: "レンバチニブ以外の複数のマルチキナーゼ阻害薬(ソラフェニブ、カボザンチニブ、ダブラフェニブ+トラメチニブ)に共通する食事タイミングの注意点です。" },
+    { category: "用量規制因子・モニタリング", type: "single", q: "ダブラフェニブ+トラメチニブ投与中に38.0℃以上の発熱が認められた場合の添付文書上の対応は?",
+      choices: ["本剤(ダブラフェニブ)を休薬する", "解熱剤投与のみで投与を継続する", "投与量を増量する", "特に対応は規定されていない"], correct: 0,
+      explain: "発熱はBRAF/MEK阻害薬クラスに特徴的な有害事象であり、休薬基準が明確に規定されています。" },
+    { category: "用量規制因子・モニタリング", type: "single", q: "ラロトレクチニブ投与中に特に注意すべき中枢神経系のモニタリングは?",
+      choices: ["浮動性めまい等の中枢神経系障害の確認", "聴力検査", "視野検査", "骨密度検査"], correct: 0,
+      explain: "浮動性めまい(17.5%)等の中枢神経系障害が重大な副作用として報告されています。" },
+    { category: "用量規制因子・モニタリング", type: "single", q: "エヌトレクチニブ投与中に特に注意すべき心臓のモニタリングは?",
+      choices: ["心臓障害・QT間隔延長のモニタリング", "血糖値のモニタリングのみ", "骨密度検査", "聴力検査"], correct: 0,
+      explain: "心臓障害(3.0%: 心不全、心室性期外収縮、心筋炎等)、QT間隔延長(1.2%)が重大な副作用として報告されています。" },
+    { category: "用量規制因子・モニタリング", type: "multi", q: "バンデタニブとQT延長を起こしうる薬剤の併用について、添付文書の記載として正しいものをすべて選べ(2つ選択)",
+      choices: ["QT延長を起こす薬剤との併用は治療上の有益性が危険性を上回ると判断される場合にのみ使用する", "抗不整脈剤(キニジン、プロカインアミド等)との併用でさらなるQT延長リスクが懸念される", "QT延長を起こす薬剤との併用は完全に禁忌である", "QT延長のリスクがある薬剤同士の併用に関する注意事項はない"], correct: [0, 1],
+      explain: "禁忌として明記されているのは先天性QT延長症候群のある患者そのものであり、QT延長を起こしうる薬剤との併用は「併用注意」として慎重投与が求められています。" },
+
+    // ══════════ 特徴的な副作用 ══════════
+    { category: "特徴的な副作用", type: "single", q: "レンバチニブの重大な副作用で最も高頻度に報告されているのは?",
+      choices: ["高血圧(56.8%)", "甲状腺機能低下症(37.5%)", "手足症候群(29.1%)", "出血(14.9%)"], correct: 0,
+      explain: "高血圧は56.8%と最も高頻度で報告されており、血管新生阻害薬に共通する代表的な有害事象です。" },
+    { category: "特徴的な副作用", type: "single", q: "ソラフェニブに特徴的な皮膚有害事象で、最も高頻度に報告されるのは?",
+      choices: ["手足症候群(46.7%)", "ざ瘡様皮疹", "光線過敏症", "脱毛"], correct: 0,
+      explain: "手足症候群はソラフェニブの代表的な重大な副作用で、日常生活動作に影響することがあります。" },
+    { category: "特徴的な副作用", type: "single", q: "セルペルカチニブに特徴的な心電図異常は?",
+      choices: ["QT間隔延長(13.9%)", "洞性徐脈", "心房細動", "房室ブロック"], correct: 0,
+      explain: "QT間隔延長は13.9%で報告されており、バンデタニブと同様に注意が必要な有害事象です。" },
+    { category: "特徴的な副作用", type: "single", q: "バンデタニブの警告欄に明記されている、致死的リスクのある有害事象の組み合わせは?",
+      choices: ["QT延長(Torsade de pointesを含む心室性不整脈)と間質性肺疾患", "手足症候群と脱毛", "甲状腺機能低下症と低カルシウム血症のみ", "消化管穿孔のみ"], correct: 0,
+      explain: "警告欄にQT延長による心室性不整脈(Torsade de pointesを含む)と、間質性肺疾患による死亡例が明記されています。" },
+    { category: "特徴的な副作用", type: "single", q: "カボザンチニブ(国内承認適応:腎細胞癌・肝細胞癌)で特徴的な、頻度は低いが重篤な消化管系有害事象は?",
+      choices: ["消化管穿孔(0.9%)", "重度の下痢のみ", "腸閉塞", "便秘"], correct: 0,
+      explain: "消化管穿孔・瘻孔はマルチキナーゼ阻害薬(VEGFR阻害薬)クラスに共通する重篤な有害事象です。" },
+    { category: "特徴的な副作用", type: "single", q: "ダブラフェニブ+トラメチニブでBRAF/MEK阻害薬クラスに特徴的とされる、頻度の低いまれな有害事象は?",
+      choices: ["有棘細胞癌等の皮膚悪性腫瘍(二次発癌)", "重度の骨髄抑制", "重度の下痢", "肺線維症"], correct: 0,
+      explain: "頻度は低いものの、BRAF阻害薬特有の注意点として添付文書に記載されています。" },
+    { category: "特徴的な副作用", type: "single", q: "ラロトレクチニブで高頻度に報告される肝機能異常は?",
+      choices: ["ALT増加(28.0%)", "ビリルビン上昇のみ", "肝硬変", "肝細胞癌の新規発生"], correct: 0,
+      explain: "ALT増加28.0%、AST増加23.3%と、肝機能障害が高頻度で報告されています。" },
+    { category: "特徴的な副作用", type: "single", q: "エヌトレクチニブで特徴的な中枢神経系有害事象は?",
+      choices: ["認知障害・運動失調(27.4%)", "けいれん発作のみ", "末梢神経障害", "難聴"], correct: 0,
+      explain: "TRK阻害薬クラスに特徴的な中枢神経系への影響で、認知障害・運動失調が高頻度に報告されています。" },
+    { category: "特徴的な副作用", type: "single", q: "レンバチニブで報告される、甲状腺癌の治療薬として皮肉にも生じうる内分泌系の有害事象は?",
+      choices: ["甲状腺機能低下症(37.5%)", "副腎機能亢進症", "高カルシウム血症", "尿崩症"], correct: 0,
+      explain: "甲状腺全摘後でTSH抑制療法中の患者であっても、レンバチニブ自体の作用により甲状腺機能低下症が高頻度に報告されます。" },
+    { category: "特徴的な副作用", type: "single", q: "MTCにおいて、セルペルカチニブがバンデタニブ・カボザンチニブと比較して報告されている利点は?",
+      choices: ["忍容性が比較的良好で治療中止率が低い", "効果がまったくない", "投与経路が注射剤である", "価格が最も安価である"], correct: 0,
+      explain: "LIBRETTO-531試験で、医師選択群(バンデタニブ/カボザンチニブ)と比較して治療中止率が低いことが報告されています。" },
+    { category: "特徴的な副作用", type: "single", q: "レンバチニブ・ソラフェニブ・バンデタニブに共通する、血管新生阻害に関連した代表的な有害事象は?",
+      choices: ["高血圧", "難聴", "脱毛のみ", "味覚障害のみ"], correct: 0,
+      explain: "VEGFR阻害を介する血管新生阻害薬クラスに共通して高頻度に報告される有害事象です。" },
+    { category: "特徴的な副作用", type: "multi", q: "本レポートに記載の甲状腺癌治療薬のうち、QT間隔延長が重大な副作用として報告されているものをすべて選べ(2つ選択)",
+      choices: ["バンデタニブ(13.9%)", "セルペルカチニブ(13.9%)", "レンバチニブ", "ラロトレクチニブ"], correct: [0, 1],
+      explain: "バンデタニブ・セルペルカチニブはいずれもQT間隔延長が13.9%と高頻度に報告されており、心電図モニタリングが重要です。" },
+
+    // ══════════ バイオマーカー ══════════
+    { category: "バイオマーカー", type: "single", q: "BRAF V600E変異は乳頭癌でどの程度の頻度で認められるか?",
+      choices: ["約40-60%(報告により25-83%)", "約1-2%", "ほぼ100%", "乳頭癌には出現しない"], correct: 0,
+      explain: "未分化癌でも約40%に認められ、報告によりばらつきがあります。" },
+    { category: "バイオマーカー", type: "single", q: "RET融合遺伝子は乳頭癌のどのような患者層で頻度が高い傾向があるか?",
+      choices: ["若年・放射線誘発例", "高齢者全般", "男性のみ", "濾胞癌のみ"], correct: 0,
+      explain: "乳頭癌全体では約10-20%とされますが、若年例や放射線誘発例で頻度が高い傾向があります。" },
+    { category: "バイオマーカー", type: "single", q: "散発性の甲状腺髄様癌(MTC)で最も代表的なRET点変異は?",
+      choices: ["M918T", "V600E", "T790M", "EGFR exon19欠失"], correct: 0,
+      explain: "散発性MTCの約40-50%にRET点変異が認められ、M918Tが代表例です。遺伝性はMEN2A/2Bに関連します。" },
+    { category: "バイオマーカー", type: "single", q: "NTRK融合遺伝子陽性、MSI-H/dMMRの甲状腺癌に、それぞれ対応する治療の組み合わせとして正しいのは?",
+      choices: ["NTRK融合→ラロトレクチニブ/エヌトレクチニブ、MSI-H→ペムブロリズマブ", "NTRK融合→ペムブロリズマブ、MSI-H→セルペルカチニブ", "いずれもバンデタニブで対応する", "いずれも対応する承認薬はない"], correct: 0,
+      explain: "NTRK融合遺伝子陽性にはラロトレクチニブ/エヌトレクチニブ、MSI-H/dMMR(甲状腺癌では稀)にはペムブロリズマブが腫瘍横断的承認で使用できます。" },
+
+    // ══════════ コスト制度 ══════════
+    { category: "コスト制度", type: "single", q: "高額療養費制度における一般的な所得区分での自己負担限度額の目安は?",
+      choices: ["月額57,600円程度", "月額5,760円程度", "月額576,000円程度", "自己負担額に上限はない"], correct: 0,
+      explain: "所得区分に応じて上限額は変動しますが、一般所得区分では月額概ね57,600円程度が目安です。" },
+    { category: "コスト制度", type: "single", q: "高額療養費制度の「多数回該当」(4回目以降)による軽減後の自己負担限度額の目安は?",
+      choices: ["約44,400円/月", "約144,400円/月", "約4,400円/月", "軽減措置はない"], correct: 0,
+      explain: "直近12ヶ月で3回以上高額療養費制度を利用した場合、4回目以降はさらに上限額が下がります。長期投与となる分子標的薬治療で重要な軽減措置です。" }
+  ];
+
+  var QUIZ_SESSION_SIZE = 10;
+  var quizOrder = [];     // indices into QUIZ for THIS session (random subset)
+  var quizIndex = 0;
+  var quizAnswers = [];   // per-question(by original index): selected choice index (single) or array of indices (multi)
+  var quizFeedback = {};  // { [questionIndex]: 'good' | 'bad' }
+
+  function quizPickSession() {
+    var all = QUIZ.map(function (_, i) { return i; });
+    quizShuffle(all);
+    quizOrder = all.slice(0, QUIZ_SESSION_SIZE);
+  }
+  function quizShuffle(arr) {
+    for (var i = arr.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = arr[i]; arr[i] = arr[j]; arr[j] = t;
+    }
+    return arr;
+  }
+
+  function quizLoadFeedback() {
+    try {
+      var raw = localStorage.getItem('thyroidQuizFeedback_v2');
+      quizFeedback = raw ? JSON.parse(raw) : {};
+    } catch (e) { quizFeedback = {}; }
+  }
+  function quizSaveFeedback() {
+    try { localStorage.setItem('thyroidQuizFeedback_v2', JSON.stringify(quizFeedback)); } catch (e) {}
+  }
+  function quizBuildRatingRow(qi) {
+    var row = document.createElement('div');
+    row.className = 'rate-row';
+    var label = document.createElement('span');
+    label.className = 'rate-label';
+    label.textContent = 'この問題の評価:';
+    var goodBtn = document.createElement('button');
+    goodBtn.type = 'button'; goodBtn.className = 'rate-btn'; goodBtn.textContent = '👍 良問';
+    var badBtn = document.createElement('button');
+    badBtn.type = 'button'; badBtn.className = 'rate-btn'; badBtn.textContent = '👎 悪問';
+    function refresh() {
+      goodBtn.classList.toggle('active-good', quizFeedback[qi] === 'good');
+      badBtn.classList.toggle('active-bad', quizFeedback[qi] === 'bad');
+    }
+    goodBtn.onclick = function () {
+      quizFeedback[qi] = (quizFeedback[qi] === 'good') ? null : 'good';
+      if (!quizFeedback[qi]) delete quizFeedback[qi];
+      quizSaveFeedback(); refresh();
+    };
+    badBtn.onclick = function () {
+      quizFeedback[qi] = (quizFeedback[qi] === 'bad') ? null : 'bad';
+      if (!quizFeedback[qi]) delete quizFeedback[qi];
+      quizSaveFeedback(); refresh();
+    };
+    refresh();
+    row.appendChild(label); row.appendChild(goodBtn); row.appendChild(badBtn);
+    return row;
+  }
+  function quizFallbackCopy(text, done) {
+    var ta = document.createElement('textarea');
+    ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); } catch (e) {}
+    document.body.removeChild(ta);
+    done();
+  }
+  function quizChoiceLabel(item) {
+    return item.choices.join(' / ');
+  }
+  function quizCorrectLabel(item) {
+    if (item.type === 'multi') return item.correct.map(function (i) { return item.choices[i]; }).join(' ＋ ');
+    return item.choices[item.correct];
+  }
+  function quizExportFeedback() {
+    var ratedIdx = Object.keys(quizFeedback);
+    if (ratedIdx.length === 0) {
+      alert('まだ評価された問題がありません。各問題に回答した後に表示される「👍 良問」「👎 悪問」ボタンで評価してから、もう一度お試しください。');
+      return;
+    }
+    var goodList = [], badList = [];
+    ratedIdx.forEach(function (idxStr) {
+      var idx = parseInt(idxStr, 10);
+      var item = QUIZ[idx];
+      if (!item) return;
+      var entry = '・[' + item.category + (item.type === 'multi' ? '/複数選択' : '') + '] ' + item.q + '\n  選択肢: ' + quizChoiceLabel(item) + '\n  正解: ' + quizCorrectLabel(item);
+      if (quizFeedback[idx] === 'good') goodList.push(entry);
+      else if (quizFeedback[idx] === 'bad') badList.push(entry);
+    });
+    var text = '【甲状腺癌クイズ(quiz-thyroid.html、全50問プール)フィードバック】\n\n' +
+      '良問と評価された問題(' + goodList.length + '件):\n' + (goodList.length ? goodList.join('\n\n') : '(なし)') + '\n\n' +
+      '悪問と評価された問題(' + badList.length + '件) — 改善・差し替えを検討してください:\n' + (badList.length ? badList.join('\n\n') : '(なし)') + '\n\n' +
+      '参照ファイル: artifacts/html/oncology-reports/quiz-thyroid.html\n\n' +
+      '上記フィードバックを踏まえて、「悪問」と評価された問題をレポート本文(artifacts/html/oncology-reports/thyroid.html、添付文書情報セクション含む)の内容に基づいて改善・差し替えてください。「良問」と評価された問題は現状を維持してください。';
+    var notify = function () { alert('フィードバックをコピーしました。MulmoClaudeのチャットに貼り付けて送信してください。問題の改善に使います。'); };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(notify).catch(function () { quizFallbackCopy(text, notify); });
+    } else { quizFallbackCopy(text, notify); }
+  }
+  function quizResetFeedback() {
+    if (!confirm('すべての評価をリセットします。よろしいですか?')) return;
+    quizFeedback = {};
+    quizSaveFeedback();
+    alert('評価をリセットしました。');
+  }
+
+  function quizRenderQuestion() {
+    document.getElementById('quiz-result-area').style.display = 'none';
+    document.getElementById('quiz-question-area').style.display = 'block';
+    var qi = quizOrder[quizIndex];
+    var item = QUIZ[qi];
+    document.getElementById('quiz-progress-text').textContent = '問 ' + (quizIndex + 1) + ' / ' + quizOrder.length + '(全' + QUIZ.length + '問中からランダム出題)';
+    document.getElementById('quiz-cat-badge').textContent = item.category;
+    document.getElementById('quiz-type-badge').style.display = (item.type === 'multi') ? 'inline-flex' : 'none';
+    document.getElementById('quiz-progress-fill').style.width = Math.round((quizIndex / quizOrder.length) * 100) + '%';
+    document.getElementById('quiz-question-text').textContent = item.q;
+    document.getElementById('quiz-explain-area').style.display = 'none';
+    document.getElementById('quiz-explain-area').innerHTML = '';
+    document.getElementById('quiz-next-btn').style.display = 'none';
+    document.getElementById('quiz-submit-row').style.display = 'none';
+
+    var wrap = document.getElementById('quiz-choices');
+    wrap.innerHTML = '';
+
+    if (item.type === 'multi') {
+      var selected = {};
+      item.choices.forEach(function (choiceText, idx) {
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'quiz-choice';
+        btn.innerHTML = '<span class="quiz-choice-check">☐</span> ' + choiceText.replace(/</g, '&lt;');
+        btn.onclick = function () {
+          selected[idx] = !selected[idx];
+          btn.classList.toggle('selected', !!selected[idx]);
+          btn.querySelector('.quiz-choice-check').textContent = selected[idx] ? '☑' : '☐';
+        };
+        wrap.appendChild(btn);
+      });
+      document.getElementById('quiz-submit-row').style.display = 'block';
+      document.getElementById('quiz-submit-btn').onclick = function () {
+        var chosen = Object.keys(selected).filter(function (k) { return selected[k]; }).map(Number);
+        quizAnswerMulti(chosen);
+      };
+    } else {
+      item.choices.forEach(function (choiceText, idx) {
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'quiz-choice';
+        btn.textContent = choiceText;
+        btn.onclick = function () { quizAnswerSingle(idx); };
+        wrap.appendChild(btn);
+      });
+    }
+  }
+
+  function quizFinishQuestion(qi, isCorrect, correctText) {
+    var item = QUIZ[qi];
+    var explainArea = document.getElementById('quiz-explain-area');
+    explainArea.className = 'quiz-explain';
+    explainArea.style.display = 'block';
+    explainArea.innerHTML = '<div style="font-weight:700; margin-bottom:4px; color:' + (isCorrect ? 'var(--good)' : 'var(--critical)') + ';">' +
+      (isCorrect ? '✅ 正解' : '❌ 不正解(正解: ' + correctText + ')') + '</div>' +
+      '<div>' + (item.explain || '') + '</div>';
+    explainArea.appendChild(quizBuildRatingRow(qi));
+    document.getElementById('quiz-submit-row').style.display = 'none';
+    document.getElementById('quiz-next-btn').style.display = 'inline-block';
+    document.getElementById('quiz-next-btn').textContent = (quizIndex === quizOrder.length - 1) ? '結果を見る →' : '次の問題 →';
+  }
+
+  function quizAnswerSingle(selectedIdx) {
+    var qi = quizOrder[quizIndex];
+    var item = QUIZ[qi];
+    quizAnswers[qi] = selectedIdx;
+    var buttons = document.getElementById('quiz-choices').querySelectorAll('.quiz-choice');
+    buttons.forEach(function (btn, idx) {
+      btn.disabled = true;
+      if (idx === item.correct) btn.classList.add('correct');
+      else if (idx === selectedIdx) btn.classList.add('wrong');
+    });
+    quizFinishQuestion(qi, selectedIdx === item.correct, item.choices[item.correct]);
+  }
+
+  function quizSubmitMulti() {
+    var qi = quizOrder[quizIndex];
+    var item = QUIZ[qi];
+    var buttons = document.getElementById('quiz-choices').querySelectorAll('.quiz-choice');
+    var chosen = [];
+    buttons.forEach(function (btn, idx) {
+      if (btn.classList.contains('selected')) chosen.push(idx);
+    });
+    quizAnswerMulti(chosen, buttons, item, qi);
+  }
+
+  function quizAnswerMulti(chosen, buttons, item, qi) {
+    qi = (qi === undefined) ? quizOrder[quizIndex] : qi;
+    item = item || QUIZ[qi];
+    buttons = buttons || document.getElementById('quiz-choices').querySelectorAll('.quiz-choice');
+    quizAnswers[qi] = chosen;
+    var correctSet = item.correct.slice().sort();
+    var chosenSet = chosen.slice().sort();
+    var isCorrect = correctSet.length === chosenSet.length && correctSet.every(function (v, i) { return v === chosenSet[i]; });
+    buttons.forEach(function (btn, idx) {
+      btn.disabled = true;
+      var isRight = item.correct.indexOf(idx) !== -1;
+      var wasChosen = chosen.indexOf(idx) !== -1;
+      if (isRight) btn.classList.add('correct');
+      else if (wasChosen) btn.classList.add('wrong');
+    });
+    quizFinishQuestion(qi, isCorrect, quizCorrectLabel(item));
+  }
+
+  function quizNext() {
+    if (quizIndex < quizOrder.length - 1) {
+      quizIndex++;
+      quizRenderQuestion();
+    } else {
+      quizShowResult();
+    }
+  }
+
+  function quizShowResult() {
+    document.getElementById('quiz-progress-fill').style.width = '100%';
+    document.getElementById('quiz-progress-text').textContent = '完了 ' + quizOrder.length + ' / ' + quizOrder.length;
+    document.getElementById('quiz-cat-badge').textContent = '';
+    document.getElementById('quiz-type-badge').style.display = 'none';
+    document.getElementById('quiz-question-area').style.display = 'none';
+
+    var correctCount = 0;
+    var byCategory = {};
+    quizOrder.forEach(function (qi) {
+      var item = QUIZ[qi];
+      if (!byCategory[item.category]) byCategory[item.category] = { correct: 0, total: 0 };
+      byCategory[item.category].total++;
+      var ans = quizAnswers[qi];
+      var isCorrect;
+      if (item.type === 'multi') {
+        var correctSet = item.correct.slice().sort();
+        var chosenSet = (ans || []).slice().sort();
+        isCorrect = correctSet.length === chosenSet.length && correctSet.every(function (v, i) { return v === chosenSet[i]; });
+      } else {
+        isCorrect = ans === item.correct;
+      }
+      if (isCorrect) { correctCount++; byCategory[item.category].correct++; }
+    });
+    var pct = Math.round((correctCount / quizOrder.length) * 100);
+
+    var catHtml = '';
+    Object.keys(byCategory).forEach(function (cat) {
+      var c = byCategory[cat];
+      var p = Math.round((c.correct / c.total) * 100);
+      catHtml += '<div class="cat-result-row"><span class="text-xs" style="width:150px; flex-shrink:0;">' + cat + '</span>' +
+        '<div class="cat-result-bar"><div class="cat-result-fill" style="width:' + p + '%"></div></div>' +
+        '<span class="text-xs muted" style="width:56px; text-align:right;">' + c.correct + '/' + c.total + '</span></div>';
+    });
+
+    var reviewHtml = '';
+    quizOrder.forEach(function (qi) {
+      var item = QUIZ[qi];
+      var ans = quizAnswers[qi];
+      var isCorrect;
+      var yourAnswerText;
+      if (item.type === 'multi') {
+        var correctSet = item.correct.slice().sort();
+        var chosenSet = (ans || []).slice().sort();
+        isCorrect = correctSet.length === chosenSet.length && correctSet.every(function (v, i) { return v === chosenSet[i]; });
+        yourAnswerText = (ans && ans.length) ? ans.map(function (i) { return item.choices[i]; }).join(' ＋ ') : '(未回答)';
+      } else {
+        isCorrect = ans === item.correct;
+        yourAnswerText = (ans != null) ? item.choices[ans] : '(未回答)';
+      }
+      if (!isCorrect) {
+        reviewHtml += '<div class="review-item">' +
+          '<div class="text-sm font-semibold mb-1">' + item.q + '</div>' +
+          '<div class="text-xs muted mb-2">あなたの回答: ' + yourAnswerText + ' / 正解: ' + quizCorrectLabel(item) + '</div>' +
+          '<div class="text-xs" style="line-height:1.6;">' + (item.explain || '') + '</div>' +
+          '</div>';
+      }
+    });
+    if (!reviewHtml) reviewHtml = '<p class="text-sm secondary">全問正解です。見直しの必要な項目はありません 🎉</p>';
+
+    var goodCount = 0, badCount = 0;
+    Object.keys(quizFeedback).forEach(function (k) {
+      if (quizFeedback[k] === 'good') goodCount++;
+      else if (quizFeedback[k] === 'bad') badCount++;
+    });
+
+    var resultArea = document.getElementById('quiz-result-area');
+    resultArea.style.display = 'block';
+    resultArea.innerHTML =
+      '<div class="text-center mb-6">' +
+        '<div class="score-ring-num" style="color:var(--series-new);">' + correctCount + ' / ' + quizOrder.length + '</div>' +
+        '<div class="text-sm muted mt-1">正答率 ' + pct + '%(全' + QUIZ.length + '問プールから今回ランダム抽出された' + quizOrder.length + '問)</div>' +
+      '</div>' +
+      '<div class="mb-6"><div class="text-sm font-semibold mb-3">カテゴリ別正答率(今回出題分)</div>' + catHtml + '</div>' +
+      '<div class="mb-2 text-sm font-semibold">見直し(不正解・未回答の問題)</div>' +
+      '<div class="mb-6">' + reviewHtml + '</div>' +
+      '<div class="mb-6 pt-4 border-t" style="border-color:var(--gridline);">' +
+        '<div class="text-sm font-semibold mb-2">問題の評価状況(全50問プール通算)</div>' +
+        '<div class="text-xs muted mb-3">👍 良問 ' + goodCount + '件 ・ 👎 悪問 ' + badCount + '件</div>' +
+        '<div class="flex flex-wrap gap-3">' +
+          '<button type="button" class="quiz-btn-outline" onclick="quizExportFeedback()">📋 フィードバックをエクスポート(チャットに貼り付け用)</button>' +
+          '<button type="button" class="quiz-btn-outline" onclick="quizResetFeedback()" style="border-color:var(--critical); color:var(--critical);">🗑 評価をリセット</button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="flex flex-wrap gap-3 justify-center">' +
+        '<button type="button" class="quiz-btn" onclick="quizRestart()">🔀 新しい10問でもう一度</button>' +
+        '<a href="thyroid.html" class="quiz-btn-outline" style="text-decoration:none; display:inline-block;">レポート本文に戻る</a>' +
+      '</div>';
+  }
+
+  function quizRestart() {
+    quizPickSession();
+    quizIndex = 0;
+    quizAnswers = [];
+    quizRenderQuestion();
+  }
+
+  quizLoadFeedback();
+  quizPickSession();
+  quizRenderQuestion();
+</script>
+
+<footer class="text-center text-xs pb-4" style="color: var(--text-muted);">
+  本クイズは学習・自己点検を目的とした資料です。臨床判断には利用せず、最新の添付文書・ガイドライン原文を優先してください。
+</footer>
+
+</body>
+</html>

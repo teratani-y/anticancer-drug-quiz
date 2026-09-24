@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>慢性リンパ性白血病(CLL)理解度クイズ 全50問(ランダム10問出題)</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+:root, .viz-root {
+  color-scheme: light;
+  --surface-1: #fcfcfb; --page-plane: #f9f9f7;
+  --text-primary: #0b0b0b; --text-secondary: #52514e; --text-muted: #898781;
+  --gridline: #e1e0d9; --baseline: #c3c2b7;
+  --series-new: #2a78d6; --series-control: #b9b7ae;
+  --good: #0ca30c; --warning: #b9790a; --critical: #d03b3b;
+  --border: rgba(11,11,11,0.10);
+}
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) {
+    color-scheme: dark;
+    --surface-1: #1a1a19; --page-plane: #0d0d0d;
+    --text-primary: #ffffff; --text-secondary: #c3c2b7; --text-muted: #898781;
+    --gridline: #2c2c2a; --baseline: #383835;
+    --series-new: #3987e5; --series-control: #55534c;
+    --good: #0ca30c; --warning: #eab116; --critical: #e66767;
+    --border: rgba(255,255,255,0.10);
+  }
+}
+body { background: var(--page-plane); color: var(--text-primary); font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+.card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+.secondary { color: var(--text-secondary); }
+.muted { color: var(--text-muted); }
+.cat-badge { display:inline-flex; align-items:center; padding:3px 10px; border-radius:9999px; font-size:0.72rem; font-weight:700; background: color-mix(in srgb, var(--series-new) 14%, transparent); color: var(--series-new); }
+.type-badge { display:inline-flex; align-items:center; padding:3px 10px; border-radius:9999px; font-size:0.68rem; font-weight:700; background: color-mix(in srgb, var(--warning) 16%, transparent); color: var(--warning); margin-left:6px; }
+.progress-track { background: var(--gridline); border-radius: 9999px; height: 8px; overflow: hidden; }
+.progress-fill { background: var(--series-new); height: 100%; border-radius: 9999px; transition: width .25s; }
+.quiz-choice { display:block; width:100%; text-align:left; background: var(--page-plane); border: 1.5px solid var(--gridline); border-radius: 10px; padding: 12px 16px; font-size: 0.92rem; cursor: pointer; transition: border-color .12s, background .12s; margin-bottom: 10px; }
+.quiz-choice:last-child { margin-bottom: 0; }
+.quiz-choice:hover:not(:disabled) { border-color: var(--series-new); }
+.quiz-choice:disabled { cursor: default; }
+.quiz-choice.correct { border-color: var(--good); background: color-mix(in srgb, var(--good) 12%, transparent); font-weight: 700; }
+.quiz-choice.wrong { border-color: var(--critical); background: color-mix(in srgb, var(--critical) 10%, transparent); }
+.quiz-choice.selected { border-color: var(--series-new); background: color-mix(in srgb, var(--series-new) 10%, transparent); }
+.quiz-choice-check { display:inline-block; width:16px; }
+.quiz-explain { background: var(--page-plane); border: 1px solid var(--gridline); border-radius: 10px; padding: 14px 16px; margin-top: 14px; font-size: 0.85rem; line-height: 1.7; }
+.quiz-btn { background: var(--series-new); color: #fff; border: none; border-radius: 8px; padding: 10px 22px; font-size: 0.88rem; font-weight: 700; cursor: pointer; }
+.quiz-btn:hover { opacity: 0.9; }
+.quiz-btn:disabled { opacity: 0.4; cursor: default; }
+.quiz-btn-outline { background: transparent; color: var(--series-new); border: 1.5px solid var(--series-new); border-radius: 8px; padding: 9px 20px; font-size: 0.88rem; font-weight: 700; cursor: pointer; }
+.quiz-btn-outline:hover { background: color-mix(in srgb, var(--series-new) 10%, transparent); }
+.score-ring-num { font-size: 2.6rem; font-weight: 800; }
+.cat-result-row { display:flex; align-items:center; gap:10px; margin-bottom: 8px; }
+.cat-result-bar { flex:1; background: var(--gridline); border-radius: 9999px; height: 10px; overflow:hidden; }
+.cat-result-fill { background: var(--series-new); height:100%; border-radius: 9999px; }
+.review-item { border: 1px solid var(--gridline); border-radius: 10px; padding: 12px 14px; margin-bottom: 10px; }
+.review-item:last-child { margin-bottom: 0; }
+.rate-row { display:flex; align-items:center; gap:8px; margin-top:14px; flex-wrap:wrap; }
+.rate-label { font-size:0.75rem; color: var(--text-muted); }
+.rate-btn { background: var(--page-plane); border: 1.5px solid var(--gridline); border-radius: 8px; padding: 6px 12px; font-size: 0.78rem; font-weight:600; cursor:pointer; color: var(--text-secondary); }
+.rate-btn:hover { border-color: var(--series-new); }
+.rate-btn.active-good { border-color: var(--good); background: color-mix(in srgb, var(--good) 14%, transparent); color: var(--good); }
+.rate-btn.active-bad { border-color: var(--critical); background: color-mix(in srgb, var(--critical) 12%, transparent); color: var(--critical); }
+</style>
+</head>
+<body class="viz-root">
+<div class="max-w-3xl mx-auto px-4 py-8 space-y-5">
+
+  <header class="card">
+    <div class="flex items-center justify-between gap-2 flex-wrap">
+      <div>
+        <h1 class="text-xl font-bold">🧠 慢性リンパ性白血病(CLL)理解度クイズ</h1>
+        <p class="text-sm mt-1 secondary">全50問のプールからランダムに10問出題・4択/複数選択混在・医療従事者向け(治療ライン選択・用法用量・投与スケジュール・用量規制因子/モニタリング・添付文書の警告/禁忌/重大な副作用・バイオマーカー・コスト制度)</p>
+      </div>
+      <a href="cll.html" class="text-xs" style="color:var(--series-new); text-decoration:none; font-weight:600;">← レポート本文に戻る</a>
+    </div>
+    <p class="text-xs mt-3 muted">出題内容はすべて <a href="cll.html" style="color:var(--series-new);">慢性リンパ性白血病(CLL)薬物治療レポート</a>(本文および「8. 主要薬剤の添付文書情報」)に記載の情報に基づきます。臨床判断には利用せず、学習・自己点検の目的でご利用ください。ページを再読み込みする、または結果画面の「シャッフルしてもう一度」を押すたびに、新しい10問がランダムに選ばれます。</p>
+  </header>
+
+  <!-- Quiz card -->
+  <section class="card" id="quiz-card">
+    <div class="flex items-center justify-between mb-2">
+      <span id="quiz-progress-text" class="text-xs font-semibold muted"></span>
+      <span><span id="quiz-cat-badge" class="cat-badge"></span><span id="quiz-type-badge" class="type-badge" style="display:none;">複数選択</span></span>
+    </div>
+    <div class="progress-track mb-5"><div class="progress-fill" id="quiz-progress-fill" style="width:0%"></div></div>
+
+    <div id="quiz-question-area">
+      <div id="quiz-question-text" class="text-base font-semibold mb-4" style="line-height:1.6;"></div>
+      <div id="quiz-choices"></div>
+      <div id="quiz-submit-row" style="display:none;" class="mt-3">
+        <button type="button" class="quiz-btn" id="quiz-submit-btn" onclick="quizSubmitMulti()">この内容で回答する</button>
+      </div>
+      <div id="quiz-explain-area" style="display:none;"></div>
+      <div class="mt-5 flex justify-end">
+        <button type="button" id="quiz-next-btn" class="quiz-btn" style="display:none;" onclick="quizNext()">次の問題 →</button>
+      </div>
+    </div>
+
+    <div id="quiz-result-area" style="display:none;"></div>
+  </section>
+
+</div>
+
+<script>
+  var QUIZ = [
+    // ══════════ 治療ライン選択(どの局面でどの選択肢を使うか) ══════════
+    { category: "治療ライン選択", type: "single", q: "高齢/unfit中心・全IGHV/TP53状況の患者に対する1次治療で、第III相RCTのエビデンスがある選択肢は?",
+      choices: ["イブルチニブ単剤(第1世代BTK阻害薬)", "ベネトクラクス+オビヌツズマブ+イブルチニブ(triplet)", "化学免疫療法(FCR)単独", "リソカブタゲン マラルユーセル(CAR-T)"], correct: 0,
+      explain: "RESONATE-2試験に基づく選択肢で、継続内服による長期の心血管系モニタリングが必要です。" },
+    { category: "治療ライン選択", type: "single", q: "全年齢層の1次治療で、同列の選択肢として記載されている第2世代BTK阻害薬の組み合わせは?",
+      choices: ["アカラブルチニブ±オビヌツズマブ、またはザヌブルチニブ単剤", "イブルチニブ単剤のみ", "ベネトクラクス単剤", "ピルトブルチニブ単剤"], correct: 0,
+      explain: "ELEVATE-TN試験(アカラブルチニブ)、SEQUOIA試験(ザヌブルチニブ、del17p/TP53例含む)がそれぞれの根拠試験です。" },
+    { category: "治療ライン選択", type: "single", q: "Unfit高齢者中心〜全年齢層向けに、固定期間(12ヶ月)で治療を終了できる1次治療は?",
+      choices: ["ベネトクラクス+オビヌツズマブ", "イブルチニブ単剤(継続内服)", "アカラブルチニブ単剤(継続内服)", "ザヌブルチニブ単剤(継続内服)"], correct: 0,
+      explain: "CLL14試験に基づく治療で、PFS中央値76.6ヶ月と良好な成績が報告されています。TP53変異/del17pありでもPFS49.0ヶ月です。" },
+    { category: "治療ライン選択", type: "single", q: "Fit患者(若年・TP53異常なし)向けの1次治療として、triplet(3剤併用・固定期間)の組み合わせは?",
+      choices: ["ベネトクラクス+オビヌツズマブ+イブルチニブ", "ザヌブルチニブ+リツキシマブ+ベンダムスチン", "アカラブルチニブ+オビヌツズマブ+ピルトブルチニブ", "FCR(フルダラビン+シクロホスファミド+リツキシマブ)"], correct: 0,
+      explain: "GAIA/CLL13試験に基づく治療で、5年PFS 81.3%という良好な成績が報告されています。" },
+    { category: "治療ライン選択", type: "single", q: "Fit患者向けの1次治療として、AMPLIFY試験で検討された固定期間のdoublet(±抗CD20抗体)は?",
+      choices: ["アカラブルチニブ+ベネトクラクス±オビヌツズマブ", "イブルチニブ+リツキシマブ", "ザヌブルチニブ+ベネトクラクス", "ピルトブルチニブ+オビヌツズマブ"], correct: 0,
+      explain: "AMPLIFY試験では3年PFS 76-83%と報告されています。" },
+    { category: "治療ライン選択", type: "single", q: "化学免疫療法(FCR/BR)が1次治療として限定的に推奨されるのはどのような患者か?",
+      choices: ["IGHV変異あり・TP53正常例", "IGHV変異なし・TP53正常例", "del(17p)/TP53変異あり例", "全てのFit患者に第一選択として推奨される"], correct: 0,
+      explain: "化学免疫療法は新規薬剤に比べPFSで劣る傾向があり、IGHV変異あり・TP53正常例に限定的に推奨される位置づけです。" },
+    { category: "治療ライン選択", type: "single", q: "前治療歴があり(BTKi未使用)の再発・難治治療で、イブルチニブに対する優越性を示した第III相試験の薬剤は?",
+      choices: ["ザヌブルチニブ(ALPINE試験)", "アカラブルチニブ(ELEVATE-TN試験)", "ベネトクラクス(CLL14試験)", "ピルトブルチニブ(BRUIN CLL-321試験)"], correct: 0,
+      explain: "ALPINE試験では36ヶ月PFS 65.4%(ザヌブルチニブ) vs 54.4%(イブルチニブ、HR 0.68)と報告されています。" },
+    { category: "治療ライン選択", type: "single", q: "前治療歴のある再発・難治CLLで、固定期間(24ヶ月)の治療選択肢は?",
+      choices: ["ベネトクラクス+リツキシマブ(MURANO試験)", "ベネトクラクス+オビヌツズマブ(CLL14試験)", "ザヌブルチニブ単剤(ALPINE試験)", "ピルトブルチニブ単剤(BRUIN CLL-321試験)"], correct: 0,
+      explain: "MURANO試験に基づく再発・難治例向けの固定期間治療です(1次治療のCLL14試験はオビヌツズマブ併用・12ヶ月)。" },
+    { category: "治療ライン選択", type: "single", q: "BTK阻害薬抵抗性・不耐容の再発・難治CLL/SLL(BCL2阻害薬既治療は問わない)に対し、2025年9月にPMDA承認された治療は?",
+      choices: ["ピルトブルチニブ(非共有結合性・第3世代BTK阻害薬)", "ザヌブルチニブ(第2世代BTK阻害薬)", "リソカブタゲン マラルユーセル(CD19 CAR-T)", "ベネトクラクス+リツキシマブ"], correct: 0,
+      explain: "第III相のBRUIN CLL-321試験(vs 医師選択治療IdelaR/BR)に基づく承認です。単群拡大コホートのORR73.3%(従来のBRUIN試験)から、第III相データへ根拠が更新されました。" },
+    { category: "治療ライン選択", type: "single", q: "BTKi・BCL2i含む2ライン以上の前治療後の選択肢として本レポートに挙げられている、単群試験に基づく治療は?",
+      choices: ["リソカブタゲン マラルユーセル(CD19 CAR-T)", "イブルチニブ単剤", "ベネトクラクス+オビヌツズマブ", "化学免疫療法(FCR)"], correct: 0,
+      explain: "TRANSCEND CLL 004試験(ORR 45%、CR 20%)に基づく評価ですが、liso-cel(ブレヤンジ)のCLL/SLLへの国内適応追加は2026年5月に申請されたばかりで、2026年9月時点では未承認(海外データが中心)です。" },
+    { category: "治療ライン選択", type: "single", q: "del(17p)/TP53変異がある場合に化学免疫療法の位置づけがどう変わるか、正しい説明は?",
+      choices: ["化学免疫療法は無効かつ禁忌に近い扱いとなり、BTK阻害薬又はベネトクラクス+抗CD20抗体が必須となる", "化学免疫療法が最も推奨される第一選択になる", "del(17p)/TP53変異は治療選択に影響しない", "新規薬剤は全て使用できなくなる"], correct: 0,
+      explain: "del(17p)/TP53変異はDNA損傷修復経路の異常で化学療法抵抗性と関連するため、新規薬剤が必須の選択肢となります。" },
+    { category: "治療ライン選択", type: "single", q: "Richter形質転換が疑われる場合、NCCN v2.2026で強調されている治療選択のアプローチは?",
+      choices: ["クローン関連性の分子解析により原病変由来か新規クローンかを鑑別する", "常に元のCLLに対する治療をそのまま継続する", "分子解析は不要でDLBCLに準じた治療を画一的に行う", "Richter形質転換はCLLでは起こらない"], correct: 0,
+      explain: "DLBCL様への組織学的転換で予後不良とされ、原病変由来か新規クローンかの鑑別が治療選択に活用されます。" },
+    { category: "治療ライン選択", type: "single", q: "MRD(微小残存病変)がCLL診療でどのように位置づけられているか?",
+      choices: ["固定期間治療の効果・治療終了判断の指標としてNCCN v2.2026でも重視されている", "診断確定にのみ用いられ治療方針には影響しない", "MRDはCLLでは測定できない", "BTK阻害薬の適応判定にのみ用いられる"], correct: 0,
+      explain: "特にベネトクラクス併用の固定期間治療で、治療効果・終了判断の指標として重視されています。" },
+    { category: "治療ライン選択", type: "multi", q: "Fit患者向けの1次治療として、固定期間の新規薬剤併用レジメンとして本レポートに挙げられている組み合わせをすべて選べ(2つ選択)",
+      choices: ["ベネトクラクス+オビヌツズマブ+イブルチニブ(GAIA/CLL13試験)", "アカラブルチニブ+ベネトクラクス±オビヌツズマブ(AMPLIFY試験)", "ザヌブルチニブ+リツキシマブ(継続内服)", "ピルトブルチニブ単剤(継続内服)"], correct: [0, 1],
+      explain: "いずれも固定期間の新規薬剤併用として第III相試験のエビデンスがあります。ザヌブルチニブ・ピルトブルチニブの単剤療法は継続内服であり、固定期間治療ではありません。" },
+    // ══════════ 用法用量・投与スケジュール ══════════
+    { category: "用法用量・投与スケジュール", type: "multi", q: "添付文書上、1日2回投与(1日2分割)の用法が規定されているBTK阻害薬をすべて選べ(2つ選択)",
+      choices: ["アカラブルチニブ(1回100mgを1日2回)", "ザヌブルチニブ(1回160mgを1日2回)", "イブルチニブ(420mgを1日1回)", "ピルトブルチニブ(200mgを1日1回)"], correct: [0, 1],
+      explain: "アカラブルチニブとザヌブルチニブは1日2回投与です。イブルチニブ(420mgを1日1回)とピルトブルチニブ(200mgを1日1回)はいずれも1日1回投与です。" },
+    { category: "用法用量・投与スケジュール", type: "single", q: "アカラブルチニブの添付文書上の用法用量は?",
+      choices: ["100mgを1日2回経口投与", "100mgを1日1回経口投与", "200mgを1日1回経口投与", "50mgを1日2回経口投与"], correct: 0,
+      explain: "患者の状態により適宜減量します。血液毒性やGrade3以上の非血液毒性発現時は休薬・段階的減量の基準が規定されています。" },
+    { category: "用法用量・投与スケジュール", type: "single", q: "ザヌブルチニブの添付文書上の用法用量は?",
+      choices: ["160mgを1日2回経口投与", "80mgを1日1回経口投与", "320mgを1日1回経口投与", "160mgを1日1回経口投与"], correct: 0,
+      explain: "強いCYP3A阻害剤併用時は80mgを1日1回、中程度のCYP3A阻害剤併用時は80mgを1日2回に減量します。" },
+    { category: "用法用量・投与スケジュール", type: "single", q: "ベネトクラクスの用量漸増期(慢性リンパ性白血病・未治療)の投与スケジュールは?",
+      choices: ["第1週20mg→第2週50mg→第3週100mg→第4週200mg→第5週400mg", "初日から400mgを1日1回", "第1週100mg→第2週400mgの2段階のみ", "1週間ごとに倍量とし上限200mgまで"], correct: 0,
+      explain: "それぞれ1日1回7日間食後に経口投与し、その後の維持投与期は400mgを1日1回食後に経口投与します。用量漸増期はTLSリスクが特に高い期間です。" },
+    { category: "用法用量・投与スケジュール", type: "single", q: "ベネトクラクスの維持投与期(慢性リンパ性白血病)の用量は?",
+      choices: ["400mgを1日1回食後に経口投与", "200mgを1日2回食前に経口投与", "600mgを1日1回食後に経口投与(AML用量と共通)", "100mgを1日3回経口投与"], correct: 0,
+      explain: "急性骨髄性白血病(シタラビン少量療法併用)では維持投与期600mgと用量が異なる点に注意してください。" },
+    { category: "用法用量・投与スケジュール", type: "single", q: "ピルトブルチニブの添付文書上の用法用量は?",
+      choices: ["200mgを1日1回経口投与", "50mgを1日2回経口投与", "100mgを1日2回経口投与", "400mgを1日1回経口投与"], correct: 0,
+      explain: "患者の状態により適宜減量します。Grade3以上の副作用発現時は200mg→100mg→50mg→投与中止の順に減量します。" },
+    { category: "用法用量・投与スケジュール", type: "single", q: "リツキシマブの慢性リンパ性白血病における併用療法時の用法用量は?",
+      choices: ["初回375mg/m²、2回目以降500mg/m²(最大6回)", "常に375mg/m²を週1回8回", "1,000mg/bodyを2週間間隔で2回", "体重換算で10mg/kgを投与"], correct: 0,
+      explain: "ベネトクラクス(MURANO試験)やベンダムスチン(BR療法)との併用で用いられます。" },
+    { category: "用法用量・投与スケジュール", type: "single", q: "ベンダムスチンの慢性リンパ性白血病における1サイクルの投与スケジュールは?",
+      choices: ["100mg/m²を1時間かけて2日間連日点滴静注した後、26日間休薬", "100mg/m²を週1回、4週連続で点滴静注", "毎日50mg/m²を21日間連日投与", "1回のみ200mg/m²を点滴静注"], correct: 0,
+      explain: "低悪性度B細胞性非ホジキンリンパ腫やマントル細胞リンパ腫では90mg/m²と、適応症により用量が異なります。" },
+    { category: "用法用量・投与スケジュール", type: "single", q: "オビヌツズマブをアカラブルチニブと併用する場合の投与開始時のスケジュールは?",
+      choices: ["初日100mg→2日目900mg→8・15日目1000mgと段階的に増量する", "初日から1000mgを投与する", "初日500mg→2日目500mgの分割投与のみ", "週1回1000mgを4週連続投与する"], correct: 0,
+      explain: "以降は28日を1サイクルとし最大6サイクル投与します。infusion reactionのリスクを踏まえた段階的増量です。" },
+
+    // ══════════ 用量規制因子・モニタリング ══════════
+    { category: "用量規制因子・モニタリング", type: "single", q: "ベネトクラクスの用量漸増期において、添付文書上の禁忌に該当する併用薬は?",
+      choices: ["強いCYP3A阻害剤(リトナビル、クラリスロマイシン等)", "強いCYP3A誘導剤(リファンピシン等)", "PPI(プロトンポンプ阻害剤)", "抗ヒスタミン剤"], correct: 0,
+      explain: "用量漸増期における強いCYP3A阻害剤の併用は、腫瘍崩壊症候群(TLS)の発現が増強されるおそれがあるため禁忌とされています。維持投与期は併用注意の扱いです。" },
+    { category: "用量規制因子・モニタリング", type: "single", q: "ベネトクラクスの警告欄に基づき、腫瘍崩壊症候群(TLS)のモニタリングが特に重要なタイミングは?",
+      choices: ["投与開始及び増量後1〜2日", "維持投与期に入って3ヶ月以降", "投与終了後1年以上経過した時点", "初回投与前のみ"], correct: 0,
+      explain: "添付文書の警告欄に、TLSは特に投与開始及び増量後1〜2日に多く認められていると明記されています。" },
+    { category: "用量規制因子・モニタリング", type: "single", q: "ザヌブルチニブと強いCYP3A阻害剤を併用する場合の添付文書上の対応は?",
+      choices: ["1回80mgを1日1回に減量する", "1回160mgを1日2回のまま変更しない", "本剤の投与を中止する", "強いCYP3A阻害剤の方を中止する必要がある"], correct: 0,
+      explain: "中程度のCYP3A阻害剤併用時は1回80mgを1日2回に減量します。" },
+    { category: "用量規制因子・モニタリング", type: "single", q: "アカラブルチニブとプロトンポンプ阻害剤(PPI)の併用に関する添付文書上の注意は?",
+      choices: ["可能な限り併用を避けること", "特に注意事項はなく自由に併用できる", "PPIは併用禁忌である", "アカラブルチニブを2倍量に増量して併用する"], correct: 0,
+      explain: "制酸剤を併用する場合は投与間隔を2時間以上あけることとされています。アカラブルチニブは胃内pHに吸収が影響されやすい薬剤です。" },
+    { category: "用量規制因子・モニタリング", type: "single", q: "イブルチニブの併用禁忌薬として添付文書に列挙されている薬剤群の性質は?",
+      choices: ["ケトコナゾール・イトラコナゾール・クラリスロマイシン等の強いCYP3A阻害剤やセリチニブ等", "強いCYP3A誘導剤のみ", "全てのプロトンポンプ阻害剤", "全ての抗凝固剤"], correct: 0,
+      explain: "これらとの併用で本剤の血中濃度が上昇し副作用が増強されるおそれがあるため、併用禁忌に指定されています。" },
+    { category: "用量規制因子・モニタリング", type: "multi", q: "ベンダムスチン投与再開の休薬基準(骨髄抑制からの回復)として添付文書に規定されている項目をすべて選べ(2つ選択)",
+      choices: ["好中球数1,000/mm³以上", "血小板数75,000/mm³以上", "血小板数25,000/mm³以上", "ヘモグロビン値10g/dL以上"], correct: [0, 1],
+      explain: "好中球数1,000/mm³以上及び血小板数75,000/mm³以上に回復するまで休薬します。血小板数25,000/mm³未満は減量基準の閾値であり、休薬基準の数値と混同しないよう注意してください。" },
+    { category: "用量規制因子・モニタリング", type: "single", q: "ピルトブルチニブでGrade3以上の副作用が発現した場合の添付文書上の減量ステップの順序は?",
+      choices: ["200mg→100mg→50mg→投与中止", "200mgのまま経過観察のみ", "直ちに永久中止する以外の選択肢はない", "100mg→200mgへ増量して対応する"], correct: 0,
+      explain: "回復までの間休薬した上で、発現回数に応じてこの順序で用量調節を行います。" },
+    { category: "用量規制因子・モニタリング", type: "single", q: "イブルチニブが禁忌となる肝機能障害の程度は?",
+      choices: ["中等度以上の肝機能障害", "軽度の肝機能障害から禁忌", "肝機能障害の程度を問わず禁忌ではない", "重度の腎機能障害"], correct: 0,
+      explain: "イブルチニブは主に肝代謝されるため、中等度以上の肝機能障害のある患者は禁忌とされています。" },
+    { category: "用量規制因子・モニタリング", type: "single", q: "リツキシマブ投与時、infusion reaction対策として添付文書に規定されている初回投与速度の運用は?",
+      choices: ["最初の30分は50mg/時で開始し、その後30分毎に50mg/時ずつ上げ最大400mg/時とする", "常に一定速度(400mg/時)で投与する", "初回から最大速度で投与し忍容性を確認する", "速度規定はなく施設判断に委ねられている"], correct: 0,
+      explain: "投与30分前の抗ヒスタミン剤・解熱鎮痛剤の前投与と組み合わせて、infusion reactionのリスクを管理します。" },
+
+    // ══════════ 特徴的な副作用(添付文書の警告・禁忌・重大な副作用) ══════════
+    { category: "特徴的な副作用", type: "single", q: "BTK阻害薬クラスに共通する不整脈関連の重大な副作用は?",
+      choices: ["心房細動", "QT延長症候群のみ", "完全房室ブロック", "洞不全症候群のみ"], correct: 0,
+      explain: "イブルチニブ(5.4%)、アカラブルチニブ(1.5%)、ザヌブルチニブ(3.0%)いずれも心房細動が報告されており、長期の心血管系モニタリングが必要です。" },
+    { category: "特徴的な副作用", type: "single", q: "第1世代BTK阻害薬(イブルチニブ)と第2世代(アカラブルチニブ、ザヌブルチニブ)の心血管リスクの違いとして、本レポートで説明されている内容は?",
+      choices: ["第1世代の方が心血管系有害事象がより高頻度(投与中止率11-41%)とされる", "第2世代の方が心血管リスクが明確に高い", "両世代で心血管リスクに差はない", "第2世代は心血管系有害事象が全く報告されていない"], correct: 0,
+      explain: "第2世代は選択性が高く、心血管リスクが相対的に軽減されているとされています。" },
+    { category: "特徴的な副作用", type: "single", q: "ベネトクラクスの添付文書の警告欄に薬剤固有の内容として明記されている重大な有害事象は?",
+      choices: ["腫瘍崩壊症候群(TLS)", "心房細動", "間質性肺疾患", "手足症候群"], correct: 0,
+      explain: "投与開始及び増量後1〜2日に多く認められると明記されており、用量漸増期の厳重なモニタリングが必要です。" },
+    { category: "特徴的な副作用", type: "single", q: "オビヌツズマブの重大な副作用として最も高頻度に報告されているものは?",
+      choices: ["infusion reaction(51.9%)", "腫瘍崩壊症候群(0.9%)", "間質性肺疾患(0.4%)", "消化管穿孔(0.1%)"], correct: 0,
+      explain: "アナフィラキシー・血圧低下・気管支痙攣等の症状が含まれ、初回投与時は特に慎重な速度管理と前投薬が必要です。" },
+    { category: "特徴的な副作用", type: "single", q: "リツキシマブの添付文書の警告欄に、死亡に至った例が報告されているとして複数列挙されている項目に含まれないものは?",
+      choices: ["手足症候群", "infusion reaction(アナフィラキシー・肺障害・心障害等)", "B型肝炎ウイルスキャリアにおける劇症肝炎", "皮膚粘膜眼症候群(Stevens-Johnson症候群)"], correct: 0,
+      explain: "手足症候群はVEGFR阻害薬等に特徴的な副作用で、リツキシマブの警告欄には記載されていません。リツキシマブの警告欄には腫瘍崩壊症候群や間質性肺炎増悪も含まれます。" },
+    { category: "特徴的な副作用", type: "single", q: "ザヌブルチニブの重大な副作用として、他のBTK阻害薬と比べて特徴的に記載されている感染症は?",
+      choices: ["クリプトコッカス性肺炎(0.1%)", "帯状疱疹のみ", "サイトメガロウイルス感染症のみ", "結核のみ"], correct: 0,
+      explain: "肺炎(3.9%)やB型肝炎再活性化(0.6%)と並び、クリプトコッカス性肺炎が重大な副作用として記載されています。" },
+    { category: "特徴的な副作用", type: "single", q: "ベンダムスチンの重大な副作用のうち、最も高頻度に報告されている項目は?",
+      choices: ["骨髄抑制(白血球減少68.9%等)", "腫瘍崩壊症候群(0.8%)", "間質性肺疾患(頻度不明)", "重篤な皮膚症状(TEN・SJS)"], correct: 0,
+      explain: "白血球減少68.9%、血小板減少37.4%、好中球減少34.1%、リンパ球減少30.6%と高頻度で、頻回の血液検査が警告欄でも求められています。" },
+    { category: "特徴的な副作用", type: "single", q: "ピルトブルチニブについて、共有結合性BTK阻害薬(イブルチニブ等)と比較して本レポートで説明されている毒性プロファイルの特徴は?",
+      choices: ["非共有結合性という結合様式の違いから、共有結合性BTK阻害薬とは異なる毒性プロファイルを持つ", "全く同一の毒性プロファイルである", "心房細動のみが特徴的で他の副作用はない", "毒性は報告されていない"], correct: 0,
+      explain: "好中球減少・感染・出血等が重大な副作用として記載されており、BRUIN CLL-321試験ではGrade3以上有害事象36.8%(対照群93.3%)と対照より少ない結果でした。" },
+    { category: "特徴的な副作用", type: "single", q: "リソカブタゲン マラルユーセル(CAR-T)に特有の、専門施設での入院管理が必須とされる重大な有害事象は?",
+      choices: ["サイトカイン放出症候群(CRS)及び免疫エフェクター細胞関連神経毒性症候群(ICANS)", "腫瘍崩壊症候群のみ", "心房細動のみ", "手足症候群のみ"], correct: 0,
+      explain: "遷延性血球減少や重症感染症のリスクもあり、単回投与で長期寛解の可能性がある一方、短期的な管理負担は大きい治療です。" },
+    { category: "特徴的な副作用", type: "single", q: "アカラブルチニブ・ザヌブルチニブ・ピルトブルチニブに共通する適用上の注意(カプセル・錠剤の取り扱い)は?",
+      choices: ["PTPシートから取り出して服用し、PTPシートの誤飲による食道穿孔等に注意する", "遮光保存が必須で光に当てると失活する", "必ず空腹時に服用する", "粉砕して服用する必要がある"], correct: 0,
+      explain: "PTPシートの誤飲により硬い鋭角部が食道粘膜へ刺入し、穿孔等の重篤な合併症を併発することがあるため、添付文書で繰り返し注意喚起されています。" },
+    { category: "特徴的な副作用", type: "multi", q: "BTK阻害薬クラス(イブルチニブ・アカラブルチニブ・ザヌブルチニブ)に共通して重大な副作用として記載されている項目をすべて選べ(2つ選択)",
+      choices: ["心房細動", "出血", "腫瘍崩壊症候群の記載はない(BTK阻害薬に特有ではない)", "手足症候群"], correct: [0, 1],
+      explain: "3剤いずれも心房細動・出血が重大な副作用として記載されています。腫瘍崩壊症候群はベネトクラクスで特に強調される副作用、手足症候群はVEGFR阻害薬クラスに特徴的です。" },
+    { category: "特徴的な副作用", type: "multi", q: "薬剤固有の警告欄の内容として正しい組み合わせをすべて選べ(2つ選択)",
+      choices: ["ベネトクラクス: 腫瘍崩壊症候群(投与開始・増量後1〜2日に多く発現)", "リツキシマブ: infusion reaction・TLS・B型肝炎再活性化等の複数項目で死亡例報告", "ピルトブルチニブ: 間質性肺疾患のみが薬剤固有警告として記載されている", "アカラブルチニブ: 妊婦への投与が完全に禁忌とされている"], correct: [0, 1],
+      explain: "ピルトブルチニブ・アカラブルチニブの禁忌・警告欄は本レポートの調査範囲では定型文(緊急時対応医療施設、過敏症既往歴)のみで、薬剤固有の記載は確認できませんでした。" },
+
+    // ══════════ バイオマーカー ══════════
+    { category: "バイオマーカー", type: "single", q: "IGHV変異状況が治療選択に与える影響として正しい説明は?",
+      choices: ["変異なし(unmutated)は新規治療が強く推奨され、変異ありはFCR等でも長期寛解の場合があるが近年は新規治療が優先される傾向", "IGHV変異状況は治療選択に一切影響しない", "変異ありは必ず新規治療が禁忌となる", "IGHV検査は保険適用外である"], correct: 0,
+      explain: "IGHV変異状況は化学免疫療法の適格性の判断や予後予測に用いられる重要なバイオマーカーです。" },
+    { category: "バイオマーカー", type: "single", q: "del(17p)/TP53変異の臨床的意義として正しい説明は?",
+      choices: ["化学免疫療法禁忌の判断や新規薬剤優先の根拠となる重要バイオマーカーである", "予後には全く影響しない", "IGHV変異状況と完全に同一の意味を持つ", "検出されると全ての薬物治療が禁忌になる"], correct: 0,
+      explain: "del(17p)/TP53変異はDNA損傷修復経路の異常であり、化学療法抵抗性と関連するため、BTK阻害薬やベネトクラクス+抗CD20抗体等の新規薬剤が必須となります。" },
+    { category: "バイオマーカー", type: "single", q: "del(17p)/TP53変異検査の日本における保険適用状況について、本レポートで留意点として挙げられている内容は?",
+      choices: ["2026年時点で保険適用外(自費/研究室ベース)とされる可能性があり要確認とされている", "全国一律で保険適用が確立している", "IGHV検査と同様に完全に保険適用が確立している", "この検査は日本では実施できない"], correct: 0,
+      explain: "本資料冒頭の注意事項にも明記されており、実際の検査体制は施設により異なる可能性があるため個別確認が必要です。" },
+    { category: "バイオマーカー", type: "single", q: "MRD(微小残存病変)は主にどのような目的で測定が重視されるか?",
+      choices: ["固定期間治療(ベネトクラクス併用等)の効果判定・治療終了判断の指標として", "初診時の病期診断のためだけに用いられる", "BTK阻害薬の投与量を決定するために用いられる", "del(17p)/TP53変異の代替検査として用いられる"], correct: 0,
+      explain: "NCCN v2.2026でもMRDの重要性が強調されています。" },
+
+    // ══════════ コスト制度 ══════════
+    { category: "コスト制度", type: "single", q: "高額療養費制度の「多数回該当」とはどのような仕組みか?",
+      choices: ["直近12ヶ月で4回目以降の該当時にさらに自己負担上限が軽減される仕組み", "70歳以上のみに適用される特別枠", "初回申請時のみ適用される一時的な割引", "手術を伴う治療のみに適用される"], correct: 0,
+      explain: "BTK阻害薬のような継続内服治療を長期間受ける患者にとって特に負担軽減効果が大きい制度です。" },
+    { category: "コスト制度", type: "single", q: "固定期間治療(ベネトクラクス+オビヌツズマブ等)がコスト面で持つ利点として本レポートで説明されている内容は?",
+      choices: ["治療終了後は投薬が不要になるため、継続内服のBTK阻害薬より総コストが抑えられる可能性がある", "固定期間治療は必ずBTK阻害薬より高額になる", "固定期間治療は保険適用外である", "コスト面での利点は特にないとされている"], correct: 0,
+      explain: "12ヶ月間で治療を終了できるため、BTK阻害薬のような継続内服治療と比較して総コストを抑えられる可能性がある点が利点として挙げられています。" }
+  ];
+
+  var QUIZ_SESSION_SIZE = 10;
+  var quizOrder = [];     // indices into QUIZ for THIS session (random subset)
+  var quizIndex = 0;
+  var quizAnswers = [];   // per-question(by original index): selected choice index (single) or array of indices (multi)
+  var quizFeedback = {};  // { [questionIndex]: 'good' | 'bad' }
+
+  function quizPickSession() {
+    var all = QUIZ.map(function (_, i) { return i; });
+    quizShuffle(all);
+    quizOrder = all.slice(0, QUIZ_SESSION_SIZE);
+  }
+  function quizShuffle(arr) {
+    for (var i = arr.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = arr[i]; arr[i] = arr[j]; arr[j] = t;
+    }
+    return arr;
+  }
+
+  function quizLoadFeedback() {
+    try {
+      var raw = localStorage.getItem('cllQuizFeedback_v2');
+      quizFeedback = raw ? JSON.parse(raw) : {};
+    } catch (e) { quizFeedback = {}; }
+  }
+  function quizSaveFeedback() {
+    try { localStorage.setItem('cllQuizFeedback_v2', JSON.stringify(quizFeedback)); } catch (e) {}
+  }
+  function quizBuildRatingRow(qi) {
+    var row = document.createElement('div');
+    row.className = 'rate-row';
+    var label = document.createElement('span');
+    label.className = 'rate-label';
+    label.textContent = 'この問題の評価:';
+    var goodBtn = document.createElement('button');
+    goodBtn.type = 'button'; goodBtn.className = 'rate-btn'; goodBtn.textContent = '👍 良問';
+    var badBtn = document.createElement('button');
+    badBtn.type = 'button'; badBtn.className = 'rate-btn'; badBtn.textContent = '👎 悪問';
+    function refresh() {
+      goodBtn.classList.toggle('active-good', quizFeedback[qi] === 'good');
+      badBtn.classList.toggle('active-bad', quizFeedback[qi] === 'bad');
+    }
+    goodBtn.onclick = function () {
+      quizFeedback[qi] = (quizFeedback[qi] === 'good') ? null : 'good';
+      if (!quizFeedback[qi]) delete quizFeedback[qi];
+      quizSaveFeedback(); refresh();
+    };
+    badBtn.onclick = function () {
+      quizFeedback[qi] = (quizFeedback[qi] === 'bad') ? null : 'bad';
+      if (!quizFeedback[qi]) delete quizFeedback[qi];
+      quizSaveFeedback(); refresh();
+    };
+    refresh();
+    row.appendChild(label); row.appendChild(goodBtn); row.appendChild(badBtn);
+    return row;
+  }
+  function quizFallbackCopy(text, done) {
+    var ta = document.createElement('textarea');
+    ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); } catch (e) {}
+    document.body.removeChild(ta);
+    done();
+  }
+  function quizChoiceLabel(item) {
+    return item.choices.join(' / ');
+  }
+  function quizCorrectLabel(item) {
+    if (item.type === 'multi') return item.correct.map(function (i) { return item.choices[i]; }).join(' ＋ ');
+    return item.choices[item.correct];
+  }
+  function quizExportFeedback() {
+    var ratedIdx = Object.keys(quizFeedback);
+    if (ratedIdx.length === 0) {
+      alert('まだ評価された問題がありません。各問題に回答した後に表示される「👍 良問」「👎 悪問」ボタンで評価してから、もう一度お試しください。');
+      return;
+    }
+    var goodList = [], badList = [];
+    ratedIdx.forEach(function (idxStr) {
+      var idx = parseInt(idxStr, 10);
+      var item = QUIZ[idx];
+      if (!item) return;
+      var entry = '・[' + item.category + (item.type === 'multi' ? '/複数選択' : '') + '] ' + item.q + '\n  選択肢: ' + quizChoiceLabel(item) + '\n  正解: ' + quizCorrectLabel(item);
+      if (quizFeedback[idx] === 'good') goodList.push(entry);
+      else if (quizFeedback[idx] === 'bad') badList.push(entry);
+    });
+    var text = '【慢性リンパ性白血病(CLL)クイズ(quiz-cll.html、全50問プール)フィードバック】\n\n' +
+      '良問と評価された問題(' + goodList.length + '件):\n' + (goodList.length ? goodList.join('\n\n') : '(なし)') + '\n\n' +
+      '悪問と評価された問題(' + badList.length + '件) — 改善・差し替えを検討してください:\n' + (badList.length ? badList.join('\n\n') : '(なし)') + '\n\n' +
+      '参照ファイル: artifacts/html/oncology-reports/quiz-cll.html\n\n' +
+      '上記フィードバックを踏まえて、「悪問」と評価された問題をレポート本文(artifacts/html/oncology-reports/cll.html、添付文書情報セクション含む)の内容に基づいて改善・差し替えてください。「良問」と評価された問題は現状を維持してください。';
+    var notify = function () { alert('フィードバックをコピーしました。MulmoClaudeのチャットに貼り付けて送信してください。問題の改善に使います。'); };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(notify).catch(function () { quizFallbackCopy(text, notify); });
+    } else { quizFallbackCopy(text, notify); }
+  }
+  function quizResetFeedback() {
+    if (!confirm('すべての評価をリセットします。よろしいですか?')) return;
+    quizFeedback = {};
+    quizSaveFeedback();
+    alert('評価をリセットしました。');
+  }
+
+  function quizRenderQuestion() {
+    document.getElementById('quiz-result-area').style.display = 'none';
+    document.getElementById('quiz-question-area').style.display = 'block';
+    var qi = quizOrder[quizIndex];
+    var item = QUIZ[qi];
+    document.getElementById('quiz-progress-text').textContent = '問 ' + (quizIndex + 1) + ' / ' + quizOrder.length + '(全' + QUIZ.length + '問中からランダム出題)';
+    document.getElementById('quiz-cat-badge').textContent = item.category;
+    document.getElementById('quiz-type-badge').style.display = (item.type === 'multi') ? 'inline-flex' : 'none';
+    document.getElementById('quiz-progress-fill').style.width = Math.round((quizIndex / quizOrder.length) * 100) + '%';
+    document.getElementById('quiz-question-text').textContent = item.q;
+    document.getElementById('quiz-explain-area').style.display = 'none';
+    document.getElementById('quiz-explain-area').innerHTML = '';
+    document.getElementById('quiz-next-btn').style.display = 'none';
+    document.getElementById('quiz-submit-row').style.display = 'none';
+
+    var wrap = document.getElementById('quiz-choices');
+    wrap.innerHTML = '';
+
+    if (item.type === 'multi') {
+      var selected = {};
+      item.choices.forEach(function (choiceText, idx) {
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'quiz-choice';
+        btn.innerHTML = '<span class="quiz-choice-check">☐</span> ' + choiceText.replace(/</g, '&lt;');
+        btn.onclick = function () {
+          selected[idx] = !selected[idx];
+          btn.classList.toggle('selected', !!selected[idx]);
+          btn.querySelector('.quiz-choice-check').textContent = selected[idx] ? '☑' : '☐';
+        };
+        wrap.appendChild(btn);
+      });
+      document.getElementById('quiz-submit-row').style.display = 'block';
+      document.getElementById('quiz-submit-btn').onclick = function () {
+        var chosen = Object.keys(selected).filter(function (k) { return selected[k]; }).map(Number);
+        quizAnswerMulti(chosen);
+      };
+    } else {
+      item.choices.forEach(function (choiceText, idx) {
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'quiz-choice';
+        btn.textContent = choiceText;
+        btn.onclick = function () { quizAnswerSingle(idx); };
+        wrap.appendChild(btn);
+      });
+    }
+  }
+
+  function quizFinishQuestion(qi, isCorrect, correctText) {
+    var item = QUIZ[qi];
+    var explainArea = document.getElementById('quiz-explain-area');
+    explainArea.className = 'quiz-explain';
+    explainArea.style.display = 'block';
+    explainArea.innerHTML = '<div style="font-weight:700; margin-bottom:4px; color:' + (isCorrect ? 'var(--good)' : 'var(--critical)') + ';">' +
+      (isCorrect ? '✅ 正解' : '❌ 不正解(正解: ' + correctText + ')') + '</div>' +
+      '<div>' + (item.explain || '') + '</div>';
+    explainArea.appendChild(quizBuildRatingRow(qi));
+    document.getElementById('quiz-submit-row').style.display = 'none';
+    document.getElementById('quiz-next-btn').style.display = 'inline-block';
+    document.getElementById('quiz-next-btn').textContent = (quizIndex === quizOrder.length - 1) ? '結果を見る →' : '次の問題 →';
+  }
+
+  function quizAnswerSingle(selectedIdx) {
+    var qi = quizOrder[quizIndex];
+    var item = QUIZ[qi];
+    quizAnswers[qi] = selectedIdx;
+    var buttons = document.getElementById('quiz-choices').querySelectorAll('.quiz-choice');
+    buttons.forEach(function (btn, idx) {
+      btn.disabled = true;
+      if (idx === item.correct) btn.classList.add('correct');
+      else if (idx === selectedIdx) btn.classList.add('wrong');
+    });
+    quizFinishQuestion(qi, selectedIdx === item.correct, item.choices[item.correct]);
+  }
+
+  function quizSubmitMulti() {
+    var qi = quizOrder[quizIndex];
+    var item = QUIZ[qi];
+    var buttons = document.getElementById('quiz-choices').querySelectorAll('.quiz-choice');
+    var chosen = [];
+    buttons.forEach(function (btn, idx) {
+      if (btn.classList.contains('selected')) chosen.push(idx);
+    });
+    quizAnswerMulti(chosen, buttons, item, qi);
+  }
+
+  function quizAnswerMulti(chosen, buttons, item, qi) {
+    qi = (qi === undefined) ? quizOrder[quizIndex] : qi;
+    item = item || QUIZ[qi];
+    buttons = buttons || document.getElementById('quiz-choices').querySelectorAll('.quiz-choice');
+    quizAnswers[qi] = chosen;
+    var correctSet = item.correct.slice().sort();
+    var chosenSet = chosen.slice().sort();
+    var isCorrect = correctSet.length === chosenSet.length && correctSet.every(function (v, i) { return v === chosenSet[i]; });
+    buttons.forEach(function (btn, idx) {
+      btn.disabled = true;
+      var isRight = item.correct.indexOf(idx) !== -1;
+      var wasChosen = chosen.indexOf(idx) !== -1;
+      if (isRight) btn.classList.add('correct');
+      else if (wasChosen) btn.classList.add('wrong');
+    });
+    quizFinishQuestion(qi, isCorrect, quizCorrectLabel(item));
+  }
+
+  function quizNext() {
+    if (quizIndex < quizOrder.length - 1) {
+      quizIndex++;
+      quizRenderQuestion();
+    } else {
+      quizShowResult();
+    }
+  }
+
+  function quizShowResult() {
+    document.getElementById('quiz-progress-fill').style.width = '100%';
+    document.getElementById('quiz-progress-text').textContent = '完了 ' + quizOrder.length + ' / ' + quizOrder.length;
+    document.getElementById('quiz-cat-badge').textContent = '';
+    document.getElementById('quiz-type-badge').style.display = 'none';
+    document.getElementById('quiz-question-area').style.display = 'none';
+
+    var correctCount = 0;
+    var byCategory = {};
+    quizOrder.forEach(function (qi) {
+      var item = QUIZ[qi];
+      if (!byCategory[item.category]) byCategory[item.category] = { correct: 0, total: 0 };
+      byCategory[item.category].total++;
+      var ans = quizAnswers[qi];
+      var isCorrect;
+      if (item.type === 'multi') {
+        var correctSet = item.correct.slice().sort();
+        var chosenSet = (ans || []).slice().sort();
+        isCorrect = correctSet.length === chosenSet.length && correctSet.every(function (v, i) { return v === chosenSet[i]; });
+      } else {
+        isCorrect = ans === item.correct;
+      }
+      if (isCorrect) { correctCount++; byCategory[item.category].correct++; }
+    });
+    var pct = Math.round((correctCount / quizOrder.length) * 100);
+
+    var catHtml = '';
+    Object.keys(byCategory).forEach(function (cat) {
+      var c = byCategory[cat];
+      var p = Math.round((c.correct / c.total) * 100);
+      catHtml += '<div class="cat-result-row"><span class="text-xs" style="width:150px; flex-shrink:0;">' + cat + '</span>' +
+        '<div class="cat-result-bar"><div class="cat-result-fill" style="width:' + p + '%"></div></div>' +
+        '<span class="text-xs muted" style="width:56px; text-align:right;">' + c.correct + '/' + c.total + '</span></div>';
+    });
+
+    var reviewHtml = '';
+    quizOrder.forEach(function (qi) {
+      var item = QUIZ[qi];
+      var ans = quizAnswers[qi];
+      var isCorrect;
+      var yourAnswerText;
+      if (item.type === 'multi') {
+        var correctSet = item.correct.slice().sort();
+        var chosenSet = (ans || []).slice().sort();
+        isCorrect = correctSet.length === chosenSet.length && correctSet.every(function (v, i) { return v === chosenSet[i]; });
+        yourAnswerText = (ans && ans.length) ? ans.map(function (i) { return item.choices[i]; }).join(' ＋ ') : '(未回答)';
+      } else {
+        isCorrect = ans === item.correct;
+        yourAnswerText = (ans != null) ? item.choices[ans] : '(未回答)';
+      }
+      if (!isCorrect) {
+        reviewHtml += '<div class="review-item">' +
+          '<div class="text-sm font-semibold mb-1">' + item.q + '</div>' +
+          '<div class="text-xs muted mb-2">あなたの回答: ' + yourAnswerText + ' / 正解: ' + quizCorrectLabel(item) + '</div>' +
+          '<div class="text-xs" style="line-height:1.6;">' + (item.explain || '') + '</div>' +
+          '</div>';
+      }
+    });
+    if (!reviewHtml) reviewHtml = '<p class="text-sm secondary">全問正解です。見直しの必要な項目はありません 🎉</p>';
+
+    var goodCount = 0, badCount = 0;
+    Object.keys(quizFeedback).forEach(function (k) {
+      if (quizFeedback[k] === 'good') goodCount++;
+      else if (quizFeedback[k] === 'bad') badCount++;
+    });
+
+    var resultArea = document.getElementById('quiz-result-area');
+    resultArea.style.display = 'block';
+    resultArea.innerHTML =
+      '<div class="text-center mb-6">' +
+        '<div class="score-ring-num" style="color:var(--series-new);">' + correctCount + ' / ' + quizOrder.length + '</div>' +
+        '<div class="text-sm muted mt-1">正答率 ' + pct + '%(全' + QUIZ.length + '問プールから今回ランダム抽出された' + quizOrder.length + '問)</div>' +
+      '</div>' +
+      '<div class="mb-6"><div class="text-sm font-semibold mb-3">カテゴリ別正答率(今回出題分)</div>' + catHtml + '</div>' +
+      '<div class="mb-2 text-sm font-semibold">見直し(不正解・未回答の問題)</div>' +
+      '<div class="mb-6">' + reviewHtml + '</div>' +
+      '<div class="mb-6 pt-4 border-t" style="border-color:var(--gridline);">' +
+        '<div class="text-sm font-semibold mb-2">問題の評価状況(全50問プール通算)</div>' +
+        '<div class="text-xs muted mb-3">👍 良問 ' + goodCount + '件 ・ 👎 悪問 ' + badCount + '件</div>' +
+        '<div class="flex flex-wrap gap-3">' +
+          '<button type="button" class="quiz-btn-outline" onclick="quizExportFeedback()">📋 フィードバックをエクスポート(チャットに貼り付け用)</button>' +
+          '<button type="button" class="quiz-btn-outline" onclick="quizResetFeedback()" style="border-color:var(--critical); color:var(--critical);">🗑 評価をリセット</button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="flex flex-wrap gap-3 justify-center">' +
+        '<button type="button" class="quiz-btn" onclick="quizRestart()">🔀 新しい10問でもう一度</button>' +
+        '<a href="cll.html" class="quiz-btn-outline" style="text-decoration:none; display:inline-block;">レポート本文に戻る</a>' +
+      '</div>';
+  }
+
+  function quizRestart() {
+    quizPickSession();
+    quizIndex = 0;
+    quizAnswers = [];
+    quizRenderQuestion();
+  }
+
+  quizLoadFeedback();
+  quizPickSession();
+  quizRenderQuestion();
+</script>
+
+<footer class="text-center text-xs pb-4" style="color: var(--text-muted);">
+  本クイズは学習・自己点検を目的とした資料です。臨床判断には利用せず、最新の添付文書・ガイドライン原文を優先してください。
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>造血幹細胞移植(HSCT)理解度クイズ 全50問(ランダム10問出題)</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+:root, .viz-root {
+  color-scheme: light;
+  --surface-1: #fcfcfb; --page-plane: #f9f9f7;
+  --text-primary: #0b0b0b; --text-secondary: #52514e; --text-muted: #898781;
+  --gridline: #e1e0d9; --baseline: #c3c2b7;
+  --series-new: #2a78d6; --series-control: #b9b7ae;
+  --good: #0ca30c; --warning: #b9790a; --critical: #d03b3b;
+  --border: rgba(11,11,11,0.10);
+}
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) {
+    color-scheme: dark;
+    --surface-1: #1a1a19; --page-plane: #0d0d0d;
+    --text-primary: #ffffff; --text-secondary: #c3c2b7; --text-muted: #898781;
+    --gridline: #2c2c2a; --baseline: #383835;
+    --series-new: #3987e5; --series-control: #55534c;
+    --good: #0ca30c; --warning: #eab116; --critical: #e66767;
+    --border: rgba(255,255,255,0.10);
+  }
+}
+body { background: var(--page-plane); color: var(--text-primary); font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+.card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+.secondary { color: var(--text-secondary); }
+.muted { color: var(--text-muted); }
+.cat-badge { display:inline-flex; align-items:center; padding:3px 10px; border-radius:9999px; font-size:0.72rem; font-weight:700; background: color-mix(in srgb, var(--series-new) 14%, transparent); color: var(--series-new); }
+.type-badge { display:inline-flex; align-items:center; padding:3px 10px; border-radius:9999px; font-size:0.68rem; font-weight:700; background: color-mix(in srgb, var(--warning) 16%, transparent); color: var(--warning); margin-left:6px; }
+.progress-track { background: var(--gridline); border-radius: 9999px; height: 8px; overflow: hidden; }
+.progress-fill { background: var(--series-new); height: 100%; border-radius: 9999px; transition: width .25s; }
+.quiz-choice { display:block; width:100%; text-align:left; background: var(--page-plane); border: 1.5px solid var(--gridline); border-radius: 10px; padding: 12px 16px; font-size: 0.92rem; cursor: pointer; transition: border-color .12s, background .12s; margin-bottom: 10px; }
+.quiz-choice:last-child { margin-bottom: 0; }
+.quiz-choice:hover:not(:disabled) { border-color: var(--series-new); }
+.quiz-choice:disabled { cursor: default; }
+.quiz-choice.correct { border-color: var(--good); background: color-mix(in srgb, var(--good) 12%, transparent); font-weight: 700; }
+.quiz-choice.wrong { border-color: var(--critical); background: color-mix(in srgb, var(--critical) 10%, transparent); }
+.quiz-choice.selected { border-color: var(--series-new); background: color-mix(in srgb, var(--series-new) 10%, transparent); }
+.quiz-choice-check { display:inline-block; width:16px; }
+.quiz-explain { background: var(--page-plane); border: 1px solid var(--gridline); border-radius: 10px; padding: 14px 16px; margin-top: 14px; font-size: 0.85rem; line-height: 1.7; }
+.quiz-btn { background: var(--series-new); color: #fff; border: none; border-radius: 8px; padding: 10px 22px; font-size: 0.88rem; font-weight: 700; cursor: pointer; }
+.quiz-btn:hover { opacity: 0.9; }
+.quiz-btn:disabled { opacity: 0.4; cursor: default; }
+.quiz-btn-outline { background: transparent; color: var(--series-new); border: 1.5px solid var(--series-new); border-radius: 8px; padding: 9px 20px; font-size: 0.88rem; font-weight: 700; cursor: pointer; }
+.quiz-btn-outline:hover { background: color-mix(in srgb, var(--series-new) 10%, transparent); }
+.score-ring-num { font-size: 2.6rem; font-weight: 800; }
+.cat-result-row { display:flex; align-items:center; gap:10px; margin-bottom: 8px; }
+.cat-result-bar { flex:1; background: var(--gridline); border-radius: 9999px; height: 10px; overflow:hidden; }
+.cat-result-fill { background: var(--series-new); height:100%; border-radius: 9999px; }
+.review-item { border: 1px solid var(--gridline); border-radius: 10px; padding: 12px 14px; margin-bottom: 10px; }
+.review-item:last-child { margin-bottom: 0; }
+.rate-row { display:flex; align-items:center; gap:8px; margin-top:14px; flex-wrap:wrap; }
+.rate-label { font-size:0.75rem; color: var(--text-muted); }
+.rate-btn { background: var(--page-plane); border: 1.5px solid var(--gridline); border-radius: 8px; padding: 6px 12px; font-size: 0.78rem; font-weight:600; cursor:pointer; color: var(--text-secondary); }
+.rate-btn:hover { border-color: var(--series-new); }
+.rate-btn.active-good { border-color: var(--good); background: color-mix(in srgb, var(--good) 14%, transparent); color: var(--good); }
+.rate-btn.active-bad { border-color: var(--critical); background: color-mix(in srgb, var(--critical) 12%, transparent); color: var(--critical); }
+</style>
+</head>
+<body class="viz-root">
+<div class="max-w-3xl mx-auto px-4 py-8 space-y-5">
+
+  <header class="card">
+    <div class="flex items-center justify-between gap-2 flex-wrap">
+      <div>
+        <h1 class="text-xl font-bold">🧠 造血幹細胞移植(HSCT)理解度クイズ</h1>
+        <p class="text-sm mt-1 secondary">全50問のプールからランダムに10問出題・4択/複数選択混在・医療従事者向け(移植適応・レジメン選択・用法用量・投与スケジュール・用量規制因子/モニタリング・特徴的な合併症・バイオマーカー/適合性判定・コスト制度)</p>
+      </div>
+      <a href="hsct.html" class="text-xs" style="color:var(--series-new); text-decoration:none; font-weight:600;">← レポート本文に戻る</a>
+    </div>
+    <p class="text-xs mt-3 muted">出題内容はすべて <a href="hsct.html" style="color:var(--series-new);">造血幹細胞移植(HSCT)総論レポート</a>(本文および「8. 主要薬剤の添付文書情報」)に記載の情報に基づきます。臨床判断には利用せず、学習・自己点検の目的でご利用ください。ページを再読み込みする、または結果画面の「シャッフルしてもう一度」を押すたびに、新しい10問がランダムに選ばれます。</p>
+  </header>
+
+  <!-- Quiz card -->
+  <section class="card" id="quiz-card">
+    <div class="flex items-center justify-between mb-2">
+      <span id="quiz-progress-text" class="text-xs font-semibold muted"></span>
+      <span><span id="quiz-cat-badge" class="cat-badge"></span><span id="quiz-type-badge" class="type-badge" style="display:none;">複数選択</span></span>
+    </div>
+    <div class="progress-track mb-5"><div class="progress-fill" id="quiz-progress-fill" style="width:0%"></div></div>
+
+    <div id="quiz-question-area">
+      <div id="quiz-question-text" class="text-base font-semibold mb-4" style="line-height:1.6;"></div>
+      <div id="quiz-choices"></div>
+      <div id="quiz-submit-row" style="display:none;" class="mt-3">
+        <button type="button" class="quiz-btn" id="quiz-submit-btn" onclick="quizSubmitMulti()">この内容で回答する</button>
+      </div>
+      <div id="quiz-explain-area" style="display:none;"></div>
+      <div class="mt-5 flex justify-end">
+        <button type="button" id="quiz-next-btn" class="quiz-btn" style="display:none;" onclick="quizNext()">次の問題 →</button>
+      </div>
+    </div>
+
+    <div id="quiz-result-area" style="display:none;"></div>
+  </section>
+
+</div>
+
+<script>
+  var QUIZ = [
+    // ══════════ 移植適応・レジメン選択 ══════════
+    { category: "移植適応・レジメン選択", type: "single", q: "多発性骨髄腫や化学療法感受性のある再発リンパ腫で標準的に選択される移植方式は?",
+      choices: ["自家移植(Auto-HSCT)", "同種移植(Allo-HSCT)", "臍帯血移植のみ", "ハプロ移植のみ"], correct: 0,
+      explain: "自家移植は患者自身の末梢血幹細胞を用いるためGVHDリスクがなく、多発性骨髄腫や化学療法感受性のある再発リンパ腫で標準的に選択されます。" },
+    { category: "移植適応・レジメン選択", type: "single", q: "AML・ALL・高リスクMDS等で同種移植が選択される主な理由は?",
+      choices: ["移植片対腫瘍(GVT)効果による免疫学的な腫瘍制御が治癒に寄与するため", "GVHDのリスクが全くないため", "入院期間が自家移植より短いため", "前処置が不要なため"], correct: 0,
+      explain: "同種移植はドナー由来の幹細胞を用い、前処置による腫瘍細胞根絶に加え、移植片対腫瘍(GVT)効果による免疫学的制御で治癒を目指します。GVHDのリスクを伴う点が自家移植との大きな違いです。" },
+    { category: "移植適応・レジメン選択", type: "single", q: "血縁ドナーがおらず、フルマッチドナーも得られない場合に、PTCy導入により安全性が大きく向上し適応が拡大しているドナーソースは?",
+      choices: ["ハプロ移植(HLA半合致血縁者)", "血縁ドナー移植", "非血縁ドナー移植(骨髄バンク経由)のみ", "自家末梢血幹細胞移植"], correct: 0,
+      explain: "ハプロ移植はHLA半合致の血縁者をドナーとする方式で、移植後シクロホスファミド(PTCy)の導入により重症GVHDのリスクが大きく低減し、フルマッチドナー不在時の有力な選択肢となっています。" },
+    { category: "移植適応・レジメン選択", type: "single", q: "迅速な移植が必要だが血縁・非血縁ドナーのコーディネートに時間がかかる場合に検討される、ドナー負担のないドナーソースは?",
+      choices: ["臍帯血移植", "ハプロ移植", "自家移植", "非血縁ドナー骨髄移植"], correct: 0,
+      explain: "臍帯血移植はHLA6抗原中2抗原までの不一致を許容し、ドナー本人への負担なく比較的迅速に入手できますが、生着まで3〜4週間を要し、生着不全リスクがやや高い点がトレードオフです。" },
+    { category: "移植適応・レジメン選択", type: "single", q: "BMT CTN 0901試験が示した、若年・臓器機能良好な患者における骨髄破壊的前処置(MAC)と骨髄非破壊的前処置(RIC)の比較結果は?",
+      choices: ["MACの方がRICより再発率が有意に低い", "RICの方がMACより再発率が有意に低い", "再発率に差はなかった", "MACはRICより非再発死亡が低い"], correct: 0,
+      explain: "BMT CTN 0901試験では、若年・臓器機能良好な患者においてMAC(骨髄破壊的前処置)の方がRIC(骨髄非破壊的前処置)より再発率が有意に低いことが示されました。ただしMACは毒性・非再発死亡のリスクも高くなる可能性があるため、患者選択が重要です。" },
+    { category: "移植適応・レジメン選択", type: "single", q: "高齢者・臓器機能低下・合併症を有する移植不適格例に選択される前処置強度と、そのトレードオフは?",
+      choices: ["RIC(骨髄非破壊的前処置)。GVT効果への依存度が高く再発リスクがやや高い", "MAC(骨髄破壊的前処置)。毒性は少ないが再発率が高い", "前処置は不要", "RICは同種移植でのみ使用され自家移植では使用されない"], correct: 0,
+      explain: "RICは免疫抑制を主体とした強度の弱い前処置で、移植片対腫瘍(GVT)効果に治療効果を依存する分、再発リスクはMACよりやや高い傾向があります。高齢者・移植不適格例の適応拡大に寄与しています。" },
+    { category: "移植適応・レジメン選択", type: "single", q: "ステロイド抵抗性急性GVHDの二次治療として、REACH2試験で医師選択の最良治療(BAT)と比較され標準治療として確立した薬剤は?",
+      choices: ["ルキソリチニブ", "タクロリムス", "メトトレキサート", "抗ヒト胸腺細胞ウサギ免疫グロブリン"], correct: 0,
+      explain: "REACH2試験(第III相RCT)でルキソリチニブはBATに対しDay28 ORRで優位性を示し(62% vs 39%)、ステロイド抵抗性急性GVHDの標準的な二次治療として確立しました。" },
+    { category: "移植適応・レジメン選択", type: "single", q: "ステロイド抵抗性・依存性慢性GVHDの二次治療として、REACH3試験で検証された薬剤は?",
+      choices: ["ルキソリチニブ", "シクロスポリン", "ミコフェノール酸モフェチル", "サイモグロブリン"], correct: 0,
+      explain: "REACH3試験(第III相RCT)でルキソリチニブはBATに対しWeek24 ORRで優位性を示し(49.7% vs 25.6%)、ステロイド抵抗性・依存性慢性GVHDの標準的な二次治療として確立しました。" },
+    { category: "移植適応・レジメン選択", type: "single", q: "初回移植時のGVHD予防で、最も広く使用される標準的な組み合わせは?",
+      choices: ["カルシニューリン阻害薬(シクロスポリンまたはタクロリムス)+短期メトトレキサート", "ルキソリチニブ単独", "ステロイド単独", "抗ヒト胸腺細胞ウサギ免疫グロブリン単独"], correct: 0,
+      explain: "カルシニューリン阻害薬(シクロスポリンまたはタクロリムス)に短期メトトレキサートを併用する方法が、最も広く使用される標準的なGVHD予防法です。" },
+    { category: "移植適応・レジメン選択", type: "single", q: "米国の2件のRCTで、ミコフェノール酸モフェチル(MMF)+CsA/TACと短期メトトレキサート+CsA/TACを比較した結果は?",
+      choices: ["有意差はなく同等の成績であった", "MMF併用群が明確に優れていた", "短期メトトレキサート併用群が明確に優れていた", "MMF併用群は禁忌のため試験が中止された"], correct: 0,
+      explain: "米国で実施された2件のRCTでは、MMF+CsA/TACは短期メトトレキサート+CsA/TACに対する優位性を示せず、両者はおおむね同等の成績でした。MMFは国内でも2021年6月にGVHD抑制の適応追加承認を取得しています。" },
+    { category: "移植適応・レジメン選択", type: "single", q: "CML(慢性骨髄性白血病)において同種造血幹細胞移植が検討される典型的な局面は?",
+      choices: ["第2世代を含むチロシンキナーゼ阻害薬(TKI)抵抗性となった後", "初発診断時にすべての患者で", "TKI治療開始前のルーチン検査として", "分子遺伝学的完全奏効が得られた直後に必ず"], correct: 0,
+      explain: "CMLでは複数のTKI治療が奏効しない、いわゆる2GTKI抵抗性となった後に同種造血幹細胞移植が治癒を目指す選択肢として検討されます。" },
+    { category: "移植適応・レジメン選択", type: "single", q: "高リスクMDS(骨髄異形成症候群)における同種造血幹細胞移植の位置づけとして本レポートに記載されているのは?",
+      choices: ["唯一の治癒的選択肢とされる", "禁忌とされる", "低リスクMDSより優先度が低い", "自家移植のみが選択肢となる"], correct: 0,
+      explain: "高リスクMDSでは同種造血幹細胞移植が唯一の治癒的選択肢とされており、低リスクでも重度血球減少やTP53変異例では早期移植が検討されます。" },
+    { category: "移植適応・レジメン選択", type: "multi", q: "同種移植のドナーソースとして本レポートに挙げられている選択肢をすべて選べ(4つ選択)",
+      choices: ["血縁ドナー(同胞)", "非血縁ドナー(骨髄バンク経由)", "臍帯血移植", "ハプロ移植(HLA半合致血縁者)"], correct: [0, 1, 2, 3],
+      explain: "本レポートでは血縁ドナー、非血縁ドナー、臍帯血移植、ハプロ移植の4種類が同種移植のドナーソースとして、それぞれの迅速性・GVHDリスク・生着不全リスクの特徴とともに整理されています。" },
+    { category: "移植適応・レジメン選択", type: "multi", q: "ステロイド抵抗性GVHDに対するルキソリチニブの位置づけについて正しいものをすべて選べ(2つ選択)",
+      choices: ["急性GVHD(REACH2試験)・慢性GVHD(REACH3試験)のいずれにも第III相RCTのエビデンスがある", "日本人サブグループでも同様の傾向が確認されている", "海外未承認薬であり国内では使用できない", "ステロイドの初回投与前から併用することが必須とされている"], correct: [0, 1],
+      explain: "ルキソリチニブは急性・慢性GVHDのいずれについても第III相RCT(REACH2/REACH3試験)のエビデンスに基づく標準的な二次治療であり、国内承認済みで日本人サブグループでも同様の傾向が確認されています。あくまでステロイド抵抗性・依存性例に対する二次治療としての位置づけです。" },
+
+    // ══════════ 用法用量・投与スケジュール ══════════
+    { category: "用法用量・投与スケジュール", type: "single", q: "フルダラビン(フルダラ)の同種造血幹細胞移植前処置における添付文書上の用法用量は?",
+      choices: ["1日量30mg/m²を6日間連日点滴静注", "1日量20mg/m²を5日間連日点滴静注し23日間休薬", "1日量30mg/m²を5日間連日点滴静注", "1回500mgを週1回点滴静注"], correct: 0,
+      explain: "同種造血幹細胞移植の前処置では1日量30mg/m²を6日間連日点滴静注します(慢性リンパ性白血病等の通常療法である20mg/m²×5日間+23日間休薬とは異なる用法です)。" },
+    { category: "用法用量・投与スケジュール", type: "single", q: "メルファラン(アルケラン)の高用量前処置(3日間投与)における総量は?",
+      choices: ["180mg/m²(1日60mg/m²×3日間)", "60mg/m²(1日20mg/m²×3日間)", "600mg/m²(1日200mg/m²×3日間)", "90mg/m²(1日30mg/m²×3日間)"], correct: 0,
+      explain: "添付文書では成人に1日60mg/m²を3日間投与(総量180mg/m²)、又は多発性骨髄腫では1日100mg/m²を2日間投与(総量200mg/m²)と規定されています。幹細胞輸注は最終投与終了後24時間以上あけて行います。" },
+    { category: "用法用量・投与スケジュール", type: "single", q: "シクロホスファミド(エンドキサン)の造血幹細胞移植前処置における添付文書上の用法用量は?",
+      choices: ["1日60mg/kgを2〜3時間かけて2日間点滴静注", "1日100mgを連日静脈内注射", "1日600mg/m²を単回投与", "1回1g/m²を週1回投与"], correct: 0,
+      explain: "造血幹細胞移植前処置(急性白血病等)では1日60mg/kg(体重)を2〜3時間かけて2日間点滴静注します。単独使用時(他がん種)の通常用量(1日100mg程度)とは大きく異なる高用量です。" },
+    { category: "用法用量・投与スケジュール", type: "single", q: "ブスルファン(ブスルフェクス)のA法における投与法は?",
+      choices: ["1回0.8mg/kgを2時間かけて6時間毎に1日4回、4日間点滴静注", "1回3.2mg/kgを3時間かけて1日1回、4日間点滴静注", "1回5mg/kgを1日1回、2日間点滴静注", "1回0.8mg/kgを週1回、4週間点滴静注"], correct: 0,
+      explain: "A法は1回0.8mg/kg(体重)を2時間かけて6時間毎に1日4回、4日間点滴静注する方法です。B法(1回3.2mg/kgを3時間かけて1日1回、4日間)といずれかを選択します。" },
+    { category: "用法用量・投与スケジュール", type: "single", q: "タクロリムス(プログラフ)のGVHD予防における添付文書上の開始用法用量は?",
+      choices: ["移植1日前より1回0.06mg/kgを1日2回経口投与", "移植当日より1回0.3mg/kgを1日1回経口投与", "移植7日前より1回0.06mg/kgを週1回経口投与", "移植後発症時のみ1回1mgを1日2回経口投与"], correct: 0,
+      explain: "移植1日前よりタクロリムスとして1回0.06mg/kg(体重)を1日2回経口投与を開始し、その後血中濃度を確認しながら徐々に減量します。" },
+    { category: "用法用量・投与スケジュール", type: "single", q: "シクロスポリン(ネオーラル)のGVHD予防における添付文書上の用法用量は?",
+      choices: ["移植1日前から1日量6〜12mg/kgを1日2回に分けて経口投与し、3〜6ヵ月継続後に漸減", "移植当日から1日量1mg/kgを1日1回経口投与し、生涯継続", "移植後発症時のみ1日量50mgを投与", "移植7日前から1日量200mgを週1回投与"], correct: 0,
+      explain: "移植1日前からシクロスポリンとして1日量6〜12mg/kg(体重)を1日2回に分けて経口投与し、3〜6ヵ月間継続した後、徐々に減量して中止します。" },
+    { category: "用法用量・投与スケジュール", type: "single", q: "ルキソリチニブ(ジャカビ)の成人におけるステロイド抵抗性GVHD治療の添付文書上の用法用量は?",
+      choices: ["1回10mgを1日2回(12時間毎)経口投与", "1回5mgを1日1回経口投与", "1回20mgを1日2回経口投与", "1回50mgを週1回経口投与"], correct: 0,
+      explain: "成人及び12歳以上の小児には1回10mgを1日2回(12時間毎)経口投与し、患者の状態に応じて適宜減量します。REACH2/REACH3試験もこの用量で検証されました。" },
+    { category: "用法用量・投与スケジュール", type: "single", q: "ミコフェノール酸モフェチル(セルセプト)の成人GVHD抑制における添付文書上の用法用量の上限は?",
+      choices: ["1日3,000mg(1回250〜1,500mgを1日2回、状況により1日3回も可)", "1日500mg固定", "1日10,000mg", "上限の定めはない"], correct: 0,
+      explain: "成人は1回250〜1,500mgを1日2回12時間毎に食後経口投与し、年齢・症状により適宜増減するが1日3,000mgを上限とします(1日3回投与も可)。" },
+    { category: "用法用量・投与スケジュール", type: "multi", q: "抗ヒト胸腺細胞ウサギ免疫グロブリン(サイモグロブリン)の適応と用法用量の組み合わせとして正しいものをすべて選べ(2つ選択)",
+      choices: ["造血幹細胞移植の前処置: 1日1回体重1kgあたり2.5mgを移植5日前より4日間", "造血幹細胞移植後の急性GVHD: 1日1回体重1kgあたり2.5〜3.75mgを5日間", "GVHD予防のみに用いられ、GVHD発症後の治療には用いられない", "投与量は年齢によらず常に一律50mg固定である"], correct: [0, 1],
+      explain: "サイモグロブリンは前処置への追加(1日1回体重1kgあたり2.5mgを移植5日前より4日間)と、急性GVHD発症後の治療(1日1回体重1kgあたり2.5〜3.75mgを5日間)の両方に用いられ、体重換算で投与量を計算します。" },
+
+    // ══════════ 用量規制因子・モニタリング ══════════
+    { category: "用量規制因子・モニタリング", type: "single", q: "タクロリムスで血中トラフ濃度が高値で持続する場合に高まるリスクは?",
+      choices: ["腎不全等の重篤な副作用の発現リスク", "拒絶反応(GVHD)のリスクのみが高まる", "リスクの変化はない", "肝機能改善効果が高まる"], correct: 0,
+      explain: "添付文書には血中トラフ濃度が20ng/mLを超える期間が長い場合、副作用が発現しやすくなると明記されており、定期的な血中濃度モニタリングに基づく用量調節が不可欠です。" },
+    { category: "用量規制因子・モニタリング", type: "single", q: "シクロホスファミドとペントスタチンの併用が添付文書上禁忌とされている理由は?",
+      choices: ["致命的な心毒性が発現し死亡した症例が報告されているため", "薬効が完全に打ち消されるため", "保険適用外となるため", "投与経路が異なるため物理的に混注できない"], correct: 0,
+      explain: "外国においてシクロホスファミドとペントスタチンの併用により心毒性が発現し死亡した症例が報告されており、添付文書の警告・禁忌に明記されています。" },
+    { category: "用量規制因子・モニタリング", type: "single", q: "フルダラビンとペントスタチンの併用が添付文書上禁忌とされている理由は?",
+      choices: ["致命的な肺毒性が報告されているため", "骨髄抑制が全く生じなくなるため", "腎機能に影響しないため", "併用により造血幹細胞の生着が促進されるため"], correct: 0,
+      explain: "フルダラビンの添付文書には、ペントスタチンとの併用により致命的な肺毒性が報告されているため併用しないことと明記されています。シクロホスファミドとペントスタチンの併用禁忌(心毒性)とは異なる毒性機序です。" },
+    { category: "用量規制因子・モニタリング", type: "single", q: "ブスルファンの薬物動態に影響しうる相互作用として添付文書に記載されている薬剤は?",
+      choices: ["デフェラシロクス(本剤のクリアランスが減少し曝露量が増加)", "アスピリン(本剤の効果が完全に消失)", "アセトアミノフェン(必ず併用禁忌)", "ビタミンC(本剤の分解が促進)"], correct: 0,
+      explain: "デフェラシロクスとの併用で本剤のクリアランスが減少し曝露量が増加した報告があり、併用注意とされています。イトラコナゾール、メトロニダゾールも同様に本剤の作用増強に関わる併用注意薬です。" },
+    { category: "用量規制因子・モニタリング", type: "single", q: "タクロリムスと生ワクチンの併用が添付文書上禁忌とされる理由として最も適切なのは?",
+      choices: ["免疫抑制下でワクチン由来病原体の増殖・発症リスクが高まるため", "タクロリムスの血中濃度が上昇しすぎるため", "生ワクチンの効果が過剰に増強されるため", "腎機能障害が必発するため"], correct: 0,
+      explain: "タクロリムスによる強い免疫抑制下では、生ワクチンに含まれる弱毒化病原体であっても増殖して感染症を発症するリスクが高まるため、併用禁忌とされています。" },
+    { category: "用量規制因子・モニタリング", type: "single", q: "抗ヒト胸腺細胞ウサギ免疫グロブリン(サイモグロブリン)投与前に、添付文書の用法用量に関連する注意で特に求められる手順は?",
+      choices: ["試験投与による過敏症の有無の確認", "投与前のHLA適合性の再検査", "投与前のCYP3A4遺伝子多型検査", "投与前の生検による組織確認"], correct: 0,
+      explain: "投与に先立ち試験投与を行い過敏症の有無を確認することが規定されています。ショック・アナフィラキシーのリスクがあるため重要な安全対策です。" },
+    { category: "用量規制因子・モニタリング", type: "single", q: "ルキソリチニブと強力なCYP3A4阻害剤(イトラコナゾール、リトナビル等)を併用する際に添付文書上推奨される対応は?",
+      choices: ["本剤の血中濃度上昇のおそれがあるため減量を考慮する", "特に対応は不要である", "併用時は必ずルキソリチニブを中止する", "CYP3A4阻害剤側の減量のみで対応する"], correct: 0,
+      explain: "強力なCYP3A4阻害剤との併用により本剤の血中濃度が上昇するおそれがあるため、減量を考慮し患者状態を慎重に観察することとされています。" },
+    { category: "用量規制因子・モニタリング", type: "single", q: "メルファラン投与患者でシクロスポリン・タクロリムスとの併用時に注意すべき有害事象として添付文書に記載されているのは?",
+      choices: ["腎障害の発現", "低血糖", "脱毛の増強", "味覚障害の増強"], correct: 0,
+      explain: "メルファランとシクロスポリン又はタクロリムスとの併用で腎障害が発現したとの報告があり、併用注意とされています。GVHD予防薬と前処置薬の相互作用として臨床上重要です。" },
+    { category: "用量規制因子・モニタリング", type: "multi", q: "重症感染症を合併している患者が添付文書上投与禁忌に該当する薬剤をすべて選べ(2つ選択)",
+      choices: ["ブスルファン(ブスルフェクス)", "メルファラン(アルケラン)", "ルキソリチニブ(ジャカビ)", "ミコフェノール酸モフェチル(セルセプト)"], correct: [0, 1],
+      explain: "ブスルファン・メルファランはいずれも重症感染症を合併している患者への投与が禁忌とされており、強い骨髄抑制作用を有する前処置薬に共通する安全対策です(シクロホスファミド、フルダラビン、サイモグロブリンも同様に重症感染症合併患者は禁忌)。" },
+
+    // ══════════ 特徴的な合併症(GVHD等) ══════════
+    { category: "特徴的な合併症(GVHD等)", type: "single", q: "急性GVHDの好発臓器として本レポートに記載されているのは?",
+      choices: ["皮膚・消化管・肝臓", "肺・腎臓・骨髄のみ", "脳・脊髄", "甲状腺のみ"], correct: 0,
+      explain: "急性GVHDは皮膚・消化管・肝臓が好発臓器とされ、国内報告で移植後100日までにGrade II以上が約36%発症、Grade III以上で10〜20%とされています。" },
+    { category: "特徴的な合併症(GVHD等)", type: "single", q: "慢性GVHDが標的とする臓器の特徴として本レポートに記載されているのは?",
+      choices: ["皮膚、眼、口腔粘膜等の全身臓器", "肝臓のみ", "骨髄のみ", "消化管のみ"], correct: 0,
+      explain: "慢性GVHDは皮膚、眼、口腔粘膜等の全身臓器を標的とし、QOLへの長期的影響が大きい合併症です。国内報告で移植後2年までに約37%発症するとされています。" },
+    { category: "特徴的な合併症(GVHD等)", type: "single", q: "ブスルファンの添付文書で重大な副作用として明記されている、前処置に特徴的な肝関連合併症は?",
+      choices: ["静脈閉塞性肝疾患(肝中心静脈閉塞症、7.5%)", "自己免疫性肝炎", "脂肪肝のみ", "胆管炎"], correct: 0,
+      explain: "静脈閉塞性肝疾患(VOD/類洞閉塞症候群)は骨髄破壊的前処置に特徴的な合併症で、ブスルファンの添付文書の重大な副作用に7.5%の頻度で記載されています。" },
+    { category: "特徴的な合併症(GVHD等)", type: "single", q: "抗ヒト胸腺細胞ウサギ免疫グロブリン(サイモグロブリン)で高頻度に報告される血液学的な重大な副作用は?",
+      choices: ["血小板減少(31.0%)", "赤血球増多症", "好酸球増多症のみ", "多血症"], correct: 0,
+      explain: "添付文書の重大な副作用に血小板減少(31.0%)が高頻度で記載されており、投与中の血算モニタリングが重要です。" },
+    { category: "特徴的な合併症(GVHD等)", type: "single", q: "ルキソリチニブの添付文書で最も高頻度に報告されている重大な副作用は?",
+      choices: ["血小板減少症(33.3%)", "間質性肺疾患", "消化管穿孔", "高血圧クリーゼ"], correct: 0,
+      explain: "血小板減少症(33.3%)、貧血(29.9%)、好中球減少症(10.7%)の順に血球減少系の副作用が高頻度で報告されており、定期的な血算モニタリングが重要です。" },
+    { category: "特徴的な合併症(GVHD等)", type: "single", q: "シクロホスファミド(エンドキサン)の前処置において、メスナ未使用時に高頻度となるとされる重大な副作用は?",
+      choices: ["出血性膀胱炎(35%との報告)", "手足症候群", "低マグネシウム血症", "皮膚有棘細胞癌"], correct: 0,
+      explain: "造血幹細胞移植前処置での大量シクロホスファミド投与では、メスナ未使用時に出血性膀胱炎が35%程度の頻度で発現したとの報告があり、添付文書の用法及び用量に関連する注意でメスナの併用が求められています。" },
+    { category: "特徴的な合併症(GVHD等)", type: "single", q: "タクロリムスの添付文書の警告に明記されている、致死的な経過をたどりうる重篤な副作用の組み合わせは?",
+      choices: ["腎不全・心不全・感染症・全身痙攣・意識障害・脳梗塞等", "手足症候群・低マグネシウム血症のみ", "脱毛・味覚障害のみ", "皮膚有棘細胞癌のみ"], correct: 0,
+      explain: "添付文書の警告には、重篤な副作用(腎不全、心不全、感染症、全身痙攣、意識障害、脳梗塞等)により致死的な経過をたどることがあると明記されています。" },
+    { category: "特徴的な合併症(GVHD等)", type: "single", q: "メルファラン(高用量前処置)で特に高頻度に報告される消化器症状は?",
+      choices: ["下痢(92.7%)、口内炎・粘膜炎(80.5%)", "便秘のみ(5%未満)", "消化器症状はほぼ生じない", "味覚障害のみ(1%未満)"], correct: 0,
+      explain: "高用量メルファランは強い粘膜障害性を有し、添付文書上も下痢92.7%、口内炎・粘膜炎80.5%と非常に高頻度の消化器症状が報告されています。支持療法(口腔ケア、整腸剤等)が重要です。" },
+    { category: "特徴的な合併症(GVHD等)", type: "single", q: "ミコフェノール酸モフェチル(セルセプト)の添付文書の警告に明記されている特有のリスクは?",
+      choices: ["催奇形性(妊娠検査・確実な避妊法が必須)", "難聴", "視力障害のみ", "味覚脱失のみ"], correct: 0,
+      explain: "本剤はヒトにおいて催奇形性が報告されており、妊娠する可能性のある女性への投与に際しては投与前の妊娠検査及び確実な避妊法の実施が必須とされています。" },
+    { category: "特徴的な合併症(GVHD等)", type: "single", q: "ジャカビ(ルキソリチニブ)の添付文書の警告に明記されている、死亡例も報告された重篤な感染症は?",
+      choices: ["結核、敗血症等", "水痘のみ", "インフルエンザのみ", "感染症に関する警告記載はない"], correct: 0,
+      explain: "添付文書の警告には、結核、敗血症等の重篤な感染症が発現し、死亡に至った症例が報告されていると明記されており、投与前後の感染症の有無の確認・継続的な観察が求められます。" },
+    { category: "特徴的な合併症(GVHD等)", type: "single", q: "非再発死亡(NRM)の主な内訳として本レポートに記載されているのは?",
+      choices: ["GVHD・感染症・臓器障害の複合的結果", "原疾患の再発のみ", "手術関連合併症のみ", "輸血後溶血反応のみ"], correct: 0,
+      explain: "非再発死亡(NRM)は原疾患の再発以外の原因による死亡を指し、GVHD・感染症・臓器障害の複合的結果として評価され、移植後1年で概ね10〜30%程度(疾患・年齢・前処置強度・ドナー適合度により変動)とされています。" },
+    { category: "特徴的な合併症(GVHD等)", type: "multi", q: "造血幹細胞移植の晩期合併症として本レポートに挙げられているものをすべて選べ(3つ選択)",
+      choices: ["二次がん", "不妊", "内分泌障害(甲状腺機能低下等)・白内障(TBI関連)", "急性GVHD(移植後100日以内に必発する合併症)"], correct: [0, 1, 2],
+      explain: "晩期合併症には二次がん、不妊、内分泌障害(甲状腺機能低下等)、白内障(TBI関連)、慢性GVHDに伴う臓器障害等が挙げられ、長期フォローアップ外来での定期評価が推奨されます。急性GVHDは早期合併症であり、必発するものでもありません。" },
+
+    // ══════════ バイオマーカー・適合性判定 ══════════
+    { category: "バイオマーカー・適合性判定", type: "single", q: "血縁ドナー(同胞)の適合性判定で原則とされる基準は?",
+      choices: ["HLA主要抗原一致", "ABO血液型の完全一致", "年齢が患者と近いこと", "体格が患者と近いこと"], correct: 0,
+      explain: "血縁ドナー(同胞)はHLA主要抗原一致が原則とされ、迅速に移植可能でGVHD頻度も非血縁ドナーよりやや低い傾向があります。" },
+    { category: "バイオマーカー・適合性判定", type: "single", q: "非血縁ドナー(骨髄バンク経由)の選択において望ましいとされるHLA適合の精度は?",
+      choices: ["高精度一致が望ましい", "適合度は問わない", "半分の一致で十分である", "HLA検査は不要である"], correct: 0,
+      explain: "非血縁ドナーはHLA高精度一致が望ましいとされ、コーディネートに数か月を要することが一般的です。" },
+    { category: "バイオマーカー・適合性判定", type: "single", q: "臍帯血移植で許容されるHLA不一致の範囲として本レポートに記載されているのは?",
+      choices: ["HLA6抗原中2抗原不一致まで", "不一致は一切許容されない", "HLA6抗原中5抗原まで不一致可", "HLA適合性の判定自体が不要"], correct: 0,
+      explain: "臍帯血移植はHLA6抗原中2抗原不一致まで許容され、ドナー負担がない一方、生着まで3〜4週間、生着不全リスクがやや高い点が特徴です。" },
+    { category: "バイオマーカー・適合性判定", type: "single", q: "ハプロ移植におけるドナーとレシピエントのHLA適合状況を表す用語は?",
+      choices: ["HLA半合致(血縁者)", "HLA完全一致", "HLA検査対象外", "ABO血液型一致のみで判定"], correct: 0,
+      explain: "ハプロ移植はHLA半合致の血縁者をドナーとする方式で、フルマッチドナーが得られない場合の選択肢として、PTCy導入により適応が拡大しています。" },
+
+    // ══════════ コスト制度 ══════════
+    { category: "コスト制度", type: "single", q: "移植を受けた月の医療費(保険適用前の総医療費ベース)の概算として本レポートに記載されているのは?",
+      choices: ["概算400万〜600万円", "概算10万〜20万円", "概算1,000万円以上が確実", "医療費は発生しない"], correct: 0,
+      explain: "移植を受けた月の医療費は検査・前処置・入院・支持療法を含む総額で概算400万〜600万円とされ、移植後数か月間も月額200万〜400万円規模になり得ます。" },
+    { category: "コスト制度", type: "single", q: "高額療養費制度の「多数回該当」とはどのような制度か?",
+      choices: ["直近12ヶ月で3回以上該当した場合、4回目以降さらに自己負担上限が下がる仕組み", "70歳以上のみに適用される特別枠", "初回申請時のみ適用される一時的な割引", "手術を伴う治療のみに適用される制度"], correct: 0,
+      explain: "移植は複数月にわたり高額な医療費が継続するため「多数回該当」に該当する可能性が高く、直近12ヶ月で4回目以降さらに自己負担上限額が下がる、患者説明時に必ず触れるべき重要な制度です。" }
+  ];
+
+  var QUIZ_SESSION_SIZE = 10;
+  var quizOrder = [];     // indices into QUIZ for THIS session (random subset)
+  var quizIndex = 0;
+  var quizAnswers = [];   // per-question(by original index): selected choice index (single) or array of indices (multi)
+  var quizFeedback = {};  // { [questionIndex]: 'good' | 'bad' }
+
+  function quizPickSession() {
+    var all = QUIZ.map(function (_, i) { return i; });
+    quizShuffle(all);
+    quizOrder = all.slice(0, QUIZ_SESSION_SIZE);
+  }
+  function quizShuffle(arr) {
+    for (var i = arr.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = arr[i]; arr[i] = arr[j]; arr[j] = t;
+    }
+    return arr;
+  }
+
+  function quizLoadFeedback() {
+    try {
+      var raw = localStorage.getItem('hsctQuizFeedback_v2');
+      quizFeedback = raw ? JSON.parse(raw) : {};
+    } catch (e) { quizFeedback = {}; }
+  }
+  function quizSaveFeedback() {
+    try { localStorage.setItem('hsctQuizFeedback_v2', JSON.stringify(quizFeedback)); } catch (e) {}
+  }
+  function quizBuildRatingRow(qi) {
+    var row = document.createElement('div');
+    row.className = 'rate-row';
+    var label = document.createElement('span');
+    label.className = 'rate-label';
+    label.textContent = 'この問題の評価:';
+    var goodBtn = document.createElement('button');
+    goodBtn.type = 'button'; goodBtn.className = 'rate-btn'; goodBtn.textContent = '👍 良問';
+    var badBtn = document.createElement('button');
+    badBtn.type = 'button'; badBtn.className = 'rate-btn'; badBtn.textContent = '👎 悪問';
+    function refresh() {
+      goodBtn.classList.toggle('active-good', quizFeedback[qi] === 'good');
+      badBtn.classList.toggle('active-bad', quizFeedback[qi] === 'bad');
+    }
+    goodBtn.onclick = function () {
+      quizFeedback[qi] = (quizFeedback[qi] === 'good') ? null : 'good';
+      if (!quizFeedback[qi]) delete quizFeedback[qi];
+      quizSaveFeedback(); refresh();
+    };
+    badBtn.onclick = function () {
+      quizFeedback[qi] = (quizFeedback[qi] === 'bad') ? null : 'bad';
+      if (!quizFeedback[qi]) delete quizFeedback[qi];
+      quizSaveFeedback(); refresh();
+    };
+    refresh();
+    row.appendChild(label); row.appendChild(goodBtn); row.appendChild(badBtn);
+    return row;
+  }
+  function quizFallbackCopy(text, done) {
+    var ta = document.createElement('textarea');
+    ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); } catch (e) {}
+    document.body.removeChild(ta);
+    done();
+  }
+  function quizChoiceLabel(item) {
+    return item.choices.join(' / ');
+  }
+  function quizCorrectLabel(item) {
+    if (item.type === 'multi') return item.correct.map(function (i) { return item.choices[i]; }).join(' ＋ ');
+    return item.choices[item.correct];
+  }
+  function quizExportFeedback() {
+    var ratedIdx = Object.keys(quizFeedback);
+    if (ratedIdx.length === 0) {
+      alert('まだ評価された問題がありません。各問題に回答した後に表示される「👍 良問」「👎 悪問」ボタンで評価してから、もう一度お試しください。');
+      return;
+    }
+    var goodList = [], badList = [];
+    ratedIdx.forEach(function (idxStr) {
+      var idx = parseInt(idxStr, 10);
+      var item = QUIZ[idx];
+      if (!item) return;
+      var entry = '・[' + item.category + (item.type === 'multi' ? '/複数選択' : '') + '] ' + item.q + '\n  選択肢: ' + quizChoiceLabel(item) + '\n  正解: ' + quizCorrectLabel(item);
+      if (quizFeedback[idx] === 'good') goodList.push(entry);
+      else if (quizFeedback[idx] === 'bad') badList.push(entry);
+    });
+    var text = '【造血幹細胞移植(HSCT)クイズ(quiz-hsct.html、全50問プール)フィードバック】\n\n' +
+      '良問と評価された問題(' + goodList.length + '件):\n' + (goodList.length ? goodList.join('\n\n') : '(なし)') + '\n\n' +
+      '悪問と評価された問題(' + badList.length + '件) — 改善・差し替えを検討してください:\n' + (badList.length ? badList.join('\n\n') : '(なし)') + '\n\n' +
+      '参照ファイル: artifacts/html/oncology-reports/quiz-hsct.html\n\n' +
+      '上記フィードバックを踏まえて、「悪問」と評価された問題をレポート本文(artifacts/html/oncology-reports/hsct.html、添付文書情報セクション含む)の内容に基づいて改善・差し替えてください。「良問」と評価された問題は現状を維持してください。';
+    var notify = function () { alert('フィードバックをコピーしました。MulmoClaudeのチャットに貼り付けて送信してください。問題の改善に使います。'); };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(notify).catch(function () { quizFallbackCopy(text, notify); });
+    } else { quizFallbackCopy(text, notify); }
+  }
+  function quizResetFeedback() {
+    if (!confirm('すべての評価をリセットします。よろしいですか?')) return;
+    quizFeedback = {};
+    quizSaveFeedback();
+    alert('評価をリセットしました。');
+  }
+
+  function quizRenderQuestion() {
+    document.getElementById('quiz-result-area').style.display = 'none';
+    document.getElementById('quiz-question-area').style.display = 'block';
+    var qi = quizOrder[quizIndex];
+    var item = QUIZ[qi];
+    document.getElementById('quiz-progress-text').textContent = '問 ' + (quizIndex + 1) + ' / ' + quizOrder.length + '(全' + QUIZ.length + '問中からランダム出題)';
+    document.getElementById('quiz-cat-badge').textContent = item.category;
+    document.getElementById('quiz-type-badge').style.display = (item.type === 'multi') ? 'inline-flex' : 'none';
+    document.getElementById('quiz-progress-fill').style.width = Math.round((quizIndex / quizOrder.length) * 100) + '%';
+    document.getElementById('quiz-question-text').textContent = item.q;
+    document.getElementById('quiz-explain-area').style.display = 'none';
+    document.getElementById('quiz-explain-area').innerHTML = '';
+    document.getElementById('quiz-next-btn').style.display = 'none';
+    document.getElementById('quiz-submit-row').style.display = 'none';
+
+    var wrap = document.getElementById('quiz-choices');
+    wrap.innerHTML = '';
+
+    if (item.type === 'multi') {
+      var selected = {};
+      item.choices.forEach(function (choiceText, idx) {
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'quiz-choice';
+        btn.innerHTML = '<span class="quiz-choice-check">☐</span> ' + choiceText.replace(/</g, '&lt;');
+        btn.onclick = function () {
+          selected[idx] = !selected[idx];
+          btn.classList.toggle('selected', !!selected[idx]);
+          btn.querySelector('.quiz-choice-check').textContent = selected[idx] ? '☑' : '☐';
+        };
+        wrap.appendChild(btn);
+      });
+      document.getElementById('quiz-submit-row').style.display = 'block';
+      document.getElementById('quiz-submit-btn').onclick = function () {
+        var chosen = Object.keys(selected).filter(function (k) { return selected[k]; }).map(Number);
+        quizAnswerMulti(chosen);
+      };
+    } else {
+      item.choices.forEach(function (choiceText, idx) {
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'quiz-choice';
+        btn.textContent = choiceText;
+        btn.onclick = function () { quizAnswerSingle(idx); };
+        wrap.appendChild(btn);
+      });
+    }
+  }
+
+  function quizFinishQuestion(qi, isCorrect, correctText) {
+    var item = QUIZ[qi];
+    var explainArea = document.getElementById('quiz-explain-area');
+    explainArea.className = 'quiz-explain';
+    explainArea.style.display = 'block';
+    explainArea.innerHTML = '<div style="font-weight:700; margin-bottom:4px; color:' + (isCorrect ? 'var(--good)' : 'var(--critical)') + ';">' +
+      (isCorrect ? '✅ 正解' : '❌ 不正解(正解: ' + correctText + ')') + '</div>' +
+      '<div>' + (item.explain || '') + '</div>';
+    explainArea.appendChild(quizBuildRatingRow(qi));
+    document.getElementById('quiz-submit-row').style.display = 'none';
+    document.getElementById('quiz-next-btn').style.display = 'inline-block';
+    document.getElementById('quiz-next-btn').textContent = (quizIndex === quizOrder.length - 1) ? '結果を見る →' : '次の問題 →';
+  }
+
+  function quizAnswerSingle(selectedIdx) {
+    var qi = quizOrder[quizIndex];
+    var item = QUIZ[qi];
+    quizAnswers[qi] = selectedIdx;
+    var buttons = document.getElementById('quiz-choices').querySelectorAll('.quiz-choice');
+    buttons.forEach(function (btn, idx) {
+      btn.disabled = true;
+      if (idx === item.correct) btn.classList.add('correct');
+      else if (idx === selectedIdx) btn.classList.add('wrong');
+    });
+    quizFinishQuestion(qi, selectedIdx === item.correct, item.choices[item.correct]);
+  }
+
+  function quizSubmitMulti() {
+    var qi = quizOrder[quizIndex];
+    var item = QUIZ[qi];
+    var buttons = document.getElementById('quiz-choices').querySelectorAll('.quiz-choice');
+    var chosen = [];
+    buttons.forEach(function (btn, idx) {
+      if (btn.classList.contains('selected')) chosen.push(idx);
+    });
+    quizAnswerMulti(chosen, buttons, item, qi);
+  }
+
+  function quizAnswerMulti(chosen, buttons, item, qi) {
+    qi = (qi === undefined) ? quizOrder[quizIndex] : qi;
+    item = item || QUIZ[qi];
+    buttons = buttons || document.getElementById('quiz-choices').querySelectorAll('.quiz-choice');
+    quizAnswers[qi] = chosen;
+    var correctSet = item.correct.slice().sort();
+    var chosenSet = chosen.slice().sort();
+    var isCorrect = correctSet.length === chosenSet.length && correctSet.every(function (v, i) { return v === chosenSet[i]; });
+    buttons.forEach(function (btn, idx) {
+      btn.disabled = true;
+      var isRight = item.correct.indexOf(idx) !== -1;
+      var wasChosen = chosen.indexOf(idx) !== -1;
+      if (isRight) btn.classList.add('correct');
+      else if (wasChosen) btn.classList.add('wrong');
+    });
+    quizFinishQuestion(qi, isCorrect, quizCorrectLabel(item));
+  }
+
+  function quizNext() {
+    if (quizIndex < quizOrder.length - 1) {
+      quizIndex++;
+      quizRenderQuestion();
+    } else {
+      quizShowResult();
+    }
+  }
+
+  function quizShowResult() {
+    document.getElementById('quiz-progress-fill').style.width = '100%';
+    document.getElementById('quiz-progress-text').textContent = '完了 ' + quizOrder.length + ' / ' + quizOrder.length;
+    document.getElementById('quiz-cat-badge').textContent = '';
+    document.getElementById('quiz-type-badge').style.display = 'none';
+    document.getElementById('quiz-question-area').style.display = 'none';
+
+    var correctCount = 0;
+    var byCategory = {};
+    quizOrder.forEach(function (qi) {
+      var item = QUIZ[qi];
+      if (!byCategory[item.category]) byCategory[item.category] = { correct: 0, total: 0 };
+      byCategory[item.category].total++;
+      var ans = quizAnswers[qi];
+      var isCorrect;
+      if (item.type === 'multi') {
+        var correctSet = item.correct.slice().sort();
+        var chosenSet = (ans || []).slice().sort();
+        isCorrect = correctSet.length === chosenSet.length && correctSet.every(function (v, i) { return v === chosenSet[i]; });
+      } else {
+        isCorrect = ans === item.correct;
+      }
+      if (isCorrect) { correctCount++; byCategory[item.category].correct++; }
+    });
+    var pct = Math.round((correctCount / quizOrder.length) * 100);
+
+    var catHtml = '';
+    Object.keys(byCategory).forEach(function (cat) {
+      var c = byCategory[cat];
+      var p = Math.round((c.correct / c.total) * 100);
+      catHtml += '<div class="cat-result-row"><span class="text-xs" style="width:150px; flex-shrink:0;">' + cat + '</span>' +
+        '<div class="cat-result-bar"><div class="cat-result-fill" style="width:' + p + '%"></div></div>' +
+        '<span class="text-xs muted" style="width:56px; text-align:right;">' + c.correct + '/' + c.total + '</span></div>';
+    });
+
+    var reviewHtml = '';
+    quizOrder.forEach(function (qi) {
+      var item = QUIZ[qi];
+      var ans = quizAnswers[qi];
+      var isCorrect;
+      var yourAnswerText;
+      if (item.type === 'multi') {
+        var correctSet = item.correct.slice().sort();
+        var chosenSet = (ans || []).slice().sort();
+        isCorrect = correctSet.length === chosenSet.length && correctSet.every(function (v, i) { return v === chosenSet[i]; });
+        yourAnswerText = (ans && ans.length) ? ans.map(function (i) { return item.choices[i]; }).join(' ＋ ') : '(未回答)';
+      } else {
+        isCorrect = ans === item.correct;
+        yourAnswerText = (ans != null) ? item.choices[ans] : '(未回答)';
+      }
+      if (!isCorrect) {
+        reviewHtml += '<div class="review-item">' +
+          '<div class="text-sm font-semibold mb-1">' + item.q + '</div>' +
+          '<div class="text-xs muted mb-2">あなたの回答: ' + yourAnswerText + ' / 正解: ' + quizCorrectLabel(item) + '</div>' +
+          '<div class="text-xs" style="line-height:1.6;">' + (item.explain || '') + '</div>' +
+          '</div>';
+      }
+    });
+    if (!reviewHtml) reviewHtml = '<p class="text-sm secondary">全問正解です。見直しの必要な項目はありません 🎉</p>';
+
+    var goodCount = 0, badCount = 0;
+    Object.keys(quizFeedback).forEach(function (k) {
+      if (quizFeedback[k] === 'good') goodCount++;
+      else if (quizFeedback[k] === 'bad') badCount++;
+    });
+
+    var resultArea = document.getElementById('quiz-result-area');
+    resultArea.style.display = 'block';
+    resultArea.innerHTML =
+      '<div class="text-center mb-6">' +
+        '<div class="score-ring-num" style="color:var(--series-new);">' + correctCount + ' / ' + quizOrder.length + '</div>' +
+        '<div class="text-sm muted mt-1">正答率 ' + pct + '%(全' + QUIZ.length + '問プールから今回ランダム抽出された' + quizOrder.length + '問)</div>' +
+      '</div>' +
+      '<div class="mb-6"><div class="text-sm font-semibold mb-3">カテゴリ別正答率(今回出題分)</div>' + catHtml + '</div>' +
+      '<div class="mb-2 text-sm font-semibold">見直し(不正解・未回答の問題)</div>' +
+      '<div class="mb-6">' + reviewHtml + '</div>' +
+      '<div class="mb-6 pt-4 border-t" style="border-color:var(--gridline);">' +
+        '<div class="text-sm font-semibold mb-2">問題の評価状況(全50問プール通算)</div>' +
+        '<div class="text-xs muted mb-3">👍 良問 ' + goodCount + '件 ・ 👎 悪問 ' + badCount + '件</div>' +
+        '<div class="flex flex-wrap gap-3">' +
+          '<button type="button" class="quiz-btn-outline" onclick="quizExportFeedback()">📋 フィードバックをエクスポート(チャットに貼り付け用)</button>' +
+          '<button type="button" class="quiz-btn-outline" onclick="quizResetFeedback()" style="border-color:var(--critical); color:var(--critical);">🗑 評価をリセット</button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="flex flex-wrap gap-3 justify-center">' +
+        '<button type="button" class="quiz-btn" onclick="quizRestart()">🔀 新しい10問でもう一度</button>' +
+        '<a href="hsct.html" class="quiz-btn-outline" style="text-decoration:none; display:inline-block;">レポート本文に戻る</a>' +
+      '</div>';
+  }
+
+  function quizRestart() {
+    quizPickSession();
+    quizIndex = 0;
+    quizAnswers = [];
+    quizRenderQuestion();
+  }
+
+  quizLoadFeedback();
+  quizPickSession();
+  quizRenderQuestion();
+</script>
+
+<footer class="text-center text-xs pb-4" style="color: var(--text-muted);">
+  本クイズは学習・自己点検を目的とした資料です。臨床判断には利用せず、最新の添付文書・ガイドライン原文を優先してください。
+</footer>
+
+</body>
+</html>

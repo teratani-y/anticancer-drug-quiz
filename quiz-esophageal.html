@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>食道癌理解度クイズ 全50問(ランダム10問出題)</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+:root, .viz-root {
+  color-scheme: light;
+  --surface-1: #fcfcfb; --page-plane: #f9f9f7;
+  --text-primary: #0b0b0b; --text-secondary: #52514e; --text-muted: #898781;
+  --gridline: #e1e0d9; --baseline: #c3c2b7;
+  --series-new: #2a78d6; --series-control: #b9b7ae;
+  --good: #0ca30c; --warning: #b9790a; --critical: #d03b3b;
+  --border: rgba(11,11,11,0.10);
+}
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) {
+    color-scheme: dark;
+    --surface-1: #1a1a19; --page-plane: #0d0d0d;
+    --text-primary: #ffffff; --text-secondary: #c3c2b7; --text-muted: #898781;
+    --gridline: #2c2c2a; --baseline: #383835;
+    --series-new: #3987e5; --series-control: #55534c;
+    --good: #0ca30c; --warning: #eab116; --critical: #e66767;
+    --border: rgba(255,255,255,0.10);
+  }
+}
+body { background: var(--page-plane); color: var(--text-primary); font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+.card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+.secondary { color: var(--text-secondary); }
+.muted { color: var(--text-muted); }
+.cat-badge { display:inline-flex; align-items:center; padding:3px 10px; border-radius:9999px; font-size:0.72rem; font-weight:700; background: color-mix(in srgb, var(--series-new) 14%, transparent); color: var(--series-new); }
+.type-badge { display:inline-flex; align-items:center; padding:3px 10px; border-radius:9999px; font-size:0.68rem; font-weight:700; background: color-mix(in srgb, var(--warning) 16%, transparent); color: var(--warning); margin-left:6px; }
+.progress-track { background: var(--gridline); border-radius: 9999px; height: 8px; overflow: hidden; }
+.progress-fill { background: var(--series-new); height: 100%; border-radius: 9999px; transition: width .25s; }
+.quiz-choice { display:block; width:100%; text-align:left; background: var(--page-plane); border: 1.5px solid var(--gridline); border-radius: 10px; padding: 12px 16px; font-size: 0.92rem; cursor: pointer; transition: border-color .12s, background .12s; margin-bottom: 10px; }
+.quiz-choice:last-child { margin-bottom: 0; }
+.quiz-choice:hover:not(:disabled) { border-color: var(--series-new); }
+.quiz-choice:disabled { cursor: default; }
+.quiz-choice.correct { border-color: var(--good); background: color-mix(in srgb, var(--good) 12%, transparent); font-weight: 700; }
+.quiz-choice.wrong { border-color: var(--critical); background: color-mix(in srgb, var(--critical) 10%, transparent); }
+.quiz-choice.selected { border-color: var(--series-new); background: color-mix(in srgb, var(--series-new) 10%, transparent); }
+.quiz-choice-check { display:inline-block; width:16px; }
+.quiz-explain { background: var(--page-plane); border: 1px solid var(--gridline); border-radius: 10px; padding: 14px 16px; margin-top: 14px; font-size: 0.85rem; line-height: 1.7; }
+.quiz-btn { background: var(--series-new); color: #fff; border: none; border-radius: 8px; padding: 10px 22px; font-size: 0.88rem; font-weight: 700; cursor: pointer; }
+.quiz-btn:hover { opacity: 0.9; }
+.quiz-btn:disabled { opacity: 0.4; cursor: default; }
+.quiz-btn-outline { background: transparent; color: var(--series-new); border: 1.5px solid var(--series-new); border-radius: 8px; padding: 9px 20px; font-size: 0.88rem; font-weight: 700; cursor: pointer; }
+.quiz-btn-outline:hover { background: color-mix(in srgb, var(--series-new) 10%, transparent); }
+.score-ring-num { font-size: 2.6rem; font-weight: 800; }
+.cat-result-row { display:flex; align-items:center; gap:10px; margin-bottom: 8px; }
+.cat-result-bar { flex:1; background: var(--gridline); border-radius: 9999px; height: 10px; overflow:hidden; }
+.cat-result-fill { background: var(--series-new); height:100%; border-radius: 9999px; }
+.review-item { border: 1px solid var(--gridline); border-radius: 10px; padding: 12px 14px; margin-bottom: 10px; }
+.review-item:last-child { margin-bottom: 0; }
+.rate-row { display:flex; align-items:center; gap:8px; margin-top:14px; flex-wrap:wrap; }
+.rate-label { font-size:0.75rem; color: var(--text-muted); }
+.rate-btn { background: var(--page-plane); border: 1.5px solid var(--gridline); border-radius: 8px; padding: 6px 12px; font-size: 0.78rem; font-weight:600; cursor:pointer; color: var(--text-secondary); }
+.rate-btn:hover { border-color: var(--series-new); }
+.rate-btn.active-good { border-color: var(--good); background: color-mix(in srgb, var(--good) 14%, transparent); color: var(--good); }
+.rate-btn.active-bad { border-color: var(--critical); background: color-mix(in srgb, var(--critical) 12%, transparent); color: var(--critical); }
+</style>
+</head>
+<body class="viz-root">
+<div class="max-w-3xl mx-auto px-4 py-8 space-y-5">
+
+  <header class="card">
+    <div class="flex items-center justify-between gap-2 flex-wrap">
+      <div>
+        <h1 class="text-xl font-bold">🧠 食道癌理解度クイズ</h1>
+        <p class="text-sm mt-1 secondary">全50問のプールからランダムに10問出題・4択/複数選択混在・医療従事者向け(治療ライン選択・用法用量・投与スケジュール・用量規制因子/モニタリング・添付文書の警告/禁忌/重大な副作用・バイオマーカー・コスト制度)</p>
+      </div>
+      <a href="esophageal.html" class="text-xs" style="color:var(--series-new); text-decoration:none; font-weight:600;">← レポート本文に戻る</a>
+    </div>
+    <p class="text-xs mt-3 muted">出題内容はすべて <a href="esophageal.html" style="color:var(--series-new);">食道癌薬物治療レポート</a>(本文および「8. 主要薬剤の添付文書情報」)に記載の情報に基づきます。臨床判断には利用せず、学習・自己点検の目的でご利用ください。ページを再読み込みする、または結果画面の「シャッフルしてもう一度」を押すたびに、新しい10問がランダムに選ばれます。</p>
+  </header>
+
+  <!-- Quiz card -->
+  <section class="card" id="quiz-card">
+    <div class="flex items-center justify-between mb-2">
+      <span id="quiz-progress-text" class="text-xs font-semibold muted"></span>
+      <span><span id="quiz-cat-badge" class="cat-badge"></span><span id="quiz-type-badge" class="type-badge" style="display:none;">複数選択</span></span>
+    </div>
+    <div class="progress-track mb-5"><div class="progress-fill" id="quiz-progress-fill" style="width:0%"></div></div>
+
+    <div id="quiz-question-area">
+      <div id="quiz-question-text" class="text-base font-semibold mb-4" style="line-height:1.6;"></div>
+      <div id="quiz-choices"></div>
+      <div id="quiz-submit-row" style="display:none;" class="mt-3">
+        <button type="button" class="quiz-btn" id="quiz-submit-btn" onclick="quizSubmitMulti()">この内容で回答する</button>
+      </div>
+      <div id="quiz-explain-area" style="display:none;"></div>
+      <div class="mt-5 flex justify-end">
+        <button type="button" id="quiz-next-btn" class="quiz-btn" style="display:none;" onclick="quizNext()">次の問題 →</button>
+      </div>
+    </div>
+
+    <div id="quiz-result-area" style="display:none;"></div>
+  </section>
+
+</div>
+
+<script>
+  var QUIZ = [
+    // ══════════ 治療ライン選択(どの局面でどの選択肢を使うか) ══════════
+    { category: "治療ライン選択", type: "single", q: "扁平上皮癌(日本の新標準)の周術期・術前治療における第一選択は?",
+      choices: ["術前DCF療法(JCOG1109/NExT試験)", "周術期FLOT療法", "術後補助ニボルマブ単独", "術前放射線単独"], correct: 0,
+      explain: "JCOG1109/NExT試験で5年OS DCF群65.1% vs CF群51.9%と改善が示され、臨床病期IB/II/III(T4除く)の術前治療の新標準となっています。" },
+    { category: "治療ライン選択", type: "single", q: "腺癌(EAC/食道胃接合部腺癌)の周術期治療における欧米(ESMO/NCCN)の標準は?",
+      choices: ["周術期FLOT療法", "術前DCF療法", "ニボルマブ単独", "チスレリズマブ+化学療法"], correct: 0,
+      explain: "FLOT4試験(欧米データ主体)に基づきESMO/NCCNで標準治療とされていますが、日本は扁平上皮癌主体のためSCCのDCF療法ほど位置づけは確立していません。" },
+    { category: "治療ライン選択", type: "single", q: "術前化学放射線療法(CRT)により局所因子で手術先行が困難な扁平上皮癌症例に検討される選択肢は?",
+      choices: ["術前CF+放射線療法(CF-RT)", "周術期FLOT療法", "術後補助ニボルマブ", "チスレリズマブ単独"], correct: 0,
+      explain: "JCOG1109第3群として設定されており、CFに対し良好な傾向を示しましたがDCFほどの優越性は確立していません。" },
+    { category: "治療ライン選択", type: "single", q: "扁平上皮癌の一次治療で、PD-L1 TPS≥1%集団において化学療法を伴わない選択肢は?",
+      choices: ["ニボルマブ+イピリムマブ", "ニボルマブ+化学療法", "ペムブロリズマブ単剤", "チスレリズマブ単剤"], correct: 0,
+      explain: "CheckMate-648試験でTPS≥1%集団のOS優越性が示され、化学療法忌避・不適格例向けの選択肢として2022年5月26日承認されました。" },
+    { category: "治療ライン選択", type: "single", q: "扁平上皮癌+腺癌(Siewert I型含む)の両方を対象に一次治療で承認されている併用療法は?",
+      choices: ["ペムブロリズマブ+化学療法(KEYNOTE-590)", "ニボルマブ+イピリムマブ", "チスレリズマブ単剤", "ラムシルマブ+パクリタキセル"], correct: 0,
+      explain: "KEYNOTE-590試験に基づき、シスプラチン+5-FUとの併用で扁平上皮癌・腺癌の両方が対象となります。" },
+    { category: "治療ライン選択", type: "single", q: "PD-L1発現状況を問わず一次治療の選択肢となる、2025年3月27日承認の併用療法は?",
+      choices: ["チスレリズマブ+化学療法(RATIONALE-306)", "ニボルマブ単独", "ラムシルマブ+パクリタキセル", "トラスツズマブ デルクステカン"], correct: 0,
+      explain: "RATIONALE-306試験(PD-L1不問)に基づき2025年3月27日に国内承認されました(テビムブラ)。" },
+    { category: "治療ライン選択", type: "single", q: "扁平上皮癌で化学療法後に増悪しICI未使用の場合、二次治療の第一選択として本レポートに挙げられているのは?",
+      choices: ["ニボルマブ単剤またはチスレリズマブ単剤", "ラムシルマブ+パクリタキセル", "ペムブロリズマブ+化学療法", "経過観察のみ"], correct: 0,
+      explain: "ATTRACTION-3試験(ニボルマブ)、RATIONALE-302試験(チスレリズマブ)がそれぞれの根拠試験です。" },
+    { category: "治療ライン選択", type: "single", q: "腺癌/食道胃接合部腺癌の二次治療として本レポートに挙げられている選択肢の注意点は?",
+      choices: ["ラムシルマブ+パクリタキセルだが、日本国内添付文書の適応は胃癌であり食道癌への明記はない", "ニボルマブ+イピリムマブが標準である", "チスレリズマブ+化学療法が唯一の選択肢である", "FLOT療法が二次治療の標準である"], correct: 0,
+      explain: "RAINBOW試験に基づく選択肢ですが、日本国内添付文書上の適応は「胃癌」であり食道癌への明記された適応は確認できないため、実際の適応判断は個別確認が必要です。" },
+    { category: "治療ライン選択", type: "single", q: "PD-L1陰性・ICI禁忌例の一次治療は?",
+      choices: ["化学療法単独(フルオロピリミジン+プラチナ製剤)", "ニボルマブ単独", "チスレリズマブ単独", "ペムブロリズマブ単独"], correct: 0,
+      explain: "PD-L1陰性やICI禁忌例では、免疫チェックポイント阻害薬を含まないCF療法等の化学療法単独が選択肢となります。" },
+    { category: "治療ライン選択", type: "single", q: "HER2陽性固形腫瘍に対するトラスツズマブ デルクステカンの、食道腺癌における位置づけは?",
+      choices: ["腫瘍横断的迅速承認によるものであり、食道腺癌単独での明確な適応拡大は確証を得られていない", "食道腺癌に対する第一選択として確立している", "日本では食道腺癌に対して完全な未承認薬である", "ガイドラインで食道腺癌の標準治療に位置づけられている"], correct: 0,
+      explain: "DESTINY-PanTumor02等の腫瘍横断的迅速承認(米国2024年)によるもので、添付文書上も食道癌への個別の明記はありません。" },
+    { category: "治療ライン選択", type: "single", q: "ペムブロリズマブの添付文書上、食道癌における単独投与の適応条件は?",
+      choices: ["がん化学療法後に増悪したPD-L1陽性の食道扁平上皮癌", "PD-L1発現を問わず全例に単独投与可能", "腺癌にのみ単独投与が可能", "単独投与は承認されていない"], correct: 0,
+      explain: "添付文書上、フルオロウラシル及びシスプラチンとの一次治療併用に加え、がん化学療法後に増悪したPD-L1陽性の食道扁平上皮癌には単独投与も可能とされています。" },
+    { category: "治療ライン選択", type: "single", q: "ニボルマブ+イピリムマブ併用が化学療法フリーの代替選択肢として位置づけられる主な対象は?",
+      choices: ["化学療法忌避・不適格な扁平上皮癌のPD-L1 TPS≥1%集団", "全扁平上皮癌患者一律", "腺癌患者のみ", "PD-L1陰性患者"], correct: 0,
+      explain: "CheckMate-648試験でTPS≥1%集団においてOS優越性が示され、化学療法忌避・不適格例向けの選択肢として位置づけられています。" },
+    { category: "治療ライン選択", type: "multi", q: "CheckMate-648試験に基づき、扁平上皮癌の一次治療として2022年5月26日に承認された同列の選択肢を2つ選べ(2つ選択)",
+      choices: ["ニボルマブ+化学療法", "ニボルマブ+イピリムマブ", "ペムブロリズマブ+化学療法", "チスレリズマブ+化学療法"], correct: [0, 1],
+      explain: "いずれもCheckMate-648試験に基づき2022年5月26日に国内承認されました。ペムブロリズマブ+化学療法はKEYNOTE-590試験、チスレリズマブ+化学療法はRATIONALE-306試験がそれぞれ根拠です。" },
+    { category: "治療ライン選択", type: "multi", q: "ニボルマブによる術後補助療法(CheckMate-577)が適応となる条件をすべて選べ(2つ選択)",
+      choices: ["術前化学放射線療法後にR0切除を行った患者", "病理学的遺残がある患者", "化学療法未治療の患者", "PD-L1陰性の患者"], correct: [0, 1],
+      explain: "CheckMate-577試験の対象は、術前CRT後にR0切除を行い、かつ病理学的遺残がある患者です。DFS中央値22.4 vs 11.0ヶ月の改善が示され、2021年11月に国内承認されました。" },
+
+    // ══════════ 用法用量・投与スケジュール ══════════
+    { category: "用法用量・投与スケジュール", type: "single", q: "シスプラチンの食道癌における標準的用法(B法)は?",
+      choices: ["50〜70mg/m²を1日1回投与し、少なくとも3週間休薬", "15〜20mg/m²を5日間連続投与のみ", "100mg/m²を週1回投与", "25mg/m²を毎週投与"], correct: 0,
+      explain: "添付文書上、B法(50〜70mg/m²、少なくとも3週間休薬)を標準的用法・用量とし、患者の状態によりA法(15〜20mg/m²を5日間連続投与、少なくとも2週間休薬)を選択します。" },
+    { category: "用法用量・投与スケジュール", type: "single", q: "ドセタキセルの食道癌における添付文書上の用法用量は?",
+      choices: ["70mg/m²を1時間以上かけて3〜4週間間隔で点滴静注", "35mg/m²を週1回投与", "100mg/m²を3週間毎に投与", "20mg/m²を5日間連続投与"], correct: 0,
+      explain: "JCOG1109/NExT試験の術前DCF療法でもこの用量がシスプラチン・5-FUと併用されています。" },
+    { category: "用法用量・投与スケジュール", type: "single", q: "パクリタキセル単剤(食道癌、添付文書のB法)の投与スケジュールは?",
+      choices: ["週1回100mg/m²を6週連続投与し、少なくとも2週間休薬", "3週毎に175mg/m²を投与", "毎日50mg/m²を5日間投与", "隔週で135mg/m²を投与"], correct: 0,
+      explain: "添付文書のB法として規定されています。投与前にはデキサメタゾン・ジフェンヒドラミン等の前投薬が必須です。" },
+    { category: "用法用量・投与スケジュール", type: "single", q: "フルオロウラシルの頭頸部癌・食道癌・胃癌における添付文書上の用法用量は?",
+      choices: ["1日1000mg/m²までを4〜5日間連日持続点滴し、3週間以上の間隔で繰り返す", "1日500mg/m²を毎日投与", "週1回2000mg/m²を投与", "1回のみの大量投与"], correct: 0,
+      explain: "添付文書上、他の抗悪性腫瘍剤又は放射線との併用が必要とされています。" },
+    { category: "用法用量・投与スケジュール", type: "single", q: "ペムブロリズマブの食道癌一次治療(フルオロウラシル+シスプラチン併用)における用法用量は?",
+      choices: ["200mgを3週間間隔又は400mgを6週間間隔", "100mgを2週間間隔", "2mg/kgを3週間間隔", "500mgを4週間間隔"], correct: 0,
+      explain: "30分間かけて点滴静注します。NSCLC等の他がん種と共通の用法用量です。" },
+    { category: "用法用量・投与スケジュール", type: "single", q: "ニボルマブの食道癌における術後補助療法の用法用量は?",
+      choices: ["240mgを2週間間隔又は480mgを4週間間隔(投与期間は最大12ヶ月間)", "240mgを2週間間隔で無期限継続", "480mgを毎週投与", "100mgを2週間間隔"], correct: 0,
+      explain: "添付文書上、投与期間は12ヵ月間までと規定されています。" },
+    { category: "用法用量・投与スケジュール", type: "single", q: "チスレリズマブ(テビムブラ)の食道癌における用法用量は?",
+      choices: ["200mgを3週間間隔で60分かけて点滴静注(一次治療・二次治療とも共通)", "100mgを2週間間隔", "400mgを6週間間隔", "体重換算(mg/kg)で投与"], correct: 0,
+      explain: "一次治療(化学療法併用)・二次治療以降(単独投与)いずれも同用量・同間隔です。忍容性が良好であれば2回目以降は30分間まで短縮できます。" },
+    { category: "用法用量・投与スケジュール", type: "single", q: "ニボルマブ+イピリムマブ併用における、イピリムマブの食道癌での用法用量は?",
+      choices: ["1回1mg/kg(体重)を6週間間隔", "1回3mg/kg(体重)を3週間間隔", "1回1mg/kg(体重)を2週間間隔", "1回240mg固定を4週間間隔"], correct: 0,
+      explain: "添付文書上、ニボルマブとの併用でイピリムマブは1回1mg/kg(体重)を6週間間隔で点滴静注します(CheckMate-648試験に基づく)。" },
+    { category: "用法用量・投与スケジュール", type: "single", q: "トラスツズマブ デルクステカンの用量が、胃癌とそれ以外の固形癌で異なる点は?",
+      choices: ["胃癌は6.4mg/kg、胃癌以外(食道腺癌を含む理論上の適応)は5.4mg/kg", "胃癌の方が低用量である", "全がん種で共通用量である", "食道癌は独自の高用量が規定されている"], correct: 0,
+      explain: "添付文書上、胃癌は1回6.4mg/kg、胃癌以外は1回5.4mg/kg(体重)を90分かけて3週間間隔で点滴静注します。" },
+
+    // ══════════ 用量規制因子・モニタリング ══════════
+    { category: "用量規制因子・モニタリング", type: "single", q: "ドセタキセル投与当日に投与延期を検討すべき好中球数の基準は?",
+      choices: ["2,000/mm³未満", "500/mm³未満", "1,000/mm³未満", "基準は規定されていない"], correct: 0,
+      explain: "添付文書上、投与当日の好中球数が2,000/mm³未満であれば投与を延期することとされています。" },
+    { category: "用量規制因子・モニタリング", type: "single", q: "パクリタキセル投与前に必ず実施すべき対応は?",
+      choices: ["デキサメタゾン・ジフェンヒドラミン等の前投薬", "制吐剤の投与のみ", "G-CSF製剤の予防投与", "特に前投薬は不要である"], correct: 0,
+      explain: "高度の過敏反応リスクがあるため、デキサメタゾンリン酸エステルナトリウム注射液・ジフェンヒドラミン塩酸塩錠等の前投薬が必須とされています。" },
+    { category: "用量規制因子・モニタリング", type: "single", q: "シスプラチン投与時に重視される支持療法は?",
+      choices: ["輸液管理(ハイドレーション)による腎毒性軽減", "G-CSF製剤の予防投与", "インスリンの併用投与", "抗凝固療法"], correct: 0,
+      explain: "投与前後の輸液管理が重要で、一定の条件を満たす場合はショートハイドレーション法の適用も可能とされています。" },
+    { category: "用量規制因子・モニタリング", type: "single", q: "ラムシルマブ投与患者で手術を予定する場合に注意すべき点は?",
+      choices: ["創傷治癒遅延リスクのため休薬期間の調整が必要", "手術前後も通常通り継続投与してよい", "休薬の必要はない", "手術後は永久に再開できない"], correct: 0,
+      explain: "添付文書の用法用量に関連する注意で、周術期の休薬期間管理が求められています。" },
+    { category: "用量規制因子・モニタリング", type: "single", q: "免疫チェックポイント阻害薬(ニボルマブ・ペムブロリズマブ・チスレリズマブ等)投与中に共通してモニタリングが必要な重大な副作用は?",
+      choices: ["間質性肺疾患(初期症状の確認・胸部画像検査)", "手足症候群", "低マグネシウム血症", "QT延長"], correct: 0,
+      explain: "いずれの薬剤も添付文書の警告欄に間質性肺疾患による死亡例の報告があり、初期症状の確認及び胸部画像検査等の観察が求められています。" },
+    { category: "用量規制因子・モニタリング", type: "single", q: "イピリムマブ併用時に特に注意すべき消化器系の重大な副作用は?",
+      choices: ["重篤な下痢・大腸炎・消化管穿孔(投与終了後数ヶ月での発症例も報告)", "便秘", "軽度の悪心のみ", "特に注意すべき消化器症状はない"], correct: 0,
+      explain: "添付文書の警告欄に、投与終了後数ヵ月で死亡例も報告されていると明記されています。" },
+    { category: "用量規制因子・モニタリング", type: "single", q: "フルオロウラシルとトリフルリジン・チピラシル塩酸塩配合剤を併用する際に注意すべき相互作用は?",
+      choices: ["骨髄抑制の増強", "効果が完全に消失する", "特に相互作用はない", "肝毒性のみが増強する"], correct: 0,
+      explain: "添付文書の併用注意に記載されています。" },
+    { category: "用量規制因子・モニタリング", type: "single", q: "パクリタキセルとシスプラチンを併用する際、投与順序で注意すべき点は?",
+      choices: ["パクリタキセルを先に投与し、シスプラチンを後に投与する", "シスプラチンを先に投与する", "同時に投与する", "投与順序に規定はない"], correct: 0,
+      explain: "両剤の添付文書に、投与順序を誤ると薬物動態学的相互作用が生じうる旨が記載されており、パクリタキセル先行投与が原則です。" },
+    { category: "用量規制因子・モニタリング", type: "multi", q: "トラスツズマブ デルクステカン投与前に確認すべき事項として添付文書に規定されているものを2つ選べ(2つ選択)",
+      choices: ["胸部CT検査の実施", "間質性肺疾患の合併・既往歴の確認", "心エコー検査の実施", "腎生検の実施"], correct: [0, 1],
+      explain: "投与開始前に胸部CT検査及び問診を実施し、間質性肺疾患の合併又は既往歴がないことを確認することが警告欄に明記されています。" },
+
+    // ══════════ 特徴的な副作用 ══════════
+    { category: "特徴的な副作用", type: "single", q: "術前DCF療法(ドセタキセル+シスプラチン+5-FU)で特に注意すべき有害事象は?",
+      choices: ["好中球減少(発熱性好中球減少含む)・口内炎・下痢", "手足症候群", "間質性肺疾患", "高血圧クリーゼ"], correct: 0,
+      explain: "本レポートの副作用まとめ表に記載されている、DCF療法に特徴的な有害事象です。" },
+    { category: "特徴的な副作用", type: "single", q: "ドセタキセル単剤で最も高頻度に報告される重大な副作用は?",
+      choices: ["好中球減少(95.8%)", "間質性肺炎", "心不全", "感染症"], correct: 0,
+      explain: "添付文書上、本剤の用量規制因子は好中球減少とされ、95.8%という高頻度で報告されています。" },
+    { category: "特徴的な副作用", type: "single", q: "パクリタキセルに特徴的で、高頻度に報告される有害事象は?",
+      choices: ["末梢神経障害(43.8%)", "手足症候群", "高血圧", "消化管穿孔が主体"], correct: 0,
+      explain: "添付文書上43.8%の頻度で報告される、パクリタキセルの代表的な有害事象です。" },
+    { category: "特徴的な副作用", type: "single", q: "ニボルマブ+イピリムマブ併用(食道癌、CheckMate-648試験)で報告された主な副作用は?",
+      choices: ["発疹・甲状腺機能低下症・そう痒症", "好中球減少が主体", "手足症候群が主体", "消化管穿孔が最多"], correct: 0,
+      explain: "CheckMate-648試験の安全性評価では、発疹(17.1%)、甲状腺機能低下症(13.4%)、そう痒症(13.4%)が主な副作用として報告されています。" },
+    { category: "特徴的な副作用", type: "single", q: "ペムブロリズマブ+化学療法(一次治療)のGrade3-4有害事象の特徴は?",
+      choices: ["化学療法由来の毒性が主体で約72%と高い", "免疫関連有害事象のみで約10%", "有害事象はほぼ見られない", "手足症候群が主体"], correct: 0,
+      explain: "本レポートの副作用表に記載の通り、化学療法併用のため化学療法由来の毒性が主体です。" },
+    { category: "特徴的な副作用", type: "single", q: "ニボルマブ+イピリムマブ(化学療法フリー、一次治療)のGrade3-4有害事象の特徴は?",
+      choices: ["比較的低毒性(約32%)で内分泌障害・皮膚障害等の免疫関連有害事象が主体", "骨髄抑制が主体で約70%", "消化管穿孔が最多", "有害事象は報告されていない"], correct: 0,
+      explain: "化学療法を伴わないため骨髄抑制は少なく、免疫関連有害事象が主体で比較的低毒性とされています。" },
+    { category: "特徴的な副作用", type: "single", q: "トラスツズマブ デルクステカンで最も注意が必要とされる、致死的例の報告もある有害事象は?",
+      choices: ["間質性肺疾患(11.6%)", "低マグネシウム血症", "手足症候群", "高血圧クリーゼ"], correct: 0,
+      explain: "ADCの中でもILDリスクが特に注目されている薬剤で、投与前の胸部CT・問診による確認が警告欄に明記されています。" },
+    { category: "特徴的な副作用", type: "single", q: "ラムシルマブ(抗VEGFR2抗体)クラスに特徴的な有害事象は?",
+      choices: ["高血圧・出血・血栓塞栓症", "末梢神経障害", "手足症候群のみ", "甲状腺機能異常"], correct: 0,
+      explain: "抗VEGFR2抗体クラスに共通する血管系の有害事象で、動脈血栓塞栓症・消化管出血・消化管穿孔について添付文書の警告欄に死亡例の報告があります。" },
+    { category: "特徴的な副作用", type: "single", q: "チスレリズマブ(テビムブラ)の重大な副作用として添付文書に記載されている、比較的特徴的な免疫関連有害事象は?",
+      choices: ["ギラン・バレー症候群(1.5%)", "高血圧クリーゼ", "手足症候群", "低マグネシウム血症"], correct: 0,
+      explain: "添付文書の重大な副作用にギラン・バレー症候群(1.5%)が記載されています。" },
+    { category: "特徴的な副作用", type: "single", q: "フルオロウラシルと放射線療法を頭頸部癌・食道癌で併用する際、添付文書の警告欄に明記されている注意点は?",
+      choices: ["重篤な副作用が発現する可能性がある", "特に相互作用はない", "効果が完全に消失する", "放射線量を増やす必要がある"], correct: 0,
+      explain: "添付文書の警告欄に、頭頸部癌・食道癌と放射線照射の併用時に重篤な副作用発現の可能性があると明記されています。" },
+    { category: "特徴的な副作用", type: "single", q: "免疫チェックポイント阻害薬単剤(ニボルマブ、二次治療、ATTRACTION-3試験)のGrade3-4有害事象の特徴は?",
+      choices: ["化学療法群の約2倍低い頻度(約18%)", "化学療法群より高い頻度", "化学療法群とほぼ同等の頻度", "本試験ではデータが得られていない"], correct: 0,
+      explain: "ATTRACTION-3試験の結果に基づき、化学療法群と比較して有害事象が少ないことが報告されています。" },
+    { category: "特徴的な副作用", type: "multi", q: "抗PD-1抗体薬(ニボルマブ・ペムブロリズマブ・チスレリズマブ)に共通する内分泌系の免疫関連有害事象を2つ選べ(2つ選択)",
+      choices: ["甲状腺機能異常", "1型糖尿病", "手足症候群", "消化管穿孔"], correct: [0, 1],
+      explain: "甲状腺機能低下症・亢進症や1型糖尿病は、抗PD-1抗体薬に共通する内分泌系の免疫関連有害事象として各薬剤の添付文書に記載されています。手足症候群はVEGFR阻害薬、消化管穿孔はベバシズマブ・ラムシルマブ等の抗VEGF系薬剤に特徴的です。" },
+
+    // ══════════ バイオマーカー ══════════
+    { category: "バイオマーカー", type: "single", q: "食道胃接合部癌(Siewert分類)において、腫瘍中心が接合部より2cm以内・口側にある場合の分類は?",
+      choices: ["食道癌として分類(Siewert I/II型相当)", "胃癌として分類", "分類対象外", "TNM分類は不要"], correct: 0,
+      explain: "Siewert分類に基づき、腫瘍中心が接合部より2cm以内・口側にある場合は食道癌として扱われます。" },
+    { category: "バイオマーカー", type: "single", q: "MSI-H/dMMR陽性の食道癌における治療上の意義は?",
+      choices: ["頻度は低いがペムブロリズマブ単剤の臓器横断的適応対象となる", "治療選択に影響しない", "手術適応の判定にのみ用いる", "化学療法の効果を減弱させる"], correct: 0,
+      explain: "MSI-H/dMMR陽性であれば、既治療後にペムブロリズマブ単剤の臓器横断的適応対象となります。" },
+    { category: "バイオマーカー", type: "single", q: "HER2発現(IHC/FISH)評価の食道癌における主な意義は?",
+      choices: ["主に腺癌でHER2標的療法(トラスツズマブ デルクステカン等)の適応判定に用いる", "扁平上皮癌の第一選択薬を決定する", "手術適応の判定に用いる", "PD-L1評価の代替となる"], correct: 0,
+      explain: "主に腺癌・食道胃接合部腺癌でのHER2標的療法の適応判定に用いられ、NCCN 2026年版でも広範な分子プロファイリングが推奨されています。" },
+    { category: "バイオマーカー", type: "multi", q: "PD-L1発現率評価が一次治療の意思決定に関わる薬剤の組み合わせとして正しいものを2つ選べ(2つ選択)",
+      choices: ["ニボルマブ+化学療法(TPS評価、CheckMate-648試験)", "ペムブロリズマブ+化学療法(CPS評価、KEYNOTE-590試験)", "チスレリズマブ+化学療法(PD-L1不問)", "ラムシルマブ+パクリタキセル(PD-L1評価が承認条件)"], correct: [0, 1],
+      explain: "CheckMate-648試験はTPS、KEYNOTE-590試験はCPSでPD-L1を評価します。一方、チスレリズマブ+化学療法(RATIONALE-306試験)はPD-L1不問で使用できます。ラムシルマブは日本国内添付文書上、食道癌への適応自体が確認できません。" },
+
+    // ══════════ コスト制度 ══════════
+    { category: "コスト制度", type: "single", q: "ニボルマブ術後補助療法(CheckMate-577)の自己負担軽減で特に重要な点は?",
+      choices: ["最大1年間の継続投与となるため長期にわたる負担軽減策の説明が重要", "1回のみの投与で完結するため負担は少ない", "保険適用外の治療である", "コストの心配は不要である"], correct: 0,
+      explain: "本レポートのコスト説明に記載の通り、投与期間は最大12ヶ月間となるため、高額療養費制度等の継続的な活用が重要です。" },
+    { category: "コスト制度", type: "single", q: "高額療養費制度・限度額適用認定証を活用する主なメリットは?",
+      choices: ["自己負担を所得区分に応じた上限額に抑えられる", "薬剤費そのものが割引される", "保険適用外治療が保険適用になる", "特にメリットはない"], correct: 0,
+      explain: "免疫チェックポイント阻害薬併用レジメンは年間数百万円規模の薬剤費となり得ますが、高額療養費制度・限度額適用認定証の活用で自己負担は所得区分に応じた上限額に抑えられます。" }
+  ];
+
+  var QUIZ_SESSION_SIZE = 10;
+  var quizOrder = [];     // indices into QUIZ for THIS session (random subset)
+  var quizIndex = 0;
+  var quizAnswers = [];   // per-question(by original index): selected choice index (single) or array of indices (multi)
+  var quizFeedback = {};  // { [questionIndex]: 'good' | 'bad' }
+
+  function quizPickSession() {
+    var all = QUIZ.map(function (_, i) { return i; });
+    quizShuffle(all);
+    quizOrder = all.slice(0, QUIZ_SESSION_SIZE);
+  }
+  function quizShuffle(arr) {
+    for (var i = arr.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = arr[i]; arr[i] = arr[j]; arr[j] = t;
+    }
+    return arr;
+  }
+
+  function quizLoadFeedback() {
+    try {
+      var raw = localStorage.getItem('esophagealQuizFeedback_v2');
+      quizFeedback = raw ? JSON.parse(raw) : {};
+    } catch (e) { quizFeedback = {}; }
+  }
+  function quizSaveFeedback() {
+    try { localStorage.setItem('esophagealQuizFeedback_v2', JSON.stringify(quizFeedback)); } catch (e) {}
+  }
+  function quizBuildRatingRow(qi) {
+    var row = document.createElement('div');
+    row.className = 'rate-row';
+    var label = document.createElement('span');
+    label.className = 'rate-label';
+    label.textContent = 'この問題の評価:';
+    var goodBtn = document.createElement('button');
+    goodBtn.type = 'button'; goodBtn.className = 'rate-btn'; goodBtn.textContent = '👍 良問';
+    var badBtn = document.createElement('button');
+    badBtn.type = 'button'; badBtn.className = 'rate-btn'; badBtn.textContent = '👎 悪問';
+    function refresh() {
+      goodBtn.classList.toggle('active-good', quizFeedback[qi] === 'good');
+      badBtn.classList.toggle('active-bad', quizFeedback[qi] === 'bad');
+    }
+    goodBtn.onclick = function () {
+      quizFeedback[qi] = (quizFeedback[qi] === 'good') ? null : 'good';
+      if (!quizFeedback[qi]) delete quizFeedback[qi];
+      quizSaveFeedback(); refresh();
+    };
+    badBtn.onclick = function () {
+      quizFeedback[qi] = (quizFeedback[qi] === 'bad') ? null : 'bad';
+      if (!quizFeedback[qi]) delete quizFeedback[qi];
+      quizSaveFeedback(); refresh();
+    };
+    refresh();
+    row.appendChild(label); row.appendChild(goodBtn); row.appendChild(badBtn);
+    return row;
+  }
+  function quizFallbackCopy(text, done) {
+    var ta = document.createElement('textarea');
+    ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); } catch (e) {}
+    document.body.removeChild(ta);
+    done();
+  }
+  function quizChoiceLabel(item) {
+    return item.choices.join(' / ');
+  }
+  function quizCorrectLabel(item) {
+    if (item.type === 'multi') return item.correct.map(function (i) { return item.choices[i]; }).join(' ＋ ');
+    return item.choices[item.correct];
+  }
+  function quizExportFeedback() {
+    var ratedIdx = Object.keys(quizFeedback);
+    if (ratedIdx.length === 0) {
+      alert('まだ評価された問題がありません。各問題に回答した後に表示される「👍 良問」「👎 悪問」ボタンで評価してから、もう一度お試しください。');
+      return;
+    }
+    var goodList = [], badList = [];
+    ratedIdx.forEach(function (idxStr) {
+      var idx = parseInt(idxStr, 10);
+      var item = QUIZ[idx];
+      if (!item) return;
+      var entry = '・[' + item.category + (item.type === 'multi' ? '/複数選択' : '') + '] ' + item.q + '\n  選択肢: ' + quizChoiceLabel(item) + '\n  正解: ' + quizCorrectLabel(item);
+      if (quizFeedback[idx] === 'good') goodList.push(entry);
+      else if (quizFeedback[idx] === 'bad') badList.push(entry);
+    });
+    var text = '【食道癌クイズ(quiz-esophageal.html、全50問プール)フィードバック】\n\n' +
+      '良問と評価された問題(' + goodList.length + '件):\n' + (goodList.length ? goodList.join('\n\n') : '(なし)') + '\n\n' +
+      '悪問と評価された問題(' + badList.length + '件) — 改善・差し替えを検討してください:\n' + (badList.length ? badList.join('\n\n') : '(なし)') + '\n\n' +
+      '参照ファイル: artifacts/html/oncology-reports/quiz-esophageal.html\n\n' +
+      '上記フィードバックを踏まえて、「悪問」と評価された問題をレポート本文(artifacts/html/oncology-reports/esophageal.html、添付文書情報セクション含む)の内容に基づいて改善・差し替えてください。「良問」と評価された問題は現状を維持してください。';
+    var notify = function () { alert('フィードバックをコピーしました。MulmoClaudeのチャットに貼り付けて送信してください。問題の改善に使います。'); };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(notify).catch(function () { quizFallbackCopy(text, notify); });
+    } else { quizFallbackCopy(text, notify); }
+  }
+  function quizResetFeedback() {
+    if (!confirm('すべての評価をリセットします。よろしいですか?')) return;
+    quizFeedback = {};
+    quizSaveFeedback();
+    alert('評価をリセットしました。');
+  }
+
+  function quizRenderQuestion() {
+    document.getElementById('quiz-result-area').style.display = 'none';
+    document.getElementById('quiz-question-area').style.display = 'block';
+    var qi = quizOrder[quizIndex];
+    var item = QUIZ[qi];
+    document.getElementById('quiz-progress-text').textContent = '問 ' + (quizIndex + 1) + ' / ' + quizOrder.length + '(全' + QUIZ.length + '問中からランダム出題)';
+    document.getElementById('quiz-cat-badge').textContent = item.category;
+    document.getElementById('quiz-type-badge').style.display = (item.type === 'multi') ? 'inline-flex' : 'none';
+    document.getElementById('quiz-progress-fill').style.width = Math.round((quizIndex / quizOrder.length) * 100) + '%';
+    document.getElementById('quiz-question-text').textContent = item.q;
+    document.getElementById('quiz-explain-area').style.display = 'none';
+    document.getElementById('quiz-explain-area').innerHTML = '';
+    document.getElementById('quiz-next-btn').style.display = 'none';
+    document.getElementById('quiz-submit-row').style.display = 'none';
+
+    var wrap = document.getElementById('quiz-choices');
+    wrap.innerHTML = '';
+
+    if (item.type === 'multi') {
+      var selected = {};
+      item.choices.forEach(function (choiceText, idx) {
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'quiz-choice';
+        btn.innerHTML = '<span class="quiz-choice-check">☐</span> ' + choiceText.replace(/</g, '&lt;');
+        btn.onclick = function () {
+          selected[idx] = !selected[idx];
+          btn.classList.toggle('selected', !!selected[idx]);
+          btn.querySelector('.quiz-choice-check').textContent = selected[idx] ? '☑' : '☐';
+        };
+        wrap.appendChild(btn);
+      });
+      document.getElementById('quiz-submit-row').style.display = 'block';
+      document.getElementById('quiz-submit-btn').onclick = function () {
+        var chosen = Object.keys(selected).filter(function (k) { return selected[k]; }).map(Number);
+        quizAnswerMulti(chosen);
+      };
+    } else {
+      item.choices.forEach(function (choiceText, idx) {
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'quiz-choice';
+        btn.textContent = choiceText;
+        btn.onclick = function () { quizAnswerSingle(idx); };
+        wrap.appendChild(btn);
+      });
+    }
+  }
+
+  function quizFinishQuestion(qi, isCorrect, correctText) {
+    var item = QUIZ[qi];
+    var explainArea = document.getElementById('quiz-explain-area');
+    explainArea.className = 'quiz-explain';
+    explainArea.style.display = 'block';
+    explainArea.innerHTML = '<div style="font-weight:700; margin-bottom:4px; color:' + (isCorrect ? 'var(--good)' : 'var(--critical)') + ';">' +
+      (isCorrect ? '✅ 正解' : '❌ 不正解(正解: ' + correctText + ')') + '</div>' +
+      '<div>' + (item.explain || '') + '</div>';
+    explainArea.appendChild(quizBuildRatingRow(qi));
+    document.getElementById('quiz-submit-row').style.display = 'none';
+    document.getElementById('quiz-next-btn').style.display = 'inline-block';
+    document.getElementById('quiz-next-btn').textContent = (quizIndex === quizOrder.length - 1) ? '結果を見る →' : '次の問題 →';
+  }
+
+  function quizAnswerSingle(selectedIdx) {
+    var qi = quizOrder[quizIndex];
+    var item = QUIZ[qi];
+    quizAnswers[qi] = selectedIdx;
+    var buttons = document.getElementById('quiz-choices').querySelectorAll('.quiz-choice');
+    buttons.forEach(function (btn, idx) {
+      btn.disabled = true;
+      if (idx === item.correct) btn.classList.add('correct');
+      else if (idx === selectedIdx) btn.classList.add('wrong');
+    });
+    quizFinishQuestion(qi, selectedIdx === item.correct, item.choices[item.correct]);
+  }
+
+  function quizSubmitMulti() {
+    var qi = quizOrder[quizIndex];
+    var item = QUIZ[qi];
+    var buttons = document.getElementById('quiz-choices').querySelectorAll('.quiz-choice');
+    var chosen = [];
+    buttons.forEach(function (btn, idx) {
+      if (btn.classList.contains('selected')) chosen.push(idx);
+    });
+    quizAnswerMulti(chosen, buttons, item, qi);
+  }
+
+  function quizAnswerMulti(chosen, buttons, item, qi) {
+    qi = (qi === undefined) ? quizOrder[quizIndex] : qi;
+    item = item || QUIZ[qi];
+    buttons = buttons || document.getElementById('quiz-choices').querySelectorAll('.quiz-choice');
+    quizAnswers[qi] = chosen;
+    var correctSet = item.correct.slice().sort();
+    var chosenSet = chosen.slice().sort();
+    var isCorrect = correctSet.length === chosenSet.length && correctSet.every(function (v, i) { return v === chosenSet[i]; });
+    buttons.forEach(function (btn, idx) {
+      btn.disabled = true;
+      var isRight = item.correct.indexOf(idx) !== -1;
+      var wasChosen = chosen.indexOf(idx) !== -1;
+      if (isRight) btn.classList.add('correct');
+      else if (wasChosen) btn.classList.add('wrong');
+    });
+    quizFinishQuestion(qi, isCorrect, quizCorrectLabel(item));
+  }
+
+  function quizNext() {
+    if (quizIndex < quizOrder.length - 1) {
+      quizIndex++;
+      quizRenderQuestion();
+    } else {
+      quizShowResult();
+    }
+  }
+
+  function quizShowResult() {
+    document.getElementById('quiz-progress-fill').style.width = '100%';
+    document.getElementById('quiz-progress-text').textContent = '完了 ' + quizOrder.length + ' / ' + quizOrder.length;
+    document.getElementById('quiz-cat-badge').textContent = '';
+    document.getElementById('quiz-type-badge').style.display = 'none';
+    document.getElementById('quiz-question-area').style.display = 'none';
+
+    var correctCount = 0;
+    var byCategory = {};
+    quizOrder.forEach(function (qi) {
+      var item = QUIZ[qi];
+      if (!byCategory[item.category]) byCategory[item.category] = { correct: 0, total: 0 };
+      byCategory[item.category].total++;
+      var ans = quizAnswers[qi];
+      var isCorrect;
+      if (item.type === 'multi') {
+        var correctSet = item.correct.slice().sort();
+        var chosenSet = (ans || []).slice().sort();
+        isCorrect = correctSet.length === chosenSet.length && correctSet.every(function (v, i) { return v === chosenSet[i]; });
+      } else {
+        isCorrect = ans === item.correct;
+      }
+      if (isCorrect) { correctCount++; byCategory[item.category].correct++; }
+    });
+    var pct = Math.round((correctCount / quizOrder.length) * 100);
+
+    var catHtml = '';
+    Object.keys(byCategory).forEach(function (cat) {
+      var c = byCategory[cat];
+      var p = Math.round((c.correct / c.total) * 100);
+      catHtml += '<div class="cat-result-row"><span class="text-xs" style="width:150px; flex-shrink:0;">' + cat + '</span>' +
+        '<div class="cat-result-bar"><div class="cat-result-fill" style="width:' + p + '%"></div></div>' +
+        '<span class="text-xs muted" style="width:56px; text-align:right;">' + c.correct + '/' + c.total + '</span></div>';
+    });
+
+    var reviewHtml = '';
+    quizOrder.forEach(function (qi) {
+      var item = QUIZ[qi];
+      var ans = quizAnswers[qi];
+      var isCorrect;
+      var yourAnswerText;
+      if (item.type === 'multi') {
+        var correctSet = item.correct.slice().sort();
+        var chosenSet = (ans || []).slice().sort();
+        isCorrect = correctSet.length === chosenSet.length && correctSet.every(function (v, i) { return v === chosenSet[i]; });
+        yourAnswerText = (ans && ans.length) ? ans.map(function (i) { return item.choices[i]; }).join(' ＋ ') : '(未回答)';
+      } else {
+        isCorrect = ans === item.correct;
+        yourAnswerText = (ans != null) ? item.choices[ans] : '(未回答)';
+      }
+      if (!isCorrect) {
+        reviewHtml += '<div class="review-item">' +
+          '<div class="text-sm font-semibold mb-1">' + item.q + '</div>' +
+          '<div class="text-xs muted mb-2">あなたの回答: ' + yourAnswerText + ' / 正解: ' + quizCorrectLabel(item) + '</div>' +
+          '<div class="text-xs" style="line-height:1.6;">' + (item.explain || '') + '</div>' +
+          '</div>';
+      }
+    });
+    if (!reviewHtml) reviewHtml = '<p class="text-sm secondary">全問正解です。見直しの必要な項目はありません 🎉</p>';
+
+    var goodCount = 0, badCount = 0;
+    Object.keys(quizFeedback).forEach(function (k) {
+      if (quizFeedback[k] === 'good') goodCount++;
+      else if (quizFeedback[k] === 'bad') badCount++;
+    });
+
+    var resultArea = document.getElementById('quiz-result-area');
+    resultArea.style.display = 'block';
+    resultArea.innerHTML =
+      '<div class="text-center mb-6">' +
+        '<div class="score-ring-num" style="color:var(--series-new);">' + correctCount + ' / ' + quizOrder.length + '</div>' +
+        '<div class="text-sm muted mt-1">正答率 ' + pct + '%(全' + QUIZ.length + '問プールから今回ランダム抽出された' + quizOrder.length + '問)</div>' +
+      '</div>' +
+      '<div class="mb-6"><div class="text-sm font-semibold mb-3">カテゴリ別正答率(今回出題分)</div>' + catHtml + '</div>' +
+      '<div class="mb-2 text-sm font-semibold">見直し(不正解・未回答の問題)</div>' +
+      '<div class="mb-6">' + reviewHtml + '</div>' +
+      '<div class="mb-6 pt-4 border-t" style="border-color:var(--gridline);">' +
+        '<div class="text-sm font-semibold mb-2">問題の評価状況(全50問プール通算)</div>' +
+        '<div class="text-xs muted mb-3">👍 良問 ' + goodCount + '件 ・ 👎 悪問 ' + badCount + '件</div>' +
+        '<div class="flex flex-wrap gap-3">' +
+          '<button type="button" class="quiz-btn-outline" onclick="quizExportFeedback()">📋 フィードバックをエクスポート(チャットに貼り付け用)</button>' +
+          '<button type="button" class="quiz-btn-outline" onclick="quizResetFeedback()" style="border-color:var(--critical); color:var(--critical);">🗑 評価をリセット</button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="flex flex-wrap gap-3 justify-center">' +
+        '<button type="button" class="quiz-btn" onclick="quizRestart()">🔀 新しい10問でもう一度</button>' +
+        '<a href="esophageal.html" class="quiz-btn-outline" style="text-decoration:none; display:inline-block;">レポート本文に戻る</a>' +
+      '</div>';
+  }
+
+  function quizRestart() {
+    quizPickSession();
+    quizIndex = 0;
+    quizAnswers = [];
+    quizRenderQuestion();
+  }
+
+  quizLoadFeedback();
+  quizPickSession();
+  quizRenderQuestion();
+</script>
+
+<footer class="text-center text-xs pb-4" style="color: var(--text-muted);">
+  本クイズは学習・自己点検を目的とした資料です。臨床判断には利用せず、最新の添付文書・ガイドライン原文を優先してください。
+</footer>
+
+</body>
+</html>

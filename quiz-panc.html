@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>膵癌理解度クイズ 全50問(ランダム10問出題)</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+:root, .viz-root {
+  color-scheme: light;
+  --surface-1: #fcfcfb; --page-plane: #f9f9f7;
+  --text-primary: #0b0b0b; --text-secondary: #52514e; --text-muted: #898781;
+  --gridline: #e1e0d9; --baseline: #c3c2b7;
+  --series-new: #2a78d6; --series-control: #b9b7ae;
+  --good: #0ca30c; --warning: #b9790a; --critical: #d03b3b;
+  --border: rgba(11,11,11,0.10);
+}
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) {
+    color-scheme: dark;
+    --surface-1: #1a1a19; --page-plane: #0d0d0d;
+    --text-primary: #ffffff; --text-secondary: #c3c2b7; --text-muted: #898781;
+    --gridline: #2c2c2a; --baseline: #383835;
+    --series-new: #3987e5; --series-control: #55534c;
+    --good: #0ca30c; --warning: #eab116; --critical: #e66767;
+    --border: rgba(255,255,255,0.10);
+  }
+}
+body { background: var(--page-plane); color: var(--text-primary); font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+.card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+.secondary { color: var(--text-secondary); }
+.muted { color: var(--text-muted); }
+.cat-badge { display:inline-flex; align-items:center; padding:3px 10px; border-radius:9999px; font-size:0.72rem; font-weight:700; background: color-mix(in srgb, var(--series-new) 14%, transparent); color: var(--series-new); }
+.type-badge { display:inline-flex; align-items:center; padding:3px 10px; border-radius:9999px; font-size:0.68rem; font-weight:700; background: color-mix(in srgb, var(--warning) 16%, transparent); color: var(--warning); margin-left:6px; }
+.progress-track { background: var(--gridline); border-radius: 9999px; height: 8px; overflow: hidden; }
+.progress-fill { background: var(--series-new); height: 100%; border-radius: 9999px; transition: width .25s; }
+.quiz-choice { display:block; width:100%; text-align:left; background: var(--page-plane); border: 1.5px solid var(--gridline); border-radius: 10px; padding: 12px 16px; font-size: 0.92rem; cursor: pointer; transition: border-color .12s, background .12s; margin-bottom: 10px; }
+.quiz-choice:last-child { margin-bottom: 0; }
+.quiz-choice:hover:not(:disabled) { border-color: var(--series-new); }
+.quiz-choice:disabled { cursor: default; }
+.quiz-choice.correct { border-color: var(--good); background: color-mix(in srgb, var(--good) 12%, transparent); font-weight: 700; }
+.quiz-choice.wrong { border-color: var(--critical); background: color-mix(in srgb, var(--critical) 10%, transparent); }
+.quiz-choice.selected { border-color: var(--series-new); background: color-mix(in srgb, var(--series-new) 10%, transparent); }
+.quiz-choice-check { display:inline-block; width:16px; }
+.quiz-explain { background: var(--page-plane); border: 1px solid var(--gridline); border-radius: 10px; padding: 14px 16px; margin-top: 14px; font-size: 0.85rem; line-height: 1.7; }
+.quiz-btn { background: var(--series-new); color: #fff; border: none; border-radius: 8px; padding: 10px 22px; font-size: 0.88rem; font-weight: 700; cursor: pointer; }
+.quiz-btn:hover { opacity: 0.9; }
+.quiz-btn:disabled { opacity: 0.4; cursor: default; }
+.quiz-btn-outline { background: transparent; color: var(--series-new); border: 1.5px solid var(--series-new); border-radius: 8px; padding: 9px 20px; font-size: 0.88rem; font-weight: 700; cursor: pointer; }
+.quiz-btn-outline:hover { background: color-mix(in srgb, var(--series-new) 10%, transparent); }
+.score-ring-num { font-size: 2.6rem; font-weight: 800; }
+.cat-result-row { display:flex; align-items:center; gap:10px; margin-bottom: 8px; }
+.cat-result-bar { flex:1; background: var(--gridline); border-radius: 9999px; height: 10px; overflow:hidden; }
+.cat-result-fill { background: var(--series-new); height:100%; border-radius: 9999px; }
+.review-item { border: 1px solid var(--gridline); border-radius: 10px; padding: 12px 14px; margin-bottom: 10px; }
+.review-item:last-child { margin-bottom: 0; }
+.rate-row { display:flex; align-items:center; gap:8px; margin-top:14px; flex-wrap:wrap; }
+.rate-label { font-size:0.75rem; color: var(--text-muted); }
+.rate-btn { background: var(--page-plane); border: 1.5px solid var(--gridline); border-radius: 8px; padding: 6px 12px; font-size: 0.78rem; font-weight:600; cursor:pointer; color: var(--text-secondary); }
+.rate-btn:hover { border-color: var(--series-new); }
+.rate-btn.active-good { border-color: var(--good); background: color-mix(in srgb, var(--good) 14%, transparent); color: var(--good); }
+.rate-btn.active-bad { border-color: var(--critical); background: color-mix(in srgb, var(--critical) 12%, transparent); color: var(--critical); }
+</style>
+</head>
+<body class="viz-root">
+<div class="max-w-3xl mx-auto px-4 py-8 space-y-5">
+
+  <header class="card">
+    <div class="flex items-center justify-between gap-2 flex-wrap">
+      <div>
+        <h1 class="text-xl font-bold">🧠 膵癌理解度クイズ</h1>
+        <p class="text-sm mt-1 secondary">全50問のプールからランダムに10問出題・4択/複数選択混在・医療従事者向け(治療ライン選択・用法用量・投与スケジュール・用量規制因子/モニタリング・添付文書の警告/禁忌/重大な副作用・バイオマーカー・コスト制度)</p>
+      </div>
+      <a href="panc.html" class="text-xs" style="color:var(--series-new); text-decoration:none; font-weight:600;">← レポート本文に戻る</a>
+    </div>
+    <p class="text-xs mt-3 muted">出題内容はすべて <a href="panc.html" style="color:var(--series-new);">膵癌薬物治療レポート</a>(本文および「7. 主要薬剤の添付文書情報」)に記載の情報に基づきます。臨床判断には利用せず、学習・自己点検の目的でご利用ください。ページを再読み込みする、または結果画面の「シャッフルしてもう一度」を押すたびに、新しい10問がランダムに選ばれます。</p>
+  </header>
+
+  <!-- Quiz card -->
+  <section class="card" id="quiz-card">
+    <div class="flex items-center justify-between mb-2">
+      <span id="quiz-progress-text" class="text-xs font-semibold muted"></span>
+      <span><span id="quiz-cat-badge" class="cat-badge"></span><span id="quiz-type-badge" class="type-badge" style="display:none;">複数選択</span></span>
+    </div>
+    <div class="progress-track mb-5"><div class="progress-fill" id="quiz-progress-fill" style="width:0%"></div></div>
+
+    <div id="quiz-question-area">
+      <div id="quiz-question-text" class="text-base font-semibold mb-4" style="line-height:1.6;"></div>
+      <div id="quiz-choices"></div>
+      <div id="quiz-submit-row" style="display:none;" class="mt-3">
+        <button type="button" class="quiz-btn" id="quiz-submit-btn" onclick="quizSubmitMulti()">この内容で回答する</button>
+      </div>
+      <div id="quiz-explain-area" style="display:none;"></div>
+      <div class="mt-5 flex justify-end">
+        <button type="button" id="quiz-next-btn" class="quiz-btn" style="display:none;" onclick="quizNext()">次の問題 →</button>
+      </div>
+    </div>
+
+    <div id="quiz-result-area" style="display:none;"></div>
+  </section>
+
+</div>
+
+<script>
+  var QUIZ = [
+    // ══════════ 治療ライン選択(どの局面でどの選択肢を使うか) ══════════
+    { category: "治療ライン選択", type: "single", q: "切除可能膵癌の術後補助化学療法で、PS 0-1・忍容性良好な患者にPRODIGE24試験に基づき選択される治療は?",
+      choices: ["mFOLFIRINOX", "S-1単独", "ゲムシタビン単剤", "オラパリブ維持療法"], correct: 0,
+      explain: "PRODIGE24試験に基づく選択肢で、PS不良・高齢例ではS-1単独(国内標準)、ゲムシタビン+S-1、またはゲムシタビン単剤が用いられる。" },
+    { category: "治療ライン選択", type: "single", q: "切除可能膵癌の術後補助化学療法で、PS不良・高齢の患者に対する国内標準の選択肢は?",
+      choices: ["S-1単独", "mFOLFIRINOX", "NALIRIFOX", "ペムブロリズマブ"], correct: 0,
+      explain: "PS不良・高齢例ではS-1単独(国内標準)、ゲムシタビン+S-1、またはゲムシタビン単剤が忍容性を踏まえて選択される。" },
+    { category: "治療ライン選択", type: "single", q: "切除可能境界(BR)/局所進行切除不能(LAPC)膵癌でPS良好・術前治療目的の場合の選択肢は?",
+      choices: ["FOLFIRINOX/mFOLFIRINOX、またはゲムシタビン+ナブパクリタキセル(GnP)", "S-1単独のみ", "オラパリブ維持療法", "ペムブロリズマブ単剤"], correct: 0,
+      explain: "局所コントロールを重視する場合は化学放射線療法も検討される。" },
+    { category: "治療ライン選択", type: "single", q: "遠隔転移・PS良好・バイオマーカー陰性の膵癌1次治療で、第III相試験のエビデンスに基づく国内で使用可能な選択肢は?",
+      choices: ["FOLFIRINOX/mFOLFIRINOX、またはゲムシタビン+ナブパクリタキセル(GnP)", "NALIRIFOX(国内一次治療は未承認)", "オラパリブ単剤", "ソトラシブ単剤"], correct: 0,
+      explain: "NALIRIFOXはNAPOLI-3試験(海外第III相)に基づく選択肢だが、国内のリポソーマルイリノテカン(オニバイド)の承認適応は二次治療以降に限定され、一次治療への適応拡大は2025年12月申請・審査中(2026年9月時点で未承認)である。" },
+    { category: "治療ライン選択", type: "single", q: "gBRCA1/2変異陽性の転移性膵癌で、プラチナ含有レジメンによる1次治療で奏効・安定が得られた後の維持療法は?",
+      choices: ["オラパリブ", "ペムブロリズマブ", "ソトラシブ", "S-1"], correct: 0,
+      explain: "POLO試験に基づく維持療法で、プラチナ製剤ベースの1次治療で16週以上病勢進行がなかった例が対象となる。" },
+    { category: "治療ライン選択", type: "single", q: "MSI-H/dMMR陽性の膵癌に対する治療選択肢は?",
+      choices: ["ペムブロリズマブ(臓器横断的承認)", "ラロトレクチニブ", "オラパリブ", "S-1単独"], correct: 0,
+      explain: "MSI-H/dMMRを対象とした臓器横断的(tumor-agnostic)承認に基づく単群試験のエビデンスである。" },
+    { category: "治療ライン選択", type: "single", q: "NTRK融合陽性の膵癌に対する治療選択肢は?",
+      choices: ["ラロトレクチニブ、またはエヌトレクチニブ", "ペムブロリズマブ", "ソトラシブ", "ダラクソンラシブ"], correct: 0,
+      explain: "いずれも臓器横断的承認に基づく単群試験のエビデンスで、膵癌では非常にまれなバイオマーカーである。" },
+    { category: "治療ライン選択", type: "single", q: "KRAS G12C変異陽性・既治療後の膵癌に対し、国内外で承認された分子標的薬は?",
+      choices: ["承認された標的薬はない", "ソトラシブが国内外で承認されている", "ソトラシブが国内のみで承認されている", "アダグラシブが国内で承認されている"], correct: 0,
+      explain: "ソトラシブの承認適応は非小細胞肺癌(単剤)・大腸癌(パニツムマブ併用)のみで、膵癌への承認適応は国内外ともにない。CodeBreaK 100試験(単群第I/II相)でORR 21.1%との報告があるが標準治療ではない。" },
+    { category: "治療ライン選択", type: "single", q: "PS 2以上・高齢・忍容性が低い遠隔転移膵癌患者に対する治療選択肢は?",
+      choices: ["ゲムシタビン単剤、またはゲムシタビン+ナブパクリタキセル(GnP)減量", "FOLFIRINOX標準用量", "NALIRIFOX", "オラパリブ単剤(BRCA変異なし)"], correct: 0,
+      explain: "忍容性を重視した選択で、強度の高いFOLFIRINOXやNALIRIFOXは通常想定されない。" },
+    { category: "治療ライン選択", type: "single", q: "一次治療後に増悪した膵癌の二次治療で、NAPOLI-1試験に基づく選択肢は?",
+      choices: ["5-FU/LV+リポソーマルイリノテカン(オニバイド)", "FOLFIRINOX", "オラパリブ", "ペムブロリズマブ"], correct: 0,
+      explain: "一次治療の内容(オキサリプラチン既使用かどうか等)により、FOLFOXやS-1も選択肢になり得る。" },
+    { category: "治療ライン選択", type: "single", q: "RAS変異陽性・既治療後の膵癌において、RASolute 302試験に基づき2026年8月に米国FDAが承認した薬剤の国内における状況は?",
+      choices: ["2026年9月時点で未承認・未申請(海外承認・国内未承認)", "国内でも同時期に承認された", "国内では治験自体行われていない", "国内で先行して承認されている"], correct: 0,
+      explain: "ダラクソンラシブ(経口pan-RAS阻害薬)は国内でも治験は実施中だが、2026年9月時点で承認・申請には至っていない。" },
+    { category: "治療ライン選択", type: "single", q: "FOLFIRINOXとゲムシタビン+ナブパクリタキセル(GnP)の使い分けについて正しい記述は?",
+      choices: ["直接比較した第III相RCTはなく、PS・年齢・合併症等を踏まえて選択する", "GnPがFOLFIRINOXに対する優越性を示した直接比較試験がある", "FOLFIRINOXは現在使用されていない", "両者は併用が標準である"], correct: 0,
+      explain: "FOLFIRINOX(PRODIGE4試験)とGnP(ABI-007試験等)はそれぞれ単独の第III相試験のエビデンスに基づく選択肢であり、直接比較試験は存在しない。" },
+    { category: "治療ライン選択", type: "single", q: "膵神経内分泌腫瘍(PNET)の治療は、膵管腺癌(PDAC)を対象とした本レジメン体系にどう位置づけられるか?",
+      choices: ["PNETは治療体系・薬剤が大きく異なり、別のガイドライン章で扱われる", "PDACと全く同じレジメンが適用される", "PNETにはFOLFIRINOXのみが用いられる", "PNETはPDACの一亜型として扱われる"], correct: 0,
+      explain: "PNETにはソマトスタチンアナログ、エベロリムス、スニチニブ等、PDACとは異なる薬剤が用いられる。" },
+    { category: "治療ライン選択", type: "multi", q: "膵癌の遠隔転移・バイオマーカー陰性1次治療で、第III相試験のエビデンスに基づく選択肢として挙げられるものをすべて選べ(3つ選択)",
+      choices: ["FOLFIRINOX/mFOLFIRINOX", "NALIRIFOX", "ゲムシタビン+ナブパクリタキセル(GnP)", "S-1単独"], correct: [0, 1, 2],
+      explain: "S-1単独は主に術後補助療法やPS不良例で用いられ、遠隔転移1次治療の第III相エビデンスとしては挙げられていない。" },
+
+    // ══════════ 用法用量・投与スケジュール ══════════
+    { category: "用法用量・投与スケジュール", type: "single", q: "ゲムシタビンの膵癌における添付文書上の用法用量は?",
+      choices: ["1000mg/m²を30分かけて週1回3週連続投与し、4週目は休薬", "500mg/m²を毎日連日投与", "2000mg/m²を2週に1回投与", "経口薬として1日1回投与"], correct: 0,
+      explain: "これを1コースとして投与を繰り返す。" },
+    { category: "用法用量・投与スケジュール", type: "single", q: "ナブパクリタキセル(ゲムシタビンとの併用、膵癌C法)の用法用量は?",
+      choices: ["125mg/m²を週1回3週連続投与し、4週目は休薬", "260mg/m²を3週に1回投与", "100mg/m²を毎日連日投与", "50mg/m²を週2回投与"], correct: 0,
+      explain: "乳癌・胃癌・非小細胞肺癌では異なる用法(A法・D法・E法等)が用いられる。" },
+    { category: "用法用量・投与スケジュール", type: "single", q: "膵癌FOLFIRINOX法(A法)におけるオキサリプラチンの用法用量は?",
+      choices: ["85mg/m²を1日1回2時間で点滴投与し、少なくとも13日間休薬", "130mg/m²を1日1回2時間で点滴投与し、少なくとも20日間休薬", "50mg/m²を毎週投与", "200mg/m²を1回のみ投与"], correct: 0,
+      explain: "B法(130mg/m²、20日以上休薬)は単剤投与を想定した用法で、有用性は確立していない。" },
+    { category: "用法用量・投与スケジュール", type: "single", q: "膵癌FOLFIRINOX法(E法)におけるイリノテカン塩酸塩水和物の用法用量は?",
+      choices: ["180mg/m²を90分以上かけて点滴静注し、少なくとも2週間休薬", "100mg/m²を週1回投与", "150mg/m²を2週間隔で投与", "70mg/m²を2週間隔で投与"], correct: 0,
+      explain: "70mg/m²を2週間隔で投与するのはリポソーマル塩酸イリノテカン(オニバイド)の二次治療における用法である。" },
+    { category: "用法用量・投与スケジュール", type: "single", q: "膵癌FOLFIRINOX法におけるレボホリナート・フルオロウラシルの投与手順は?",
+      choices: ["レボホリナート200mg/m²を2時間点滴後、5-FU400mg/m²を急速投与し、さらに2400mg/m²を46時間持続静注", "5-FUのみを単独で週1回投与", "レボホリナートを46時間持続静注する", "5-FUを経口投与する"], correct: 0,
+      explain: "これを2週間ごとに繰り返す。" },
+    { category: "用法用量・投与スケジュール", type: "single", q: "gBRCA変異陽性膵癌に対するオラパリブ維持療法の用法用量は?",
+      choices: ["300mgを1日2回経口投与", "150mgを1日1回経口投与", "600mgを週1回経口投与", "100mgを1日3回経口投与"], correct: 0,
+      explain: "患者の状態により適宜減量する。" },
+    { category: "用法用量・投与スケジュール", type: "single", q: "S-1の膵癌における投与法(A法)は?",
+      choices: ["28日間連日投与後14日間休薬", "14日間連日投与後7日間休薬", "毎日休薬なく継続投与", "週1回投与を4回"], correct: 0,
+      explain: "膵癌にはA法又はC法(14日間連日投与後7日間休薬)を使用し、体表面積に応じた基準量から開始する。" },
+    { category: "用法用量・投与スケジュール", type: "single", q: "MSI-High固形癌に対するペムブロリズマブの用法用量は?",
+      choices: ["200mgを3週間間隔、または400mgを6週間間隔", "100mgを2週間間隔", "2mg/kgを3週間間隔", "500mgを4週間間隔"], correct: 0,
+      explain: "30分間かけて点滴静注する。他がん種と同じ用法用量である。" },
+    { category: "用法用量・投与スケジュール", type: "multi", q: "膵癌FOLFIRINOX法における5-FU・レボホリナートの投与手順として正しいものをすべて選べ(2つ選択)",
+      choices: ["レボホリナート200mg/m²を2時間点滴後に5-FU400mg/m²を急速投与する", "5-FU 2400mg/m²を46時間持続静注する", "オキサリプラチンを46時間持続静注する", "レボホリナートは投与しない"], correct: [0, 1],
+      explain: "オキサリプラチンは2時間かけて点滴投与するA法/B法であり、46時間持続静注されるのは5-FUである。" },
+
+    // ══════════ 用量規制因子・モニタリング ══════════
+    { category: "用量規制因子・モニタリング", type: "single", q: "膵癌FOLFIRINOX法で2クール目以降の投与可能条件として規定されている好中球数・血小板数の基準は?",
+      choices: ["好中球数1,500/mm³以上、血小板数75,000/mm³以上", "好中球数500/mm³以上、血小板数50,000/mm³以上", "好中球数3,000/mm³以上、血小板数150,000/mm³以上", "基準の規定はない"], correct: 0,
+      explain: "イリノテカン塩酸塩水和物・フルオロウラシルの添付文書に共通して規定されている条件である。" },
+    { category: "用量規制因子・モニタリング", type: "single", q: "イリノテカン系薬剤(イリノテカン塩酸塩水和物、リポソーマルイリノテカン)の投与前検査で特に重要とされる遺伝子多型は?",
+      choices: ["UGT1A1遺伝子多型", "DPYD遺伝子多型", "BRCA1/2遺伝子", "KRAS遺伝子"], correct: 0,
+      explain: "UGT1A1*6又は*28をホモ接合体、又は両方をヘテロ接合体で有する患者はSN-38の代謝が遅延し、好中球減少等の重篤な副作用の発現可能性が高い。" },
+    { category: "用量規制因子・モニタリング", type: "single", q: "リポソーマルイリノテカン(オニバイド)で、UGT1A1*6又は*28のホモ接合体を有する患者の開始用量は?",
+      choices: ["1回50mg/m²に減量して開始する", "通常用量70mg/m²のまま開始する", "1回100mg/m²に増量する", "投与自体が禁忌である"], correct: 0,
+      explain: "忍容性が認められれば通常用量の70mg/m²に増量できる。" },
+    { category: "用量規制因子・モニタリング", type: "single", q: "ナブパクリタキセルの添付文書に規定されている休薬基準は?",
+      choices: ["好中球数1,500/mm³未満又は血小板数100,000/mm³未満", "好中球数500/mm³未満又は血小板数50,000/mm³未満", "ヘモグロビン10g/dL未満", "基準の規定はない"], correct: 0,
+      explain: "骨髄機能が回復するまで投与を延期する。" },
+    { category: "用量規制因子・モニタリング", type: "single", q: "ゲムシタビン投与中に添付文書の警告で必須とされている定期検査は?",
+      choices: ["定期的な血液検査及び胸部X線検査", "定期的な心電図検査のみ", "定期的な眼底検査", "検査は特に必須とされていない"], correct: 0,
+      explain: "高度な骨髄抑制、間質性肺炎・肺線維症の早期発見のために必要とされる。" },
+    { category: "用量規制因子・モニタリング", type: "single", q: "オキサリプラチンとレボホリナート・フルオロウラシルの併用療法で、警告欄に明記されている注意点は?",
+      choices: ["致死的な転帰に至る重篤な副作用があらわれることがあるため観察を十分に行う", "併用により効果が減弱するため通常は行わない", "特段の注意点はない", "併用は完全に禁忌である"], correct: 0,
+      explain: "本併用療法(FOLFOX骨格)は膵癌の二次治療等で有用性が認められている一方、致死的な重篤副作用のリスクも明記されている。" },
+    { category: "用量規制因子・モニタリング", type: "single", q: "S-1投与中に規定されている臨床検査の頻度は?",
+      choices: ["各コース開始前及び投与期間中は2週間に1回以上", "月1回のみ", "投与開始時のみ", "検査の規定はない"], correct: 0,
+      explain: "骨髄抑制が主な用量制限毒性であるため、頻回な臨床検査が必須とされる。" },
+    { category: "用量規制因子・モニタリング", type: "single", q: "フルオロウラシル・S-1と、トリフルリジン・チピラシル塩酸塩配合剤や葉酸代謝拮抗剤(メトトレキサート等)を併用する際に共通して注意すべき点は?",
+      choices: ["重篤な骨髄抑制等の副作用が発現するおそれがある", "併用により効果が完全に消失する", "併用に関する注意点は特にない", "併用は必須とされている"], correct: 0,
+      explain: "いずれもフッ化ピリミジン系代謝拮抗剤に関連する相互作用として添付文書に記載されている。" },
+    { category: "用量規制因子・モニタリング", type: "multi", q: "膵癌FOLFIRINOX法における段階的減量の判断材料として添付文書に規定されている項目をすべて選べ(3つ選択)",
+      choices: ["好中球減少", "下痢", "血小板減少", "血圧上昇"], correct: [0, 1, 2],
+      explain: "好中球減少・下痢・血小板減少・総ビリルビン上昇・粘膜炎等に応じた段階的減量基準が規定されている。血圧上昇はVEGFR阻害薬クラスに特徴的な有害事象で、FOLFIRINOXの減量基準には含まれない。" },
+
+    // ══════════ 特徴的な副作用(添付文書の警告・禁忌・重大な副作用) ══════════
+    { category: "特徴的な副作用", type: "single", q: "FOLFIRINOX/mFOLFIRINOXで特に高頻度に報告される血液毒性は?",
+      choices: ["好中球減少(約45-64%)", "貧血のみ", "血小板減少のみ", "血液毒性の報告はない"], correct: 0,
+      explain: "発熱性好中球減少症も約5-15%と報告されており、モニタリングが重要である。" },
+    { category: "特徴的な副作用", type: "single", q: "ゲムシタビン+ナブパクリタキセル(GnP)に特徴的な蓄積性有害事象は?",
+      choices: ["末梢神経障害", "手足症候群", "間質性肺疾患", "低マグネシウム血症"], correct: 0,
+      explain: "休薬・減量基準が定められており、長期化するとQOLに影響しやすい。" },
+    { category: "特徴的な副作用", type: "single", q: "NAPOLI-3試験の安全性解析で、NALIRIFOXがGnPより明確に高頻度だった有害事象は?",
+      choices: ["Grade3/4下痢(20.3% vs 4.5%)", "好中球減少", "貧血", "末梢神経障害"], correct: 0,
+      explain: "血液毒性(好中球減少14.1% vs 24.5%、貧血10.5% vs 17.4%)はNALIRIFOXの方がGnPより軽度と報告されている。" },
+    { category: "特徴的な副作用", type: "single", q: "オラパリブ維持療法で主体となる有害事象は?",
+      choices: ["貧血・好中球減少などの骨髄抑制系有害事象", "重度の下痢", "手足症候群", "間質性肺疾患が最も高頻度"], correct: 0,
+      explain: "貧血30.2%、好中球減少13.7%が報告されており、概してFOLFIRINOX等より軽度とされる。" },
+    { category: "特徴的な副作用", type: "single", q: "ゲムシタビンの添付文書における間質性肺炎の報告頻度は?",
+      choices: ["1.0%", "10%", "0.01%未満", "報告例はない"], correct: 0,
+      explain: "禁忌の項にも、胸部単純X線写真で異常が明らかで臨床症状のある間質性肺炎又は肺線維症患者への投与を避けることが明記されている。" },
+    { category: "特徴的な副作用", type: "single", q: "イリノテカン塩酸塩水和物に特徴的な消化器有害事象は?",
+      choices: ["高度な下痢(早発型・遅発型)", "手足症候群", "口内炎のみ", "便秘"], correct: 0,
+      explain: "下痢は65.5%と報告され、投与中/直後に起こる早発型と、24時間以降に持続する遅発型に分類される。" },
+    { category: "特徴的な副作用", type: "single", q: "オキサリプラチンの添付文書における末梢神経症状(感覚異常又は知覚不全)の報告頻度は?",
+      choices: ["96.6%", "10%未満", "0.6%", "報告例はない"], correct: 0,
+      explain: "寒冷刺激で悪化しやすく、機能障害を伴う重度の感覚異常・知覚不全のある患者は禁忌とされている。" },
+    { category: "特徴的な副作用", type: "single", q: "ペムブロリズマブの添付文書の警告欄に明記されている重大な副作用は?",
+      choices: ["間質性肺疾患", "手足症候群", "低マグネシウム血症", "末梢神経障害"], correct: 0,
+      explain: "死亡に至った症例も報告されており、初期症状の確認及び胸部X線検査の実施等、観察を十分に行うことが求められている。" },
+    { category: "特徴的な副作用", type: "single", q: "S-1の添付文書の警告欄で特に注意が必要とされる肝関連の有害事象は?",
+      choices: ["劇症肝炎等の重篤な肝障害", "脂肪肝", "肝嚢胞", "肝関連の注意点はない"], correct: 0,
+      explain: "骨髄抑制とあわせて、頻回な臨床検査によるモニタリングが必要とされる。" },
+    { category: "特徴的な副作用", type: "single", q: "リポソーマルイリノテカン(オニバイド)の警告欄に明記されている重要な注意点は?",
+      choices: ["従来のイリノテカン塩酸塩水和物製剤の代替として投与しないこと", "経口薬への切り替えが可能であること", "他の抗悪性腫瘍剤との併用が必須であること", "特に注意点はない"], correct: 0,
+      explain: "リポソーム製剤化により薬物動態が従来製剤と異なるため、代替使用は不可とされている。" },
+    { category: "特徴的な副作用", type: "single", q: "アタザナビル硫酸塩と併用禁忌とされている膵癌治療薬は?",
+      choices: ["イリノテカン系薬剤(イリノテカン塩酸塩水和物、リポソーマルイリノテカン)", "ゲムシタビン", "オキサリプラチン", "S-1"], correct: 0,
+      explain: "アタザナビル硫酸塩のUGT1A1阻害作用によりSN-38(活性代謝物)の代謝が遅延し、骨髄機能抑制・下痢等の副作用が増強するおそれがある。" },
+    { category: "特徴的な副作用", type: "multi", q: "FOLFIRINOX法の臨床試験データ(n=166)で高頻度に報告された有害事象として添付文書に記載されているものをすべて選べ(3つ選択)",
+      choices: ["好中球数減少", "下痢", "末梢性感覚ニューロパチー", "手足症候群"], correct: [0, 1, 2],
+      explain: "貧血90.4%、疲労87.3%、好中球数減少79.9%、下痢73.3%、末梢性感覚ニューロパチー70.5%等が報告されている。手足症候群はカペシタビンやS-1等の経口フッ化ピリミジンに特徴的な有害事象である。" },
+
+    // ══════════ バイオマーカー ══════════
+    { category: "バイオマーカー", type: "single", q: "gBRCA1/2変異陽性の膵癌に対応する治療は?",
+      choices: ["オラパリブ維持療法(プラチナ感受性確認後)", "ペムブロリズマブ", "ソトラシブ", "S-1単独"], correct: 0,
+      explain: "プラチナ製剤ベースの1次治療で病勢進行がなかった例が対象となる。" },
+    { category: "バイオマーカー", type: "single", q: "膵癌で最も高頻度に認められるKRAS変異サブタイプは?",
+      choices: ["G12D(約44%)", "G12C(約1-2%)", "G12V(約34%)が最多", "KRAS変異はまれである"], correct: 0,
+      explain: "次いでG12V(約34%)が多いが、いずれも国内承認済みの標的薬はない。" },
+    { category: "バイオマーカー", type: "single", q: "膵癌におけるKRAS G12C変異の頻度は?",
+      choices: ["約1-2%", "約44%", "約90%以上", "約50%"], correct: 0,
+      explain: "非小細胞肺癌と異なり、膵癌ではG12C変異はまれなサブタイプである。" },
+    { category: "バイオマーカー", type: "multi", q: "膵癌のバイオマーカーと対応する治療の組み合わせとして正しいものをすべて選べ(2つ選択)",
+      choices: ["gBRCA1/2変異陽性にはオラパリブ維持療法", "MSI-H/dMMRにはペムブロリズマブ", "KRAS G12C変異にはソトラシブが国内承認済み", "NTRK融合にはトラスツズマブ デルクステカン"], correct: [0, 1],
+      explain: "ソトラシブは膵癌への承認適応がなく、NTRK融合にはラロトレクチニブ又はエヌトレクチニブが用いられる。" },
+
+    // ══════════ コスト制度 ══════════
+    { category: "コスト制度", type: "single", q: "高額療養費制度で「限度額適用認定証」を事前に取得するメリットは?",
+      choices: ["窓口での支払いを自己負担限度額までに抑えられる", "薬剤費そのものが割引される", "保険適用外の治療が保険適用になる", "メリットは特にない"], correct: 0,
+      explain: "認定証がない場合、いったん全額を立て替えた上で後日払い戻しを受ける必要があるが、認定証があれば窓口負担自体を上限額までに抑えられる。" },
+    { category: "コスト制度", type: "single", q: "オラパリブ(リムパーザ、300mg1日2回)の概算月額(薬剤費のみ、推定)は?",
+      choices: ["約57万円/月", "約5万円/月", "約150万円/月", "保険適用外で全額自己負担"], correct: 0,
+      explain: "150mg錠4錠(1日600mg)を30日換算した場合の推定額で、高額療養費制度により実際の自己負担はこれより大幅に軽減される。" }
+  ];
+
+  var QUIZ_SESSION_SIZE = 10;
+  var quizOrder = [];     // indices into QUIZ for THIS session (random subset)
+  var quizIndex = 0;
+  var quizAnswers = [];   // per-question(by original index): selected choice index (single) or array of indices (multi)
+  var quizFeedback = {};  // { [questionIndex]: 'good' | 'bad' }
+
+  function quizPickSession() {
+    var all = QUIZ.map(function (_, i) { return i; });
+    quizShuffle(all);
+    quizOrder = all.slice(0, QUIZ_SESSION_SIZE);
+  }
+  function quizShuffle(arr) {
+    for (var i = arr.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = arr[i]; arr[i] = arr[j]; arr[j] = t;
+    }
+    return arr;
+  }
+
+  function quizLoadFeedback() {
+    try {
+      var raw = localStorage.getItem('pancQuizFeedback_v2');
+      quizFeedback = raw ? JSON.parse(raw) : {};
+    } catch (e) { quizFeedback = {}; }
+  }
+  function quizSaveFeedback() {
+    try { localStorage.setItem('pancQuizFeedback_v2', JSON.stringify(quizFeedback)); } catch (e) {}
+  }
+  function quizBuildRatingRow(qi) {
+    var row = document.createElement('div');
+    row.className = 'rate-row';
+    var label = document.createElement('span');
+    label.className = 'rate-label';
+    label.textContent = 'この問題の評価:';
+    var goodBtn = document.createElement('button');
+    goodBtn.type = 'button'; goodBtn.className = 'rate-btn'; goodBtn.textContent = '👍 良問';
+    var badBtn = document.createElement('button');
+    badBtn.type = 'button'; badBtn.className = 'rate-btn'; badBtn.textContent = '👎 悪問';
+    function refresh() {
+      goodBtn.classList.toggle('active-good', quizFeedback[qi] === 'good');
+      badBtn.classList.toggle('active-bad', quizFeedback[qi] === 'bad');
+    }
+    goodBtn.onclick = function () {
+      quizFeedback[qi] = (quizFeedback[qi] === 'good') ? null : 'good';
+      if (!quizFeedback[qi]) delete quizFeedback[qi];
+      quizSaveFeedback(); refresh();
+    };
+    badBtn.onclick = function () {
+      quizFeedback[qi] = (quizFeedback[qi] === 'bad') ? null : 'bad';
+      if (!quizFeedback[qi]) delete quizFeedback[qi];
+      quizSaveFeedback(); refresh();
+    };
+    refresh();
+    row.appendChild(label); row.appendChild(goodBtn); row.appendChild(badBtn);
+    return row;
+  }
+  function quizFallbackCopy(text, done) {
+    var ta = document.createElement('textarea');
+    ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); } catch (e) {}
+    document.body.removeChild(ta);
+    done();
+  }
+  function quizChoiceLabel(item) {
+    return item.choices.join(' / ');
+  }
+  function quizCorrectLabel(item) {
+    if (item.type === 'multi') return item.correct.map(function (i) { return item.choices[i]; }).join(' ＋ ');
+    return item.choices[item.correct];
+  }
+  function quizExportFeedback() {
+    var ratedIdx = Object.keys(quizFeedback);
+    if (ratedIdx.length === 0) {
+      alert('まだ評価された問題がありません。各問題に回答した後に表示される「👍 良問」「👎 悪問」ボタンで評価してから、もう一度お試しください。');
+      return;
+    }
+    var goodList = [], badList = [];
+    ratedIdx.forEach(function (idxStr) {
+      var idx = parseInt(idxStr, 10);
+      var item = QUIZ[idx];
+      if (!item) return;
+      var entry = '・[' + item.category + (item.type === 'multi' ? '/複数選択' : '') + '] ' + item.q + '\n  選択肢: ' + quizChoiceLabel(item) + '\n  正解: ' + quizCorrectLabel(item);
+      if (quizFeedback[idx] === 'good') goodList.push(entry);
+      else if (quizFeedback[idx] === 'bad') badList.push(entry);
+    });
+    var text = '【膵癌クイズ(quiz-panc.html、全50問プール)フィードバック】\n\n' +
+      '良問と評価された問題(' + goodList.length + '件):\n' + (goodList.length ? goodList.join('\n\n') : '(なし)') + '\n\n' +
+      '悪問と評価された問題(' + badList.length + '件) — 改善・差し替えを検討してください:\n' + (badList.length ? badList.join('\n\n') : '(なし)') + '\n\n' +
+      '参照ファイル: artifacts/html/oncology-reports/quiz-panc.html\n\n' +
+      '上記フィードバックを踏まえて、「悪問」と評価された問題をレポート本文(artifacts/html/oncology-reports/panc.html、添付文書情報セクション含む)の内容に基づいて改善・差し替えてください。「良問」と評価された問題は現状を維持してください。';
+    var notify = function () { alert('フィードバックをコピーしました。MulmoClaudeのチャットに貼り付けて送信してください。問題の改善に使います。'); };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(notify).catch(function () { quizFallbackCopy(text, notify); });
+    } else { quizFallbackCopy(text, notify); }
+  }
+  function quizResetFeedback() {
+    if (!confirm('すべての評価をリセットします。よろしいですか?')) return;
+    quizFeedback = {};
+    quizSaveFeedback();
+    alert('評価をリセットしました。');
+  }
+
+  function quizRenderQuestion() {
+    document.getElementById('quiz-result-area').style.display = 'none';
+    document.getElementById('quiz-question-area').style.display = 'block';
+    var qi = quizOrder[quizIndex];
+    var item = QUIZ[qi];
+    document.getElementById('quiz-progress-text').textContent = '問 ' + (quizIndex + 1) + ' / ' + quizOrder.length + '(全' + QUIZ.length + '問中からランダム出題)';
+    document.getElementById('quiz-cat-badge').textContent = item.category;
+    document.getElementById('quiz-type-badge').style.display = (item.type === 'multi') ? 'inline-flex' : 'none';
+    document.getElementById('quiz-progress-fill').style.width = Math.round((quizIndex / quizOrder.length) * 100) + '%';
+    document.getElementById('quiz-question-text').textContent = item.q;
+    document.getElementById('quiz-explain-area').style.display = 'none';
+    document.getElementById('quiz-explain-area').innerHTML = '';
+    document.getElementById('quiz-next-btn').style.display = 'none';
+    document.getElementById('quiz-submit-row').style.display = 'none';
+
+    var wrap = document.getElementById('quiz-choices');
+    wrap.innerHTML = '';
+
+    if (item.type === 'multi') {
+      var selected = {};
+      item.choices.forEach(function (choiceText, idx) {
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'quiz-choice';
+        btn.innerHTML = '<span class="quiz-choice-check">☐</span> ' + choiceText.replace(/</g, '&lt;');
+        btn.onclick = function () {
+          selected[idx] = !selected[idx];
+          btn.classList.toggle('selected', !!selected[idx]);
+          btn.querySelector('.quiz-choice-check').textContent = selected[idx] ? '☑' : '☐';
+        };
+        wrap.appendChild(btn);
+      });
+      document.getElementById('quiz-submit-row').style.display = 'block';
+      document.getElementById('quiz-submit-btn').onclick = function () {
+        var chosen = Object.keys(selected).filter(function (k) { return selected[k]; }).map(Number);
+        quizAnswerMulti(chosen);
+      };
+    } else {
+      item.choices.forEach(function (choiceText, idx) {
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'quiz-choice';
+        btn.textContent = choiceText;
+        btn.onclick = function () { quizAnswerSingle(idx); };
+        wrap.appendChild(btn);
+      });
+    }
+  }
+
+  function quizFinishQuestion(qi, isCorrect, correctText) {
+    var item = QUIZ[qi];
+    var explainArea = document.getElementById('quiz-explain-area');
+    explainArea.className = 'quiz-explain';
+    explainArea.style.display = 'block';
+    explainArea.innerHTML = '<div style="font-weight:700; margin-bottom:4px; color:' + (isCorrect ? 'var(--good)' : 'var(--critical)') + ';">' +
+      (isCorrect ? '✅ 正解' : '❌ 不正解(正解: ' + correctText + ')') + '</div>' +
+      '<div>' + (item.explain || '') + '</div>';
+    explainArea.appendChild(quizBuildRatingRow(qi));
+    document.getElementById('quiz-submit-row').style.display = 'none';
+    document.getElementById('quiz-next-btn').style.display = 'inline-block';
+    document.getElementById('quiz-next-btn').textContent = (quizIndex === quizOrder.length - 1) ? '結果を見る →' : '次の問題 →';
+  }
+
+  function quizAnswerSingle(selectedIdx) {
+    var qi = quizOrder[quizIndex];
+    var item = QUIZ[qi];
+    quizAnswers[qi] = selectedIdx;
+    var buttons = document.getElementById('quiz-choices').querySelectorAll('.quiz-choice');
+    buttons.forEach(function (btn, idx) {
+      btn.disabled = true;
+      if (idx === item.correct) btn.classList.add('correct');
+      else if (idx === selectedIdx) btn.classList.add('wrong');
+    });
+    quizFinishQuestion(qi, selectedIdx === item.correct, item.choices[item.correct]);
+  }
+
+  function quizSubmitMulti() {
+    var qi = quizOrder[quizIndex];
+    var item = QUIZ[qi];
+    var buttons = document.getElementById('quiz-choices').querySelectorAll('.quiz-choice');
+    var chosen = [];
+    buttons.forEach(function (btn, idx) {
+      if (btn.classList.contains('selected')) chosen.push(idx);
+    });
+    quizAnswerMulti(chosen, buttons, item, qi);
+  }
+
+  function quizAnswerMulti(chosen, buttons, item, qi) {
+    qi = (qi === undefined) ? quizOrder[quizIndex] : qi;
+    item = item || QUIZ[qi];
+    buttons = buttons || document.getElementById('quiz-choices').querySelectorAll('.quiz-choice');
+    quizAnswers[qi] = chosen;
+    var correctSet = item.correct.slice().sort();
+    var chosenSet = chosen.slice().sort();
+    var isCorrect = correctSet.length === chosenSet.length && correctSet.every(function (v, i) { return v === chosenSet[i]; });
+    buttons.forEach(function (btn, idx) {
+      btn.disabled = true;
+      var isRight = item.correct.indexOf(idx) !== -1;
+      var wasChosen = chosen.indexOf(idx) !== -1;
+      if (isRight) btn.classList.add('correct');
+      else if (wasChosen) btn.classList.add('wrong');
+    });
+    quizFinishQuestion(qi, isCorrect, quizCorrectLabel(item));
+  }
+
+  function quizNext() {
+    if (quizIndex < quizOrder.length - 1) {
+      quizIndex++;
+      quizRenderQuestion();
+    } else {
+      quizShowResult();
+    }
+  }
+
+  function quizShowResult() {
+    document.getElementById('quiz-progress-fill').style.width = '100%';
+    document.getElementById('quiz-progress-text').textContent = '完了 ' + quizOrder.length + ' / ' + quizOrder.length;
+    document.getElementById('quiz-cat-badge').textContent = '';
+    document.getElementById('quiz-type-badge').style.display = 'none';
+    document.getElementById('quiz-question-area').style.display = 'none';
+
+    var correctCount = 0;
+    var byCategory = {};
+    quizOrder.forEach(function (qi) {
+      var item = QUIZ[qi];
+      if (!byCategory[item.category]) byCategory[item.category] = { correct: 0, total: 0 };
+      byCategory[item.category].total++;
+      var ans = quizAnswers[qi];
+      var isCorrect;
+      if (item.type === 'multi') {
+        var correctSet = item.correct.slice().sort();
+        var chosenSet = (ans || []).slice().sort();
+        isCorrect = correctSet.length === chosenSet.length && correctSet.every(function (v, i) { return v === chosenSet[i]; });
+      } else {
+        isCorrect = ans === item.correct;
+      }
+      if (isCorrect) { correctCount++; byCategory[item.category].correct++; }
+    });
+    var pct = Math.round((correctCount / quizOrder.length) * 100);
+
+    var catHtml = '';
+    Object.keys(byCategory).forEach(function (cat) {
+      var c = byCategory[cat];
+      var p = Math.round((c.correct / c.total) * 100);
+      catHtml += '<div class="cat-result-row"><span class="text-xs" style="width:150px; flex-shrink:0;">' + cat + '</span>' +
+        '<div class="cat-result-bar"><div class="cat-result-fill" style="width:' + p + '%"></div></div>' +
+        '<span class="text-xs muted" style="width:56px; text-align:right;">' + c.correct + '/' + c.total + '</span></div>';
+    });
+
+    var reviewHtml = '';
+    quizOrder.forEach(function (qi) {
+      var item = QUIZ[qi];
+      var ans = quizAnswers[qi];
+      var isCorrect;
+      var yourAnswerText;
+      if (item.type === 'multi') {
+        var correctSet = item.correct.slice().sort();
+        var chosenSet = (ans || []).slice().sort();
+        isCorrect = correctSet.length === chosenSet.length && correctSet.every(function (v, i) { return v === chosenSet[i]; });
+        yourAnswerText = (ans && ans.length) ? ans.map(function (i) { return item.choices[i]; }).join(' ＋ ') : '(未回答)';
+      } else {
+        isCorrect = ans === item.correct;
+        yourAnswerText = (ans != null) ? item.choices[ans] : '(未回答)';
+      }
+      if (!isCorrect) {
+        reviewHtml += '<div class="review-item">' +
+          '<div class="text-sm font-semibold mb-1">' + item.q + '</div>' +
+          '<div class="text-xs muted mb-2">あなたの回答: ' + yourAnswerText + ' / 正解: ' + quizCorrectLabel(item) + '</div>' +
+          '<div class="text-xs" style="line-height:1.6;">' + (item.explain || '') + '</div>' +
+          '</div>';
+      }
+    });
+    if (!reviewHtml) reviewHtml = '<p class="text-sm secondary">全問正解です。見直しの必要な項目はありません 🎉</p>';
+
+    var goodCount = 0, badCount = 0;
+    Object.keys(quizFeedback).forEach(function (k) {
+      if (quizFeedback[k] === 'good') goodCount++;
+      else if (quizFeedback[k] === 'bad') badCount++;
+    });
+
+    var resultArea = document.getElementById('quiz-result-area');
+    resultArea.style.display = 'block';
+    resultArea.innerHTML =
+      '<div class="text-center mb-6">' +
+        '<div class="score-ring-num" style="color:var(--series-new);">' + correctCount + ' / ' + quizOrder.length + '</div>' +
+        '<div class="text-sm muted mt-1">正答率 ' + pct + '%(全' + QUIZ.length + '問プールから今回ランダム抽出された' + quizOrder.length + '問)</div>' +
+      '</div>' +
+      '<div class="mb-6"><div class="text-sm font-semibold mb-3">カテゴリ別正答率(今回出題分)</div>' + catHtml + '</div>' +
+      '<div class="mb-2 text-sm font-semibold">見直し(不正解・未回答の問題)</div>' +
+      '<div class="mb-6">' + reviewHtml + '</div>' +
+      '<div class="mb-6 pt-4 border-t" style="border-color:var(--gridline);">' +
+        '<div class="text-sm font-semibold mb-2">問題の評価状況(全50問プール通算)</div>' +
+        '<div class="text-xs muted mb-3">👍 良問 ' + goodCount + '件 ・ 👎 悪問 ' + badCount + '件</div>' +
+        '<div class="flex flex-wrap gap-3">' +
+          '<button type="button" class="quiz-btn-outline" onclick="quizExportFeedback()">📋 フィードバックをエクスポート(チャットに貼り付け用)</button>' +
+          '<button type="button" class="quiz-btn-outline" onclick="quizResetFeedback()" style="border-color:var(--critical); color:var(--critical);">🗑 評価をリセット</button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="flex flex-wrap gap-3 justify-center">' +
+        '<button type="button" class="quiz-btn" onclick="quizRestart()">🔀 新しい10問でもう一度</button>' +
+        '<a href="panc.html" class="quiz-btn-outline" style="text-decoration:none; display:inline-block;">レポート本文に戻る</a>' +
+      '</div>';
+  }
+
+  function quizRestart() {
+    quizPickSession();
+    quizIndex = 0;
+    quizAnswers = [];
+    quizRenderQuestion();
+  }
+
+  quizLoadFeedback();
+  quizPickSession();
+  quizRenderQuestion();
+</script>
+
+<footer class="text-center text-xs pb-4" style="color: var(--text-muted);">
+  本クイズは学習・自己点検を目的とした資料です。臨床判断には利用せず、最新の添付文書・ガイドライン原文を優先してください。
+</footer>
+
+</body>
+</html>

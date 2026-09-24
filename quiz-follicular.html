@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>濾胞性リンパ腫理解度クイズ 全50問(ランダム10問出題)</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+:root, .viz-root {
+  color-scheme: light;
+  --surface-1: #fcfcfb; --page-plane: #f9f9f7;
+  --text-primary: #0b0b0b; --text-secondary: #52514e; --text-muted: #898781;
+  --gridline: #e1e0d9; --baseline: #c3c2b7;
+  --series-new: #2a78d6; --series-control: #b9b7ae;
+  --good: #0ca30c; --warning: #b9790a; --critical: #d03b3b;
+  --border: rgba(11,11,11,0.10);
+}
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) {
+    color-scheme: dark;
+    --surface-1: #1a1a19; --page-plane: #0d0d0d;
+    --text-primary: #ffffff; --text-secondary: #c3c2b7; --text-muted: #898781;
+    --gridline: #2c2c2a; --baseline: #383835;
+    --series-new: #3987e5; --series-control: #55534c;
+    --good: #0ca30c; --warning: #eab116; --critical: #e66767;
+    --border: rgba(255,255,255,0.10);
+  }
+}
+body { background: var(--page-plane); color: var(--text-primary); font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+.card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+.secondary { color: var(--text-secondary); }
+.muted { color: var(--text-muted); }
+.cat-badge { display:inline-flex; align-items:center; padding:3px 10px; border-radius:9999px; font-size:0.72rem; font-weight:700; background: color-mix(in srgb, var(--series-new) 14%, transparent); color: var(--series-new); }
+.type-badge { display:inline-flex; align-items:center; padding:3px 10px; border-radius:9999px; font-size:0.68rem; font-weight:700; background: color-mix(in srgb, var(--warning) 16%, transparent); color: var(--warning); margin-left:6px; }
+.progress-track { background: var(--gridline); border-radius: 9999px; height: 8px; overflow: hidden; }
+.progress-fill { background: var(--series-new); height: 100%; border-radius: 9999px; transition: width .25s; }
+.quiz-choice { display:block; width:100%; text-align:left; background: var(--page-plane); border: 1.5px solid var(--gridline); border-radius: 10px; padding: 12px 16px; font-size: 0.92rem; cursor: pointer; transition: border-color .12s, background .12s; margin-bottom: 10px; }
+.quiz-choice:last-child { margin-bottom: 0; }
+.quiz-choice:hover:not(:disabled) { border-color: var(--series-new); }
+.quiz-choice:disabled { cursor: default; }
+.quiz-choice.correct { border-color: var(--good); background: color-mix(in srgb, var(--good) 12%, transparent); font-weight: 700; }
+.quiz-choice.wrong { border-color: var(--critical); background: color-mix(in srgb, var(--critical) 10%, transparent); }
+.quiz-choice.selected { border-color: var(--series-new); background: color-mix(in srgb, var(--series-new) 10%, transparent); }
+.quiz-choice-check { display:inline-block; width:16px; }
+.quiz-explain { background: var(--page-plane); border: 1px solid var(--gridline); border-radius: 10px; padding: 14px 16px; margin-top: 14px; font-size: 0.85rem; line-height: 1.7; }
+.quiz-btn { background: var(--series-new); color: #fff; border: none; border-radius: 8px; padding: 10px 22px; font-size: 0.88rem; font-weight: 700; cursor: pointer; }
+.quiz-btn:hover { opacity: 0.9; }
+.quiz-btn:disabled { opacity: 0.4; cursor: default; }
+.quiz-btn-outline { background: transparent; color: var(--series-new); border: 1.5px solid var(--series-new); border-radius: 8px; padding: 9px 20px; font-size: 0.88rem; font-weight: 700; cursor: pointer; }
+.quiz-btn-outline:hover { background: color-mix(in srgb, var(--series-new) 10%, transparent); }
+.score-ring-num { font-size: 2.6rem; font-weight: 800; }
+.cat-result-row { display:flex; align-items:center; gap:10px; margin-bottom: 8px; }
+.cat-result-bar { flex:1; background: var(--gridline); border-radius: 9999px; height: 10px; overflow:hidden; }
+.cat-result-fill { background: var(--series-new); height:100%; border-radius: 9999px; }
+.review-item { border: 1px solid var(--gridline); border-radius: 10px; padding: 12px 14px; margin-bottom: 10px; }
+.review-item:last-child { margin-bottom: 0; }
+.rate-row { display:flex; align-items:center; gap:8px; margin-top:14px; flex-wrap:wrap; }
+.rate-label { font-size:0.75rem; color: var(--text-muted); }
+.rate-btn { background: var(--page-plane); border: 1.5px solid var(--gridline); border-radius: 8px; padding: 6px 12px; font-size: 0.78rem; font-weight:600; cursor:pointer; color: var(--text-secondary); }
+.rate-btn:hover { border-color: var(--series-new); }
+.rate-btn.active-good { border-color: var(--good); background: color-mix(in srgb, var(--good) 14%, transparent); color: var(--good); }
+.rate-btn.active-bad { border-color: var(--critical); background: color-mix(in srgb, var(--critical) 12%, transparent); color: var(--critical); }
+</style>
+</head>
+<body class="viz-root">
+<div class="max-w-3xl mx-auto px-4 py-8 space-y-5">
+
+  <header class="card">
+    <div class="flex items-center justify-between gap-2 flex-wrap">
+      <div>
+        <h1 class="text-xl font-bold">🧠 濾胞性リンパ腫理解度クイズ</h1>
+        <p class="text-sm mt-1 secondary">全50問のプールからランダムに10問出題・4択/複数選択混在・医療従事者向け(治療ライン選択・用法用量・投与スケジュール・用量規制因子/モニタリング・添付文書の警告/禁忌/重大な副作用・バイオマーカー・コスト制度)</p>
+      </div>
+      <a href="follicular.html" class="text-xs" style="color:var(--series-new); text-decoration:none; font-weight:600;">← レポート本文に戻る</a>
+    </div>
+    <p class="text-xs mt-3 muted">出題内容はすべて <a href="follicular.html" style="color:var(--series-new);">濾胞性リンパ腫レポート</a>(本文および「8. 主要薬剤の添付文書情報」)に記載の情報に基づきます。臨床判断には利用せず、学習・自己点検の目的でご利用ください。ページを再読み込みする、または結果画面の「新しい10問でもう一度」を押すたびに、新しい10問がランダムに選ばれます。</p>
+  </header>
+
+  <!-- Quiz card -->
+  <section class="card" id="quiz-card">
+    <div class="flex items-center justify-between mb-2">
+      <span id="quiz-progress-text" class="text-xs font-semibold muted"></span>
+      <span><span id="quiz-cat-badge" class="cat-badge"></span><span id="quiz-type-badge" class="type-badge" style="display:none;">複数選択</span></span>
+    </div>
+    <div class="progress-track mb-5"><div class="progress-fill" id="quiz-progress-fill" style="width:0%"></div></div>
+
+    <div id="quiz-question-area">
+      <div id="quiz-question-text" class="text-base font-semibold mb-4" style="line-height:1.6;"></div>
+      <div id="quiz-choices"></div>
+      <div id="quiz-submit-row" style="display:none;" class="mt-3">
+        <button type="button" class="quiz-btn" id="quiz-submit-btn" onclick="quizSubmitMulti()">この内容で回答する</button>
+      </div>
+      <div id="quiz-explain-area" style="display:none;"></div>
+      <div class="mt-5 flex justify-end">
+        <button type="button" id="quiz-next-btn" class="quiz-btn" style="display:none;" onclick="quizNext()">次の問題 →</button>
+      </div>
+    </div>
+
+    <div id="quiz-result-area" style="display:none;"></div>
+  </section>
+
+</div>
+
+<script>
+  var QUIZ = [
+    // ══════════ 治療ライン選択(どの局面でどの選択肢を使うか) ══════════
+    { category: "治療ライン選択", type: "single", q: "初発・限局期(I-II期、非Bulky)、低リスクの濾胞性リンパ腫における標準的な治療選択肢は?",
+      choices: ["領域放射線療法(ISRT)単独、リツキシマブ単剤±放射線、または経過観察", "R-CHOPを6-8コース", "CAR-T細胞療法", "タゼメトスタット単剤"], correct: 0,
+      explain: "限局期・低リスクでは全身化学療法を要さない治療選択肢が中心です。R-CHOPやCAR-Tは進行期・再発例で検討される治療です。" },
+    { category: "治療ライン選択", type: "single", q: "進行期(III-IV期)・低腫瘍量の濾胞性リンパ腫における標準的な初期方針は?",
+      choices: ["無治療経過観察(Watch & Wait)", "直ちにBR療法を開始", "直ちにCAR-T療法を検討", "直ちに自家造血幹細胞移植"], correct: 0,
+      explain: "BNLI試験等に基づき、低腫瘍量では早期介入群と経過観察群で全生存に差がないことが示されており、症状出現時にリツキシマブ単剤(RESORT試験)等を検討します。" },
+    { category: "治療ライン選択", type: "single", q: "進行期・高腫瘍量濾胞性リンパ腫の1次治療で、GALLIUM試験においてR-chemo(対照群)より3年PFSが優れていたレジメンは?",
+      choices: ["G-chemo(オビヌツズマブ+化学療法)+G維持療法", "R2(レナリドミド+リツキシマブ)", "タゼメトスタット単剤", "モスネツズマブ単剤"], correct: 0,
+      explain: "GALLIUM試験では3年PFS 80%(G-chemo)vs 73.3%(R-chemo)とG-chemo群が上回りました。" },
+    { category: "治療ライン選択", type: "single", q: "RELEVANCE試験で、化学免疫療法(R-chemo)とほぼ同等の3年PFS(77%)を示した化学療法フリーレジメンは?",
+      choices: ["R2(レナリドミド+リツキシマブ)", "BR(ベンダムスチン+リツキシマブ)", "エプコリタマブ単剤", "タゼメトスタット単剤"], correct: 0,
+      explain: "R2は化学療法を含まないレジメンでありながら化学免疫療法と同等の効果を示し、経口薬中心のため通院負担が軽い場合がある点が特徴です。" },
+    { category: "治療ライン選択", type: "single", q: "2次治療以降(1レジメン以上の前治療歴、Grade1-3A)で2026年9月16日にPMDA承認された新規の化学療法フリー併用療法は?",
+      choices: ["エプコリタマブ+レナリドミド+リツキシマブ(R2)", "オビヌツズマブ+ベンダムスチン", "axicabtagene ciloleucel", "R-CHOP"], correct: 0,
+      explain: "EPCORE FL-1試験(vs R2単独)に基づき承認され、ORR95% vs 79%、16ヶ月PFS率85.5% vs 40.2%(HR0.21)という大きな改善を示しました。" },
+    { category: "治療ライン選択", type: "single", q: "3次治療以降、EZH2変異陽性の濾胞性リンパ腫に特に検討される経口薬は?",
+      choices: ["タゼメトスタット", "レナリドミド", "オビヌツズマブ", "ベンダムスチン"], correct: 0,
+      explain: "EZH2変異陽性ではORR69%、野生型では34%と報告されており、EZH2変異検査での陽性確認が投与の前提となります。" },
+    { category: "治療ライン選択", type: "single", q: "添付文書上、モスネツズマブ単剤療法(ステップアップ投与)の適応対象となる前治療歴の条件は?",
+      choices: ["3レジメン以上の前治療歴を有する患者", "未治療の患者", "1レジメンのみの前治療歴の患者", "前治療歴を問わない全患者"], correct: 0,
+      explain: "3レジメン以上の前治療歴を有する患者が対象で、GO29781試験に基づく承認です。" },
+    { category: "治療ライン選択", type: "multi", q: "2026年9月時点で、通常の(非形質転換)濾胞性リンパ腫に対して日本国内で承認されているCAR-T製品をすべて選べ(2つ選択)",
+      choices: ["tisagenlecleucel(キムリア)", "lisocabtagene maraleucel(ブレヤンジ)", "axicabtagene ciloleucel(イエスカルタ)", "国内承認されているCAR-T製品はまだない"], correct: [0, 1],
+      explain: "axicabtagene ciloleucel(イエスカルタ)の国内承認適応は「形質転換濾胞性リンパ腫」を含む大細胞型B細胞リンパ腫群のみで、通常の濾胞性リンパ腫そのものへの国内適応はありません(ZUMA-5試験は海外データ)。国内で濾胞性リンパ腫に承認されているのはtisa-celとliso-celの2製品です。" },
+    { category: "治療ライン選択", type: "single", q: "モスネツズマブ+ポラツズマブ ベドチン(Mosun-Pola)の、2026年9月時点における開発・承認状況は?",
+      choices: ["第III相試験未実施・NCCN/ESMO/日本血液学会GL未収載の開発中レジメン", "日本ですでに承認されている標準治療", "第III相RCTで標準治療として確立している", "日本では治験も行われていない"], correct: 0,
+      explain: "ASH 2024(Blood)の早期報告があるのみで、第III相試験は未実施・GL未収載のため、現時点では治験参加(NCT06453044等)が主な入手経路です。" },
+    { category: "治療ライン選択", type: "single", q: "早期再発した濾胞性リンパ腫に対する治療変更の選択肢として本レポートに挙げられているのは?",
+      choices: ["化学免疫療法の再導入・変更(BR、R-CHOP等)、若年者では自家造血幹細胞移植も選択肢", "直ちにCAR-T療法のみを行う", "経過観察のみを継続する", "放射線療法のみを行う"], correct: 0,
+      explain: "早期再発では化学免疫療法レジメンの変更に加え、若年者では自家造血幹細胞移植も治療選択肢に含まれます。" },
+    { category: "治療ライン選択", type: "single", q: "BR(ベンダムスチン+リツキシマブ)とR-CHOPを副作用プロファイルの観点から比較した場合の特徴は?",
+      choices: ["R-CHOPはGrade3以上の脱毛が39%と報告される一方、BRは脱毛の頻度が低い傾向がある", "BRの方が脱毛の頻度が高い", "両者の副作用プロファイルに違いはない", "BRは骨髄抑制を起こさない"], correct: 0,
+      explain: "本レポートの副作用表に基づく比較です。いずれも好中球減少・感染症等の骨髄抑制関連の有害事象は共通して注意が必要です。" },
+    { category: "治療ライン選択", type: "single", q: "axicabtagene ciloleucel(イエスカルタ)の日本国内における承認適応について正しい記述は?",
+      choices: ["形質転換濾胞性リンパ腫を含む大細胞型B細胞リンパ腫群への適応であり、通常の濾胞性リンパ腫そのものへの適応はない", "通常の濾胞性リンパ腫にも3次治療として承認されている", "濾胞性リンパ腫には一切適応がない", "日本では未承認の製品である"], correct: 0,
+      explain: "ZUMA-5試験(通常のFL対象)は海外データであり、国内承認の根拠にはなっていません。国内で濾胞性リンパ腫に承認されているCAR-T製品はtisa-celとliso-celの2製品です。" },
+    { category: "治療ライン選択", type: "single", q: "組織学的Grade3B(高悪性度)の濾胞性リンパ腫の治療方針は?",
+      choices: ["びまん性大細胞型B細胞リンパ腫(DLBCL)に準じた治療が行われることが多い", "経過観察が標準である", "放射線療法のみで治療する", "Grade1-2と全く同じ治療を行う"], correct: 0,
+      explain: "Grade3Bは高悪性度として扱われ、DLBCLに準じた治療(R-CHOP等)が検討されます。詳細な治療プロトコルはDLBCLガイドライン原文を確認する必要があります。" },
+    { category: "治療ライン選択", type: "single", q: "濾胞性リンパ腫の経過中にびまん性大細胞型B細胞リンパ腫(DLBCL)等へ組織学的転換した場合の対応は?",
+      choices: ["DLBCLに準じた治療(R-CHOP等)が検討される", "濾胞性リンパ腫の治療をそのまま継続する", "治療法は存在しない", "経過観察のみとする"], correct: 0,
+      explain: "形質転換後はより悪性度の高い組織型に準じた治療が必要となるため、DLBCLレポート・ガイドライン原文を参照する必要があります。" },
+
+    // ══════════ 用法用量・投与スケジュール ══════════
+    { category: "用法用量・投与スケジュール", type: "single", q: "リツキシマブ単独投与(B細胞性非ホジキンリンパ腫)の標準的な投与スケジュールは?",
+      choices: ["375mg/m²を1週間間隔で4回または8回点滴静注", "500mg/m²を1回のみ投与", "100mgを週1回、継続投与", "375mg/m²を1日1回、5日間連続投与"], correct: 0,
+      explain: "維持療法として用いる場合は375mg/m²を8週間隔で最大12回投与します。" },
+    { category: "用法用量・投与スケジュール", type: "single", q: "オビヌツズマブの維持療法における投与間隔と最長投与期間は?",
+      choices: ["2ヶ月に1回、最長2年間", "1ヶ月に1回、最長1年間", "3ヶ月に1回、無期限", "維持療法の設定はない"], correct: 0,
+      explain: "導入療法(1000mg、1サイクル目は1・8・15日目投与等)後、維持療法として2ヶ月に1回、最長2年間投与します。" },
+    { category: "用法用量・投与スケジュール", type: "single", q: "BR療法(ベンダムスチン+リツキシマブ併用)におけるベンダムスチンの用法用量は?",
+      choices: ["90mg/m²を1日1回、2日間連日投与後26日間休薬(1サイクル)", "120mg/m²を1日1回、2日間連日投与後19日間休薬", "45mg/m²を毎日連日投与", "90mg/m²を週1回、継続投与"], correct: 0,
+      explain: "単独投与(再発・難治例)の場合は120mg/m²を2日間連日投与し19日間休薬するなど、併用の有無で用量が異なります。" },
+    { category: "用法用量・投与スケジュール", type: "single", q: "R2療法(レナリドミド+リツキシマブ)におけるレナリドミドの用法用量は?",
+      choices: ["1日1回20mgを21日間連日経口投与後7日間休薬、最大12サイクル", "1日1回50mgを毎日休薬なく継続投与", "週1回100mgを点滴静注", "1日2回10mgを28日間連日投与"], correct: 0,
+      explain: "添付文書上、濾胞性リンパ腫・辺縁帯リンパ腫に対するR2療法の用法用量として規定されています。" },
+    { category: "用法用量・投与スケジュール", type: "single", q: "タゼメトスタット(タズベリク)の1日あたりの投与量・投与回数は?",
+      choices: ["1回800mgを1日2回経口投与", "1回400mgを1日1回経口投与", "1回200mgを1日4回経口投与", "週1回1600mgを経口投与"], correct: 0,
+      explain: "患者の状態に応じて減量することがあります。" },
+    { category: "用法用量・投与スケジュール", type: "single", q: "モスネツズマブの濾胞性リンパ腫Grade1-3Aにおける1サイクル目のステップアップ投与スケジュールは?",
+      choices: ["1日目5mg、8日目45mg、15日目45mgを皮下投与", "1日目から45mgを固定用量で投与", "1日目0.16mg、8日目0.8mgのみで完了", "投与量は体重換算で決定される"], correct: 0,
+      explain: "2サイクル目以降は1日目に45mgを最大8サイクルまで投与し、完全奏効なら終了、部分奏効・病勢安定なら計17サイクルまで継続可能です。" },
+    { category: "用法用量・投与スケジュール", type: "single", q: "エプコリタマブの濾胞性リンパ腫Grade1-3A単剤療法における3ステップ漸増(サイクル1)のスケジュールは?",
+      choices: ["1日目0.16mg→8日目0.8mg→15日目3mg→22日目48mg", "1日目0.16mg→8日目0.8mg→15日目48mgの2ステップ", "1日目から48mgを固定用量で投与", "1日目5mg→8日目45mgの2ステップ"], correct: 0,
+      explain: "Grade3Bおよび大細胞型B細胞リンパ腫では2ステップ漸増(0.16mg→0.8mg→48mg)が用いられ、Grade1-3Aとは投与ステップ数が異なります。" },
+    { category: "用法用量・投与スケジュール", type: "single", q: "axicabtagene ciloleucel(イエスカルタ)の添付文書上の目標投与細胞数は?",
+      choices: ["2.0×10⁶個/kg(体重100kg超は上限2×10⁸個)", "1×10⁸個の固定用量", "体表面積換算で決定", "投与細胞数の規定はない"], correct: 0,
+      explain: "単回点滴静注で投与します。なお国内承認適応は形質転換濾胞性リンパ腫を含む大細胞型B細胞リンパ腫群であり、通常の濾胞性リンパ腫への適応はない点に注意が必要です。" },
+    { category: "用法用量・投与スケジュール", type: "single", q: "lisocabtagene maraleucel(ブレヤンジ)の投与細胞構成として添付文書に規定されているのは?",
+      choices: ["CD8陽性細胞及びCD4陽性細胞をそれぞれ20×10⁶〜50×10⁶個、合計約100×10⁶個を目標に投与", "CD19陽性細胞のみを1×10⁹個投与", "CD20陽性細胞を体重換算で投与", "投与細胞の構成比の規定はない"], correct: 0,
+      explain: "CD8陽性細胞とCD4陽性細胞を別個に規定した構成比で投与する点が、他のCAR-T製品との違いの一つです。" },
+
+    // ══════════ 用量規制因子・モニタリング ══════════
+    { category: "用量規制因子・モニタリング", type: "single", q: "レナリドミド(R2療法)で骨髄抑制以外に特に注意すべき重大な副作用は?",
+      choices: ["深部静脈血栓症・肺塞栓症", "脳出血", "冠攣縮性狭心症", "大動脈解離"], correct: 0,
+      explain: "添付文書では深部静脈血栓症(6.2%)・肺塞栓症(3.0%)が重大な副作用として記載され、警告欄でも慎重投与が求められています。" },
+    { category: "用量規制因子・モニタリング", type: "multi", q: "レナリドミドの適正管理・催奇形性対策として添付文書に規定されている内容をすべて選べ(2つ選択)",
+      choices: ["適正管理手順(RevMate)の遵守が投与の前提", "妊娠可能女性は投与開始前の妊娠検査確認と厳格な避妊が必要", "男性患者は避妊対策が不要", "妊婦への投与は特に問題とされていない"], correct: [0, 1],
+      explain: "サリドマイド誘導体であるため胎児曝露を避ける必要があり、男性も投与終了4週間後までコンドーム着用が求められ、妊婦は禁忌です。" },
+    { category: "用量規制因子・モニタリング", type: "single", q: "エプコリタマブ・モスネツズマブのサイクル1投与で共通して求められる予防的処置は?",
+      choices: ["副腎皮質ホルモン剤等の前投与と十分な水分補給(CRS・腫瘍崩壊症候群対策)", "抗凝固薬の予防投与のみ", "放射線照射による前処置", "予防的処置は不要である"], correct: 0,
+      explain: "サイトカイン放出症候群および腫瘍崩壊症候群の予防を目的とした、二重特異性抗体クラスに共通する管理です。" },
+    { category: "用量規制因子・モニタリング", type: "single", q: "モスネツズマブでサイトカイン放出症候群の管理のため、初回投与後に必須とされる対応は?",
+      choices: ["投与後48時間の入院管理", "外来での経過観察のみで可", "入院は完全奏効が得られた場合のみ必要", "特に入院管理は求められていない"], correct: 0,
+      explain: "添付文書上、初期投与後48時間は必ず入院管理とすることが規定されています。エプコリタマブでも同様に初回48mg投与後48時間の入院管理が求められます。" },
+    { category: "用量規制因子・モニタリング", type: "single", q: "リツキシマブ・オビヌツズマブ投与時、infusion reaction軽減のための共通した対策は?",
+      choices: ["投与前の抗ヒスタミン剤・解熱鎮痛剤等の前投与と、段階的な注入速度の上昇", "前投与は不要で通常速度で開始してよい", "投与直前の絶食のみで対応する", "抗凝固薬の前投与で対応する"], correct: 0,
+      explain: "いずれも初回投与時は低速度(50mg/時)で開始し、30分毎に速度を上げていく方法が共通しています。" },
+    { category: "用量規制因子・モニタリング", type: "single", q: "ベンダムスチン投与中に頻回の血液検査が求められる、添付文書の警告欄に基づく理由は?",
+      choices: ["骨髄抑制により感染症等の重篤な副作用があらわれることがあるため", "肝機能障害の早期発見のため", "血糖値の急激な変動を防ぐため", "腎機能低下を防ぐため"], correct: 0,
+      explain: "アルキル化薬であるベンダムスチンは骨髄抑制のリスクが高く、頻回の血液検査による患者状態の観察が警告欄に明記されています。" },
+    { category: "用量規制因子・モニタリング", type: "single", q: "axicabtagene ciloleucel等のCAR-T製品投与前に、B型・C型肝炎ウイルスキャリアの患者で特に必要とされる対応は?",
+      choices: ["肝機能検査値・肝炎ウイルスマーカーのモニタリング", "抗ウイルス薬の予防投与は一切不要", "肝炎ウイルス検査は投与後のみ実施すればよい", "肝炎ウイルスキャリアには投与できない"], correct: 0,
+      explain: "リンパ球除去化学療法や本品投与により肝炎ウイルスの再活性化・増悪リスクがあるため、投与前後のモニタリングが必要です。" },
+    { category: "用量規制因子・モニタリング", type: "single", q: "タゼメトスタット投与中、休薬を検討する好中球数の基準として添付文書に示されているのは?",
+      choices: ["750/mm³未満", "3,000/mm³未満", "10,000/mm³未満", "好中球数による休薬基準はない"], correct: 0,
+      explain: "血小板減少・好中球減少・リンパ球減少等の骨髄抑制のモニタリングと、基準に基づく休薬・減量・中止の判断が必要です。" },
+    { category: "用量規制因子・モニタリング", type: "single", q: "エプコリタマブでCYP狭治療域基質薬(ワルファリン、シクロスポリン等)を併用する場合に添付文書が求める対応は?",
+      choices: ["初回投与から最初の48mg投与14日後まで患者状態を慎重に観察すること", "これらの薬剤との併用は完全に禁忌である", "特に注意すべき相互作用はない", "併用時はエプコリタマブの用量を倍量に増やす"], correct: 0,
+      explain: "サイトカイン放出に伴うCYP酵素活性の変動により、狭治療域薬物の血中濃度が変化する可能性があるための注意喚起です。" },
+
+    // ══════════ 特徴的な副作用(添付文書の警告・禁忌・重大な副作用) ══════════
+    { category: "特徴的な副作用", type: "single", q: "リツキシマブで投与患者の約90%に発現すると報告されている副作用は?",
+      choices: ["infusion reaction(多くは軽微〜中等度)", "手足症候群", "末梢神経障害", "間質性肺疾患"], correct: 0,
+      explain: "多くは軽微〜中等度ですが、アナフィラキシー・肺障害・心障害等の重篤例による死亡も報告されています。" },
+    { category: "特徴的な副作用", type: "single", q: "オビヌツズマブの重大な副作用として、B型肝炎再活性化とは別に注意喚起されている稀な神経系副作用は?",
+      choices: ["進行性多巣性白質脳症(PML)", "末梢神経障害", "認知機能障害", "てんかん発作"], correct: 0,
+      explain: "頻度0.1%と稀ですが、重篤な中枢神経系合併症として添付文書に明記されています。" },
+    { category: "特徴的な副作用", type: "single", q: "レナリドミドの添付文書の警告欄に明記されている、ヒトにおける最も重要な懸念事項は?",
+      choices: ["催奇形性(サリドマイド誘導体であるため)", "発がん性の懸念のみ", "聴覚障害のリスク", "視力低下のリスク"], correct: 0,
+      explain: "サリドマイド誘導体であり、妊婦又は妊娠している可能性のある女性には決して投与しないことが警告されています。" },
+    { category: "特徴的な副作用", type: "multi", q: "モスネツズマブ・エプコリタマブに共通する特徴として正しいものをすべて選べ(2つ選択)",
+      choices: ["いずれもCD20×CD3二重特異性抗体であり皮下投与される", "警告欄にサイトカイン放出症候群(CRS)による死亡例が明記されている", "いずれも経口薬であり通院負担が少ない", "併用禁忌薬は存在しないため相互作用の注意は不要"], correct: [0, 1],
+      explain: "いずれも重度のCRSにより死亡例が報告されており、管理ガイダンスに従った適切な処置と、多くは初回投与後の入院管理が必要です。皮下投与薬であり経口薬ではありません。" },
+    { category: "特徴的な副作用", type: "single", q: "エプコリタマブでCRSと並んで警告欄に明記されている、死亡例も報告されている神経系の重篤な副作用は?",
+      choices: ["免疫エフェクター細胞関連神経毒性症候群(ICANS)", "末梢神経障害", "重症筋無力症", "パーキンソン症候群"], correct: 0,
+      explain: "失語症・痙攣発作・脳浮腫等の症状があらわれることがあり、Grade3で休薬、再発時は中止となります。" },
+    { category: "特徴的な副作用", type: "single", q: "axi-cel・tisa-cel・liso-celの3製品すべてに共通する、致死的となりうる重大な副作用は?",
+      choices: ["サイトカイン放出症候群(CRS)", "手足症候群", "低マグネシウム血症", "末梢神経障害"], correct: 0,
+      explain: "CAR-T細胞療法クラスに共通する特徴的な副作用で、いずれの製品も警告欄でCRSによる死亡例を明記しています。" },
+    { category: "特徴的な副作用", type: "single", q: "タゼメトスタットで最も高頻度に報告されている血液毒性(重大な副作用)は?",
+      choices: ["血小板減少(11.3%)", "好中球減少(9.7%)", "リンパ球減少(8.1%)", "貧血(6.5%)"], correct: 0,
+      explain: "いずれも骨髄抑制関連の副作用として報告されており、定期的な血液検査によるモニタリングが必要です。" },
+    { category: "特徴的な副作用", type: "single", q: "ベンダムスチンの重大な副作用として、細胞障害性抗悪性腫瘍剤に共通するものは?",
+      choices: ["骨髄抑制(白血球減少、血小板減少等)", "手足症候群", "低マグネシウム血症", "皮膚有棘細胞癌"], correct: 0,
+      explain: "アルキル化薬であるベンダムスチンは骨髄抑制のリスクが高く、感染症・出血傾向等につながる可能性があります。" },
+    { category: "特徴的な副作用", type: "single", q: "海外データ(ZUMA-5試験)におけるaxicabtagene ciloleucelのGrade≥3 CRS発現率は、tisa-cel(ELARA試験)と比べてどうか?",
+      choices: ["axi-celの方が高頻度(6% vs tisa-celの0%)と報告されている", "axi-celの方が低頻度である", "両者に差はない", "axi-celはCRSを起こさない"], correct: 0,
+      explain: "ただしaxi-celは2026年9月時点で通常の濾胞性リンパ腫への国内承認がなく、この数値は海外データである点に注意が必要です。" },
+    { category: "特徴的な副作用", type: "single", q: "R2療法(レナリドミド)投与患者への生活指導で特に重要な副作用は?",
+      choices: ["皮疹・血栓症リスクへの注意", "強い脱毛への対応", "重度の下痢への対応", "光線過敏症への対応"], correct: 0,
+      explain: "経口薬中心のため通院負担は化学療法より軽い場合がありますが、皮疹や血栓症のリスクについて患者への説明・モニタリングが必要です。" },
+    { category: "特徴的な副作用", type: "single", q: "リツキシマブ・オビヌツズマブ双方の添付文書に共通して重大な副作用として記載されている、急激な腫瘍崩壊に伴う代謝性合併症は?",
+      choices: ["腫瘍崩壊症候群", "横紋筋融解症", "乳酸アシドーシス", "高カルシウム血症"], correct: 0,
+      explain: "血清電解質異常・急性腎障害等を来し、死亡例も報告されているため、特に腫瘍量の多い患者での投与初期に注意が必要です。" },
+    { category: "特徴的な副作用", type: "multi", q: "モスネツズマブで報告されている「腫瘍フレア」に関する正しい記述をすべて選べ(2つ選択)",
+      choices: ["投与後に腫瘍病変の疼痛・腫大等が一過性に生じうる有害事象である", "報告頻度は3.3%程度とされる", "腫瘍フレアは腫瘍が完全に消失したことを意味する", "腫瘍フレアはCAR-T製品特有の副作用であり二重特異性抗体では起こらない"], correct: [0, 1],
+      explain: "腫瘍フレアは治療反応の過程で一時的に腫瘍部位の症状が悪化する現象であり、腫瘍消失を意味するものではありません。CAR-T製品に限らず二重特異性抗体でも報告されています。" },
+
+    // ══════════ バイオマーカー ══════════
+    { category: "バイオマーカー", type: "single", q: "EZH2変異検査で陽性と判定された再発・難治性濾胞性リンパ腫患者に適応となる経口薬は?",
+      choices: ["タゼメトスタット", "レナリドミド", "オビヌツズマブ", "ベンダムスチン"], correct: 0,
+      explain: "添付文書の適応は「再発又は難治性のEZH2遺伝子変異陽性の濾胞性リンパ腫(標準的な治療が困難な場合に限る)」です。" },
+    { category: "バイオマーカー", type: "single", q: "濾胞性リンパ腫の診断確定に利用される、代表的な染色体転座は?",
+      choices: ["t(14;18)(IGH::BCL2)", "t(9;22)(BCR::ABL1)", "t(8;14)(MYC::IGH)", "t(15;17)(PML::RARA)"], correct: 0,
+      explain: "約85-90%の症例に存在しますが、治療選択への直接の影響は限定的で、主に診断確定に利用されます。" },
+    { category: "バイオマーカー", type: "single", q: "抗CD20抗体(リツキシマブ、オビヌツズマブ)投与の適応判断に必要な病理学的検査は?",
+      choices: ["CD20発現の確認(免疫染色)", "MSI検査", "BRAF遺伝子検査", "HER2検査"], correct: 0,
+      explain: "腫瘍細胞表面のCD20発現を免疫染色で確認することが、抗CD20抗体の適応判断の前提となります。" },
+    { category: "バイオマーカー", type: "multi", q: "濾胞性リンパ腫の分子遺伝学的特徴として正しいものをすべて選べ(2つ選択)",
+      choices: ["t(14;18)(IGH::BCL2)が約85-90%に存在する", "EZH2変異は約20-25%に認められる", "BRAF変異が診断のほぼ全例で陽性となる", "全例でMSI-Highを示す"], correct: [0, 1],
+      explain: "BRAF変異やMSI-Highは濾胞性リンパ腫の特徴的バイオマーカーではなく、他がん種(悪性黒色腫や大腸癌等)で重要とされる異なるバイオマーカーです。" },
+
+    // ══════════ コスト制度 ══════════
+    { category: "コスト制度", type: "single", q: "axi-cel/tisa-cel/liso-celの3製品に共通する、CAR-T療法1回投与あたりの薬価水準は?",
+      choices: ["約3,264.7万円/回", "約50万円/回", "約500万円/回", "薬価は無償である"], correct: 0,
+      explain: "3製品でほぼ共通の水準とされ、総医療費は平均約3,660万円(3,500万〜4,370万円程度)と報告されています。" },
+    { category: "コスト制度", type: "single", q: "高額療養費制度の「多数回該当」とはどのような制度か?",
+      choices: ["直近12ヶ月に3回以上該当した場合、4回目以降さらに上限額が下がる", "70歳以上のみに適用される特別枠", "初回申請時から適用される特別割引", "手術を伴う治療のみに適用される"], correct: 0,
+      explain: "CAR-T療法のような高額な治療を継続する患者の負担軽減に資する制度で、限度額適用認定証と併用することで窓口負担を抑えられます。" }
+  ];
+
+  var QUIZ_SESSION_SIZE = 10;
+  var quizOrder = [];     // indices into QUIZ for THIS session (random subset)
+  var quizIndex = 0;
+  var quizAnswers = [];   // per-question(by original index): selected choice index (single) or array of indices (multi)
+  var quizFeedback = {};  // { [questionIndex]: 'good' | 'bad' }
+
+  function quizPickSession() {
+    var all = QUIZ.map(function (_, i) { return i; });
+    quizShuffle(all);
+    quizOrder = all.slice(0, QUIZ_SESSION_SIZE);
+  }
+  function quizShuffle(arr) {
+    for (var i = arr.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = arr[i]; arr[i] = arr[j]; arr[j] = t;
+    }
+    return arr;
+  }
+
+  function quizLoadFeedback() {
+    try {
+      var raw = localStorage.getItem('follicularQuizFeedback_v2');
+      quizFeedback = raw ? JSON.parse(raw) : {};
+    } catch (e) { quizFeedback = {}; }
+  }
+  function quizSaveFeedback() {
+    try { localStorage.setItem('follicularQuizFeedback_v2', JSON.stringify(quizFeedback)); } catch (e) {}
+  }
+  function quizBuildRatingRow(qi) {
+    var row = document.createElement('div');
+    row.className = 'rate-row';
+    var label = document.createElement('span');
+    label.className = 'rate-label';
+    label.textContent = 'この問題の評価:';
+    var goodBtn = document.createElement('button');
+    goodBtn.type = 'button'; goodBtn.className = 'rate-btn'; goodBtn.textContent = '👍 良問';
+    var badBtn = document.createElement('button');
+    badBtn.type = 'button'; badBtn.className = 'rate-btn'; badBtn.textContent = '👎 悪問';
+    function refresh() {
+      goodBtn.classList.toggle('active-good', quizFeedback[qi] === 'good');
+      badBtn.classList.toggle('active-bad', quizFeedback[qi] === 'bad');
+    }
+    goodBtn.onclick = function () {
+      quizFeedback[qi] = (quizFeedback[qi] === 'good') ? null : 'good';
+      if (!quizFeedback[qi]) delete quizFeedback[qi];
+      quizSaveFeedback(); refresh();
+    };
+    badBtn.onclick = function () {
+      quizFeedback[qi] = (quizFeedback[qi] === 'bad') ? null : 'bad';
+      if (!quizFeedback[qi]) delete quizFeedback[qi];
+      quizSaveFeedback(); refresh();
+    };
+    refresh();
+    row.appendChild(label); row.appendChild(goodBtn); row.appendChild(badBtn);
+    return row;
+  }
+  function quizFallbackCopy(text, done) {
+    var ta = document.createElement('textarea');
+    ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); } catch (e) {}
+    document.body.removeChild(ta);
+    done();
+  }
+  function quizChoiceLabel(item) {
+    return item.choices.join(' / ');
+  }
+  function quizCorrectLabel(item) {
+    if (item.type === 'multi') return item.correct.map(function (i) { return item.choices[i]; }).join(' ＋ ');
+    return item.choices[item.correct];
+  }
+  function quizExportFeedback() {
+    var ratedIdx = Object.keys(quizFeedback);
+    if (ratedIdx.length === 0) {
+      alert('まだ評価された問題がありません。各問題に回答した後に表示される「👍 良問」「👎 悪問」ボタンで評価してから、もう一度お試しください。');
+      return;
+    }
+    var goodList = [], badList = [];
+    ratedIdx.forEach(function (idxStr) {
+      var idx = parseInt(idxStr, 10);
+      var item = QUIZ[idx];
+      if (!item) return;
+      var entry = '・[' + item.category + (item.type === 'multi' ? '/複数選択' : '') + '] ' + item.q + '\n  選択肢: ' + quizChoiceLabel(item) + '\n  正解: ' + quizCorrectLabel(item);
+      if (quizFeedback[idx] === 'good') goodList.push(entry);
+      else if (quizFeedback[idx] === 'bad') badList.push(entry);
+    });
+    var text = '【濾胞性リンパ腫クイズ(quiz-follicular.html、全50問プール)フィードバック】\n\n' +
+      '良問と評価された問題(' + goodList.length + '件):\n' + (goodList.length ? goodList.join('\n\n') : '(なし)') + '\n\n' +
+      '悪問と評価された問題(' + badList.length + '件) — 改善・差し替えを検討してください:\n' + (badList.length ? badList.join('\n\n') : '(なし)') + '\n\n' +
+      '参照ファイル: artifacts/html/oncology-reports/quiz-follicular.html\n\n' +
+      '上記フィードバックを踏まえて、「悪問」と評価された問題をレポート本文(artifacts/html/oncology-reports/follicular.html、添付文書情報セクション含む)の内容に基づいて改善・差し替えてください。「良問」と評価された問題は現状を維持してください。';
+    var notify = function () { alert('フィードバックをコピーしました。MulmoClaudeのチャットに貼り付けて送信してください。問題の改善に使います。'); };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(notify).catch(function () { quizFallbackCopy(text, notify); });
+    } else { quizFallbackCopy(text, notify); }
+  }
+  function quizResetFeedback() {
+    if (!confirm('すべての評価をリセットします。よろしいですか?')) return;
+    quizFeedback = {};
+    quizSaveFeedback();
+    alert('評価をリセットしました。');
+  }
+
+  function quizRenderQuestion() {
+    document.getElementById('quiz-result-area').style.display = 'none';
+    document.getElementById('quiz-question-area').style.display = 'block';
+    var qi = quizOrder[quizIndex];
+    var item = QUIZ[qi];
+    document.getElementById('quiz-progress-text').textContent = '問 ' + (quizIndex + 1) + ' / ' + quizOrder.length + '(全' + QUIZ.length + '問中からランダム出題)';
+    document.getElementById('quiz-cat-badge').textContent = item.category;
+    document.getElementById('quiz-type-badge').style.display = (item.type === 'multi') ? 'inline-flex' : 'none';
+    document.getElementById('quiz-progress-fill').style.width = Math.round((quizIndex / quizOrder.length) * 100) + '%';
+    document.getElementById('quiz-question-text').textContent = item.q;
+    document.getElementById('quiz-explain-area').style.display = 'none';
+    document.getElementById('quiz-explain-area').innerHTML = '';
+    document.getElementById('quiz-next-btn').style.display = 'none';
+    document.getElementById('quiz-submit-row').style.display = 'none';
+
+    var wrap = document.getElementById('quiz-choices');
+    wrap.innerHTML = '';
+
+    if (item.type === 'multi') {
+      var selected = {};
+      item.choices.forEach(function (choiceText, idx) {
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'quiz-choice';
+        btn.innerHTML = '<span class="quiz-choice-check">☐</span> ' + choiceText.replace(/</g, '&lt;');
+        btn.onclick = function () {
+          selected[idx] = !selected[idx];
+          btn.classList.toggle('selected', !!selected[idx]);
+          btn.querySelector('.quiz-choice-check').textContent = selected[idx] ? '☑' : '☐';
+        };
+        wrap.appendChild(btn);
+      });
+      document.getElementById('quiz-submit-row').style.display = 'block';
+      document.getElementById('quiz-submit-btn').onclick = function () {
+        var chosen = Object.keys(selected).filter(function (k) { return selected[k]; }).map(Number);
+        quizAnswerMulti(chosen);
+      };
+    } else {
+      item.choices.forEach(function (choiceText, idx) {
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'quiz-choice';
+        btn.textContent = choiceText;
+        btn.onclick = function () { quizAnswerSingle(idx); };
+        wrap.appendChild(btn);
+      });
+    }
+  }
+
+  function quizFinishQuestion(qi, isCorrect, correctText) {
+    var item = QUIZ[qi];
+    var explainArea = document.getElementById('quiz-explain-area');
+    explainArea.className = 'quiz-explain';
+    explainArea.style.display = 'block';
+    explainArea.innerHTML = '<div style="font-weight:700; margin-bottom:4px; color:' + (isCorrect ? 'var(--good)' : 'var(--critical)') + ';">' +
+      (isCorrect ? '✅ 正解' : '❌ 不正解(正解: ' + correctText + ')') + '</div>' +
+      '<div>' + (item.explain || '') + '</div>';
+    explainArea.appendChild(quizBuildRatingRow(qi));
+    document.getElementById('quiz-submit-row').style.display = 'none';
+    document.getElementById('quiz-next-btn').style.display = 'inline-block';
+    document.getElementById('quiz-next-btn').textContent = (quizIndex === quizOrder.length - 1) ? '結果を見る →' : '次の問題 →';
+  }
+
+  function quizAnswerSingle(selectedIdx) {
+    var qi = quizOrder[quizIndex];
+    var item = QUIZ[qi];
+    quizAnswers[qi] = selectedIdx;
+    var buttons = document.getElementById('quiz-choices').querySelectorAll('.quiz-choice');
+    buttons.forEach(function (btn, idx) {
+      btn.disabled = true;
+      if (idx === item.correct) btn.classList.add('correct');
+      else if (idx === selectedIdx) btn.classList.add('wrong');
+    });
+    quizFinishQuestion(qi, selectedIdx === item.correct, item.choices[item.correct]);
+  }
+
+  function quizSubmitMulti() {
+    var qi = quizOrder[quizIndex];
+    var item = QUIZ[qi];
+    var buttons = document.getElementById('quiz-choices').querySelectorAll('.quiz-choice');
+    var chosen = [];
+    buttons.forEach(function (btn, idx) {
+      if (btn.classList.contains('selected')) chosen.push(idx);
+    });
+    quizAnswerMulti(chosen, buttons, item, qi);
+  }
+
+  function quizAnswerMulti(chosen, buttons, item, qi) {
+    qi = (qi === undefined) ? quizOrder[quizIndex] : qi;
+    item = item || QUIZ[qi];
+    buttons = buttons || document.getElementById('quiz-choices').querySelectorAll('.quiz-choice');
+    quizAnswers[qi] = chosen;
+    var correctSet = item.correct.slice().sort();
+    var chosenSet = chosen.slice().sort();
+    var isCorrect = correctSet.length === chosenSet.length && correctSet.every(function (v, i) { return v === chosenSet[i]; });
+    buttons.forEach(function (btn, idx) {
+      btn.disabled = true;
+      var isRight = item.correct.indexOf(idx) !== -1;
+      var wasChosen = chosen.indexOf(idx) !== -1;
+      if (isRight) btn.classList.add('correct');
+      else if (wasChosen) btn.classList.add('wrong');
+    });
+    quizFinishQuestion(qi, isCorrect, quizCorrectLabel(item));
+  }
+
+  function quizNext() {
+    if (quizIndex < quizOrder.length - 1) {
+      quizIndex++;
+      quizRenderQuestion();
+    } else {
+      quizShowResult();
+    }
+  }
+
+  function quizShowResult() {
+    document.getElementById('quiz-progress-fill').style.width = '100%';
+    document.getElementById('quiz-progress-text').textContent = '完了 ' + quizOrder.length + ' / ' + quizOrder.length;
+    document.getElementById('quiz-cat-badge').textContent = '';
+    document.getElementById('quiz-type-badge').style.display = 'none';
+    document.getElementById('quiz-question-area').style.display = 'none';
+
+    var correctCount = 0;
+    var byCategory = {};
+    quizOrder.forEach(function (qi) {
+      var item = QUIZ[qi];
+      if (!byCategory[item.category]) byCategory[item.category] = { correct: 0, total: 0 };
+      byCategory[item.category].total++;
+      var ans = quizAnswers[qi];
+      var isCorrect;
+      if (item.type === 'multi') {
+        var correctSet = item.correct.slice().sort();
+        var chosenSet = (ans || []).slice().sort();
+        isCorrect = correctSet.length === chosenSet.length && correctSet.every(function (v, i) { return v === chosenSet[i]; });
+      } else {
+        isCorrect = ans === item.correct;
+      }
+      if (isCorrect) { correctCount++; byCategory[item.category].correct++; }
+    });
+    var pct = Math.round((correctCount / quizOrder.length) * 100);
+
+    var catHtml = '';
+    Object.keys(byCategory).forEach(function (cat) {
+      var c = byCategory[cat];
+      var p = Math.round((c.correct / c.total) * 100);
+      catHtml += '<div class="cat-result-row"><span class="text-xs" style="width:150px; flex-shrink:0;">' + cat + '</span>' +
+        '<div class="cat-result-bar"><div class="cat-result-fill" style="width:' + p + '%"></div></div>' +
+        '<span class="text-xs muted" style="width:56px; text-align:right;">' + c.correct + '/' + c.total + '</span></div>';
+    });
+
+    var reviewHtml = '';
+    quizOrder.forEach(function (qi) {
+      var item = QUIZ[qi];
+      var ans = quizAnswers[qi];
+      var isCorrect;
+      var yourAnswerText;
+      if (item.type === 'multi') {
+        var correctSet = item.correct.slice().sort();
+        var chosenSet = (ans || []).slice().sort();
+        isCorrect = correctSet.length === chosenSet.length && correctSet.every(function (v, i) { return v === chosenSet[i]; });
+        yourAnswerText = (ans && ans.length) ? ans.map(function (i) { return item.choices[i]; }).join(' ＋ ') : '(未回答)';
+      } else {
+        isCorrect = ans === item.correct;
+        yourAnswerText = (ans != null) ? item.choices[ans] : '(未回答)';
+      }
+      if (!isCorrect) {
+        reviewHtml += '<div class="review-item">' +
+          '<div class="text-sm font-semibold mb-1">' + item.q + '</div>' +
+          '<div class="text-xs muted mb-2">あなたの回答: ' + yourAnswerText + ' / 正解: ' + quizCorrectLabel(item) + '</div>' +
+          '<div class="text-xs" style="line-height:1.6;">' + (item.explain || '') + '</div>' +
+          '</div>';
+      }
+    });
+    if (!reviewHtml) reviewHtml = '<p class="text-sm secondary">全問正解です。見直しの必要な項目はありません 🎉</p>';
+
+    var goodCount = 0, badCount = 0;
+    Object.keys(quizFeedback).forEach(function (k) {
+      if (quizFeedback[k] === 'good') goodCount++;
+      else if (quizFeedback[k] === 'bad') badCount++;
+    });
+
+    var resultArea = document.getElementById('quiz-result-area');
+    resultArea.style.display = 'block';
+    resultArea.innerHTML =
+      '<div class="text-center mb-6">' +
+        '<div class="score-ring-num" style="color:var(--series-new);">' + correctCount + ' / ' + quizOrder.length + '</div>' +
+        '<div class="text-sm muted mt-1">正答率 ' + pct + '%(全' + QUIZ.length + '問プールから今回ランダム抽出された' + quizOrder.length + '問)</div>' +
+      '</div>' +
+      '<div class="mb-6"><div class="text-sm font-semibold mb-3">カテゴリ別正答率(今回出題分)</div>' + catHtml + '</div>' +
+      '<div class="mb-2 text-sm font-semibold">見直し(不正解・未回答の問題)</div>' +
+      '<div class="mb-6">' + reviewHtml + '</div>' +
+      '<div class="mb-6 pt-4 border-t" style="border-color:var(--gridline);">' +
+        '<div class="text-sm font-semibold mb-2">問題の評価状況(全50問プール通算)</div>' +
+        '<div class="text-xs muted mb-3">👍 良問 ' + goodCount + '件 ・ 👎 悪問 ' + badCount + '件</div>' +
+        '<div class="flex flex-wrap gap-3">' +
+          '<button type="button" class="quiz-btn-outline" onclick="quizExportFeedback()">📋 フィードバックをエクスポート(チャットに貼り付け用)</button>' +
+          '<button type="button" class="quiz-btn-outline" onclick="quizResetFeedback()" style="border-color:var(--critical); color:var(--critical);">🗑 評価をリセット</button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="flex flex-wrap gap-3 justify-center">' +
+        '<button type="button" class="quiz-btn" onclick="quizRestart()">🔀 新しい10問でもう一度</button>' +
+        '<a href="follicular.html" class="quiz-btn-outline" style="text-decoration:none; display:inline-block;">レポート本文に戻る</a>' +
+      '</div>';
+  }
+
+  function quizRestart() {
+    quizPickSession();
+    quizIndex = 0;
+    quizAnswers = [];
+    quizRenderQuestion();
+  }
+
+  quizLoadFeedback();
+  quizPickSession();
+  quizRenderQuestion();
+</script>
+
+<footer class="text-center text-xs pb-4" style="color: var(--text-muted);">
+  本クイズは学習・自己点検を目的とした資料です。臨床判断には利用せず、最新の添付文書・ガイドライン原文を優先してください。
+</footer>
+
+</body>
+</html>
