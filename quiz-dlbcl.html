@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>びまん性大細胞型B細胞リンパ腫(DLBCL)理解度クイズ 全50問(ランダム10問出題)</title>
+<title>びまん性大細胞型B細胞リンパ腫(DLBCL)理解度クイズ 全52問(ランダム10問出題)</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
 :root, .viz-root {
@@ -60,6 +60,29 @@ body { background: var(--page-plane); color: var(--text-primary); font-family: s
 .rate-btn:hover { border-color: var(--series-new); }
 .rate-btn.active-good { border-color: var(--good); background: color-mix(in srgb, var(--good) 14%, transparent); color: var(--good); }
 .rate-btn.active-bad { border-color: var(--critical); background: color-mix(in srgb, var(--critical) 12%, transparent); color: var(--critical); }
+
+/* Compact dosing schedule timeline diagram, embeddable in quiz questions */
+.quiz-diagram-area:empty { display:none; }
+.quiz-diagram-area { margin: 4px 0 16px; }
+.dg-timeline { border: 1px solid var(--gridline); border-radius: 10px; padding: 10px 12px 12px; background: var(--surface-1); }
+.dg-tl-title { font-size: 0.78rem; font-weight: 700; color: var(--text-primary); margin-bottom: 2px; }
+.dg-tl-subtitle { font-size: 0.68rem; color: var(--text-muted); margin-bottom: 8px; line-height: 1.5; }
+.table-scroll { overflow-x: auto; }
+table.dg-tl-table { width: 100%; border-collapse: separate; border-spacing: 3px; font-size: 0.7rem; }
+table.dg-tl-table th { color: var(--text-muted); font-weight: 700; font-size: 0.6rem; text-transform: uppercase; letter-spacing: .03em; padding: 2px 3px 5px; text-align: center; }
+table.dg-tl-table th:first-child { text-align: left; }
+table.dg-tl-table td:first-child { text-align: left; font-weight: 600; color: var(--text-secondary); white-space: nowrap; padding-right: 8px; font-size: 0.68rem; }
+table.dg-tl-table td { text-align: center; padding: 6px 4px; border-radius: 6px; vertical-align: middle; line-height: 1.25; }
+td.dg-tl-on { background: color-mix(in srgb, var(--series-new) 14%, transparent); border: 1px solid var(--series-new); color: var(--text-primary); font-weight: 700; }
+td.dg-tl-on-alt { background: color-mix(in srgb, var(--warning) 16%, transparent); border: 1px dashed var(--warning); color: var(--text-primary); font-weight: 700; }
+td.dg-tl-off { background: var(--page-plane); border: 1px dashed var(--gridline); color: var(--text-muted); font-weight: 400; }
+.dg-tl-note { font-size: 0.62rem; color: var(--text-muted); margin-top: 6px; line-height: 1.5; }
+.dg-tl-legend { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px; font-size: 0.6rem; color: var(--text-muted); }
+.dg-tl-legend span { display: inline-flex; align-items: center; gap: 4px; }
+.dg-tl-legend i { display: inline-block; width: 9px; height: 9px; border-radius: 3px; }
+.dg-tl-legend i.on { background: color-mix(in srgb, var(--series-new) 30%, transparent); border: 1px solid var(--series-new); }
+.dg-tl-legend i.alt { background: color-mix(in srgb, var(--warning) 30%, transparent); border: 1px dashed var(--warning); }
+.dg-tl-legend i.off { background: var(--page-plane); border: 1px dashed var(--gridline); }
 </style>
 </head>
 <body class="viz-root">
@@ -69,7 +92,7 @@ body { background: var(--page-plane); color: var(--text-primary); font-family: s
     <div class="flex items-center justify-between gap-2 flex-wrap">
       <div>
         <h1 class="text-xl font-bold">🧠 DLBCL(びまん性大細胞型B細胞リンパ腫)理解度クイズ</h1>
-        <p class="text-sm mt-1 secondary">全50問のプールからランダムに10問出題・4択/複数選択混在・医療従事者向け(治療ライン選択・用法用量・投与スケジュール・用量規制因子/モニタリング・添付文書の警告/禁忌/重大な副作用・バイオマーカー・コスト制度)</p>
+        <p class="text-sm mt-1 secondary">全52問のプールからランダムに10問出題・4択/複数選択混在・医療従事者向け(治療ライン選択・用法用量・投与スケジュール・用量規制因子/モニタリング・添付文書の警告/禁忌/重大な副作用・バイオマーカー・コスト制度)</p>
       </div>
       <a href="dlbcl.html" class="text-xs" style="color:var(--series-new); text-decoration:none; font-weight:600;">← レポート本文に戻る</a>
     </div>
@@ -86,6 +109,7 @@ body { background: var(--page-plane); color: var(--text-primary); font-family: s
 
     <div id="quiz-question-area">
       <div id="quiz-question-text" class="text-base font-semibold mb-4" style="line-height:1.6;"></div>
+      <div id="quiz-diagram-area" class="quiz-diagram-area"></div>
       <div id="quiz-choices"></div>
       <div id="quiz-submit-row" style="display:none;" class="mt-3">
         <button type="button" class="quiz-btn" id="quiz-submit-btn" onclick="quizSubmitMulti()">この内容で回答する</button>
@@ -175,6 +199,20 @@ body { background: var(--page-plane); color: var(--text-primary); font-family: s
     { category: "用法用量・投与スケジュール", type: "single", q: "エプコリタマブの濾胞性リンパ腫Grade1~3Aに対する3ステップ漸増で、2ステップ漸増と異なる点は?",
       choices: ["1サイクル目の15日目に3mgの中間用量を追加投与する", "投与間隔がすべて1週間に統一される", "皮下投与ではなく点滴静注になる", "初回用量が0.8mgに引き上げられる"], correct: 0,
       explain: "DLBCL等の2ステップ漸増と異なり、濾胞性リンパ腫Grade1~3Aでは15日目に3mgの中間用量を追加するステップが設けられています。" },
+    { category: "用法用量・投与スケジュール", type: "single", q: "R-CHOP療法において、Day1に点滴静注される薬剤の正しい組み合わせは?",
+      choices: ["リツキシマブ・シクロホスファミド・ドキソルビシン・ビンクリスチン", "リツキシマブ・プレドニゾロン・レナリドミド", "シクロホスファミド・タファシタマブ・ポラツズマブ ベドチン", "ビンクリスチン・エプコリタマブ・グロフィタマブ"], correct: 0,
+      explain: "R-CHOPはDay1にリツキシマブ(R)・シクロホスファミド(C)・ドキソルビシン(H)・ビンクリスチン(O)の4剤を点滴静注します。プレドニゾロン(P)はこの4剤と異なりDay1〜5に経口投与される点に注意してください(dlbcl.html本文「2. 治療アルゴリズム」のタイムライン図参照)。",
+      diagram: '<div class="dg-timeline"><div class="dg-tl-title">R-CHOP Day1投与薬剤(21日サイクル)</div><div class="table-scroll"><table class="dg-tl-table"><thead><tr><th>薬剤</th><th>Day1</th><th>Day2-5</th><th>Day6-21</th></tr></thead><tbody>' +
+        '<tr><td>R・C・H・O(4剤点滴静注)</td><td class="dg-tl-on">投与</td><td class="dg-tl-off">—</td><td class="dg-tl-off">休薬</td></tr>' +
+        '<tr><td>プレドニゾロン(P、経口)</td><td class="dg-tl-on">投与</td><td class="dg-tl-on">投与</td><td class="dg-tl-off">休薬</td></tr>' +
+        '</tbody></table></div><div class="dg-tl-legend"><span><i class="on"></i>投与あり</span><span><i class="off"></i>休薬</span></div></div>' },
+    { category: "用法用量・投与スケジュール", type: "single", q: "R-CHOP療法における1サイクルの長さと、通常の反復回数の組み合わせとして正しいのは?",
+      choices: ["21日ごとに1サイクル、通常6〜8サイクル反復", "7日ごとに1サイクル、通常12サイクル反復", "28日ごとに1サイクル、通常3サイクル反復", "14日ごとに1サイクル、通常4サイクル反復"], correct: 0,
+      explain: "R-CHOPは21日(3週間)を1サイクルとし、Day1に多剤点滴静注、Day1〜5にプレドニゾロン経口投与、Day6〜21は休薬というパターンを通常6〜8サイクル反復します(Coiffier B, et al. N Engl J Med 2002、PMID 11807147)。",
+      diagram: '<div class="dg-timeline"><div class="dg-tl-title">R-CHOP 1サイクルの構成(21日間)</div><div class="table-scroll"><table class="dg-tl-table"><thead><tr><th>項目</th><th>Day1</th><th>Day2-5</th><th>Day6-21</th></tr></thead><tbody>' +
+        '<tr><td>R・C・H・O(点滴静注)</td><td class="dg-tl-on">投与</td><td class="dg-tl-off">—</td><td class="dg-tl-off">休薬</td></tr>' +
+        '<tr><td>プレドニゾロン(経口)</td><td class="dg-tl-on">投与</td><td class="dg-tl-on">投与</td><td class="dg-tl-off">休薬</td></tr>' +
+        '</tbody></table></div><div class="dg-tl-note">21日間で1サイクル。通常6〜8サイクル反復する。</div><div class="dg-tl-legend"><span><i class="on"></i>投与あり</span><span><i class="off"></i>休薬</span></div></div>' },
 
     // ══════════ 用量規制因子・モニタリング ══════════
     { category: "用量規制因子・モニタリング", type: "single", q: "リツキシマブ投与前にB型肝炎ウイルス(HBV)既感染者で特に注意すべき理由は?",
@@ -352,7 +390,7 @@ body { background: var(--page-plane); color: var(--text-primary); font-family: s
       if (quizFeedback[idx] === 'good') goodList.push(entry);
       else if (quizFeedback[idx] === 'bad') badList.push(entry);
     });
-    var text = '【DLBCLクイズ(quiz-dlbcl.html、全50問プール)フィードバック】\n\n' +
+    var text = '【DLBCLクイズ(quiz-dlbcl.html、全52問プール)フィードバック】\n\n' +
       '良問と評価された問題(' + goodList.length + '件):\n' + (goodList.length ? goodList.join('\n\n') : '(なし)') + '\n\n' +
       '悪問と評価された問題(' + badList.length + '件) — 改善・差し替えを検討してください:\n' + (badList.length ? badList.join('\n\n') : '(なし)') + '\n\n' +
       '参照ファイル: artifacts/html/oncology-reports/quiz-dlbcl.html\n\n' +
@@ -379,6 +417,7 @@ body { background: var(--page-plane); color: var(--text-primary); font-family: s
     document.getElementById('quiz-type-badge').style.display = (item.type === 'multi') ? 'inline-flex' : 'none';
     document.getElementById('quiz-progress-fill').style.width = Math.round((quizIndex / quizOrder.length) * 100) + '%';
     document.getElementById('quiz-question-text').textContent = item.q;
+    document.getElementById('quiz-diagram-area').innerHTML = item.diagram || '';
     document.getElementById('quiz-explain-area').style.display = 'none';
     document.getElementById('quiz-explain-area').innerHTML = '';
     document.getElementById('quiz-next-btn').style.display = 'none';
@@ -560,7 +599,7 @@ body { background: var(--page-plane); color: var(--text-primary); font-family: s
       '<div class="mb-2 text-sm font-semibold">見直し(不正解・未回答の問題)</div>' +
       '<div class="mb-6">' + reviewHtml + '</div>' +
       '<div class="mb-6 pt-4 border-t" style="border-color:var(--gridline);">' +
-        '<div class="text-sm font-semibold mb-2">問題の評価状況(全50問プール通算)</div>' +
+        '<div class="text-sm font-semibold mb-2">問題の評価状況(全52問プール通算)</div>' +
         '<div class="text-xs muted mb-3">👍 良問 ' + goodCount + '件 ・ 👎 悪問 ' + badCount + '件</div>' +
         '<div class="flex flex-wrap gap-3">' +
           '<button type="button" class="quiz-btn-outline" onclick="quizExportFeedback()">📋 フィードバックをエクスポート(チャットに貼り付け用)</button>' +

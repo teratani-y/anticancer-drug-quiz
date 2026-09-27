@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>悪心・嘔吐(CINV)制吐療法理解度クイズ 全50問(ランダム10問出題)</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+:root, .viz-root {
+  color-scheme: light;
+  --surface-1: #fcfcfb; --page-plane: #f9f9f7;
+  --text-primary: #0b0b0b; --text-secondary: #52514e; --text-muted: #898781;
+  --gridline: #e1e0d9; --baseline: #c3c2b7;
+  --series-new: #2a78d6; --series-control: #b9b7ae;
+  --good: #0ca30c; --warning: #b9790a; --critical: #d03b3b;
+  --border: rgba(11,11,11,0.10);
+}
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) {
+    color-scheme: dark;
+    --surface-1: #1a1a19; --page-plane: #0d0d0d;
+    --text-primary: #ffffff; --text-secondary: #c3c2b7; --text-muted: #898781;
+    --gridline: #2c2c2a; --baseline: #383835;
+    --series-new: #3987e5; --series-control: #55534c;
+    --good: #0ca30c; --warning: #eab116; --critical: #e66767;
+    --border: rgba(255,255,255,0.10);
+  }
+}
+body { background: var(--page-plane); color: var(--text-primary); font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+.card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+.secondary { color: var(--text-secondary); }
+.muted { color: var(--text-muted); }
+.cat-badge { display:inline-flex; align-items:center; padding:3px 10px; border-radius:9999px; font-size:0.72rem; font-weight:700; background: color-mix(in srgb, var(--series-new) 14%, transparent); color: var(--series-new); }
+.type-badge { display:inline-flex; align-items:center; padding:3px 10px; border-radius:9999px; font-size:0.68rem; font-weight:700; background: color-mix(in srgb, var(--warning) 16%, transparent); color: var(--warning); margin-left:6px; }
+.progress-track { background: var(--gridline); border-radius: 9999px; height: 8px; overflow: hidden; }
+.progress-fill { background: var(--series-new); height: 100%; border-radius: 9999px; transition: width .25s; }
+.quiz-choice { display:block; width:100%; text-align:left; background: var(--page-plane); border: 1.5px solid var(--gridline); border-radius: 10px; padding: 12px 16px; font-size: 0.92rem; cursor: pointer; transition: border-color .12s, background .12s; margin-bottom: 10px; }
+.quiz-choice:last-child { margin-bottom: 0; }
+.quiz-choice:hover:not(:disabled) { border-color: var(--series-new); }
+.quiz-choice:disabled { cursor: default; }
+.quiz-choice.correct { border-color: var(--good); background: color-mix(in srgb, var(--good) 12%, transparent); font-weight: 700; }
+.quiz-choice.wrong { border-color: var(--critical); background: color-mix(in srgb, var(--critical) 10%, transparent); }
+.quiz-choice.selected { border-color: var(--series-new); background: color-mix(in srgb, var(--series-new) 10%, transparent); }
+.quiz-choice-check { display:inline-block; width:16px; }
+.quiz-explain { background: var(--page-plane); border: 1px solid var(--gridline); border-radius: 10px; padding: 14px 16px; margin-top: 14px; font-size: 0.85rem; line-height: 1.7; }
+.quiz-btn { background: var(--series-new); color: #fff; border: none; border-radius: 8px; padding: 10px 22px; font-size: 0.88rem; font-weight: 700; cursor: pointer; }
+.quiz-btn:hover { opacity: 0.9; }
+.quiz-btn:disabled { opacity: 0.4; cursor: default; }
+.quiz-btn-outline { background: transparent; color: var(--series-new); border: 1.5px solid var(--series-new); border-radius: 8px; padding: 9px 20px; font-size: 0.88rem; font-weight: 700; cursor: pointer; }
+.quiz-btn-outline:hover { background: color-mix(in srgb, var(--series-new) 10%, transparent); }
+.score-ring-num { font-size: 2.6rem; font-weight: 800; }
+.cat-result-row { display:flex; align-items:center; gap:10px; margin-bottom: 8px; }
+.cat-result-bar { flex:1; background: var(--gridline); border-radius: 9999px; height: 10px; overflow:hidden; }
+.cat-result-fill { background: var(--series-new); height:100%; border-radius: 9999px; }
+.review-item { border: 1px solid var(--gridline); border-radius: 10px; padding: 12px 14px; margin-bottom: 10px; }
+.review-item:last-child { margin-bottom: 0; }
+.rate-row { display:flex; align-items:center; gap:8px; margin-top:14px; flex-wrap:wrap; }
+.rate-label { font-size:0.75rem; color: var(--text-muted); }
+.rate-btn { background: var(--page-plane); border: 1.5px solid var(--gridline); border-radius: 8px; padding: 6px 12px; font-size: 0.78rem; font-weight:600; cursor:pointer; color: var(--text-secondary); }
+.rate-btn:hover { border-color: var(--series-new); }
+.rate-btn.active-good { border-color: var(--good); background: color-mix(in srgb, var(--good) 14%, transparent); color: var(--good); }
+.rate-btn.active-bad { border-color: var(--critical); background: color-mix(in srgb, var(--critical) 12%, transparent); color: var(--critical); }
+</style>
+</head>
+<body class="viz-root">
+<div class="max-w-3xl mx-auto px-4 py-8 space-y-5">
+
+  <header class="card">
+    <div class="flex items-center justify-between gap-2 flex-wrap">
+      <div>
+        <h1 class="text-xl font-bold">🧠 悪心・嘔吐(CINV)制吐療法理解度クイズ</h1>
+        <p class="text-sm mt-1 secondary">全50問のプールからランダムに10問出題・4択/複数選択混在・医療従事者向け(催吐性リスク分類と薬剤選択・用法用量/投与タイミング・副作用/注意点/相互作用・突出性/予期性悪心嘔吐への対応・コスト制度)</p>
+      </div>
+      <a href="cinv.html" class="text-xs" style="color:var(--series-new); text-decoration:none; font-weight:600;">← レポート本文に戻る</a>
+    </div>
+    <p class="text-xs mt-3 muted">出題内容はすべて <a href="cinv.html" style="color:var(--series-new);">悪心・嘔吐(CINV)制吐療法レポート</a>(本文および「6. 主要薬剤の添付文書情報」)に記載の情報に基づきます。臨床判断には利用せず、学習・自己点検の目的でご利用ください。ページを再読み込みする、または結果画面の「シャッフルしてもう一度」を押すたびに、新しい10問がランダムに選ばれます。</p>
+  </header>
+
+  <!-- Quiz card -->
+  <section class="card" id="quiz-card">
+    <div class="flex items-center justify-between mb-2">
+      <span id="quiz-progress-text" class="text-xs font-semibold muted"></span>
+      <span><span id="quiz-cat-badge" class="cat-badge"></span><span id="quiz-type-badge" class="type-badge" style="display:none;">複数選択</span></span>
+    </div>
+    <div class="progress-track mb-5"><div class="progress-fill" id="quiz-progress-fill" style="width:0%"></div></div>
+
+    <div id="quiz-question-area">
+      <div id="quiz-question-text" class="text-base font-semibold mb-4" style="line-height:1.6;"></div>
+      <div id="quiz-choices"></div>
+      <div id="quiz-submit-row" style="display:none;" class="mt-3">
+        <button type="button" class="quiz-btn" id="quiz-submit-btn" onclick="quizSubmitMulti()">この内容で回答する</button>
+      </div>
+      <div id="quiz-explain-area" style="display:none;"></div>
+      <div class="mt-5 flex justify-end">
+        <button type="button" id="quiz-next-btn" class="quiz-btn" style="display:none;" onclick="quizNext()">次の問題 →</button>
+      </div>
+    </div>
+
+    <div id="quiz-result-area" style="display:none;"></div>
+  </section>
+
+</div>
+
+<script>
+  var QUIZ = [
+    // ══════════ 催吐性リスク分類と薬剤選択(14問) ══════════
+    { category: "催吐性リスク分類と薬剤選択", type: "single", q: "制吐薬適正使用ガイドライン第3版(2023年10月改訂)において、高度催吐性リスク抗がん薬(シスプラチン、AC療法等)に対する標準的な制吐療法として本邦で初めて明記された組み合わせは?",
+      choices: ["NK1受容体拮抗薬+5-HT3受容体拮抗薬+デキサメタゾン+オランザピンの4剤併用", "5-HT3受容体拮抗薬単剤", "デキサメタゾン単剤", "ベンゾジアゼピン系単剤"], correct: 0,
+      explain: "制吐薬適正使用ガイドライン第3版で、従来の3剤併用(NK1+5-HT3+デキサメタゾン)にオランザピンを加えた4剤併用が本邦で初めて標準治療として明記されました。" },
+    { category: "催吐性リスク分類と薬剤選択", type: "single", q: "高度催吐性リスクでオランザピン投与が困難な場合(傾眠等が懸念される高齢者等)の代替レジメンは?",
+      choices: ["NK1受容体拮抗薬+5-HT3受容体拮抗薬+デキサメタゾンの3剤併用", "5-HT3受容体拮抗薬単剤", "オランザピンを増量して単剤で使用", "デキサメタゾンとベンゾジアゼピン系の併用"], correct: 0,
+      explain: "従来の標準治療である3剤併用が、4剤併用が困難な場合の代替として位置づけられます。" },
+    { category: "催吐性リスク分類と薬剤選択", type: "single", q: "中等度催吐性リスク抗がん薬(オキサリプラチン、イリノテカン等)に対する基本的な制吐療法は?",
+      choices: ["5-HT3受容体拮抗薬+デキサメタゾンの2剤併用", "NK1受容体拮抗薬単剤", "オランザピン単剤", "4剤併用が必須"], correct: 0,
+      explain: "中等度催吐性リスクの基本は2剤併用で、高度催吐性リスクの4剤併用(または3剤併用)より簡略化されたレジメンです。" },
+    { category: "催吐性リスク分類と薬剤選択", type: "single", q: "カルボプラチン(AUC≥4)投与時に、中等度催吐性リスクの基本レジメンへの追加が強く推奨される薬剤は?",
+      choices: ["NK1受容体拮抗薬(3剤併用へ強化)", "オランザピン", "ベンゾジアゼピン系", "追加は不要"], correct: 0,
+      explain: "カルボプラチンの高用量(AUC≥4)投与では遅発性悪心・嘔吐の頻度が高いため、NK1受容体拮抗薬を追加した3剤併用が強く推奨されます。" },
+    { category: "催吐性リスク分類と薬剤選択", type: "single", q: "乳癌のAC/EC療法(アントラサイクリン+シクロホスファミド)は催吐性リスク分類上どこに位置づけられ、実際にはどのような制吐療法が推奨されるか?",
+      choices: ["分類上は中等度だが、実臨床の頻度が高いため高度催吐性リスクに準じた4剤併用が推奨される", "分類上も実際の対応も軽度催吐性リスクと同じ", "分類上は高度で、対応も高度のまま変更なし", "最小度催吐性リスクに分類される"], correct: 0,
+      explain: "AC/EC療法は分類上「中等度」ですが、悪心・嘔吐の実臨床での頻度が高度催吐性リスクに近いため、高度催吐性リスクに準じた4剤併用が推奨されます。" },
+    { category: "催吐性リスク分類と薬剤選択", type: "multi", q: "軽度催吐性リスク抗がん薬(ドセタキセル、パクリタキセル等)に対する制吐療法として適切なものをすべて選べ(2つ選択)",
+      choices: ["デキサメタゾン単剤", "5-HT3受容体拮抗薬単剤", "NK1受容体拮抗薬を含む4剤併用", "高度催吐性リスクと同じ3剤併用"], correct: [0, 1],
+      explain: "軽度催吐性リスクではデキサメタゾン単剤、または5-HT3受容体拮抗薬単剤のいずれかで対応し、day2以降のルーチンの予防投与は不要です。4剤併用・3剤併用は高度催吐性リスク向けのレジメンです。" },
+    { category: "催吐性リスク分類と薬剤選択", type: "single", q: "最小度催吐性リスク抗がん薬(ビンクリスチン、免疫チェックポイント阻害薬単剤等)における予防的制吐療法の考え方は?",
+      choices: ["ルーチンの予防的制吐療法は推奨されない", "高度催吐性リスクと同じ4剤併用を行う", "NK1受容体拮抗薬単剤を必ず投与する", "デキサメタゾンを高用量で投与する"], correct: 0,
+      explain: "最小度催吐性リスクではルーチンの予防投与は推奨されず、悪心・嘔吐が出現した場合に対症療法を検討します。" },
+    { category: "催吐性リスク分類と薬剤選択", type: "single", q: "NK1受容体拮抗薬が主に効果を発揮するとされる局面は?",
+      choices: ["遅発期(day2以降)の悪心・嘔吐の抑制", "急性期(24時間以内)のみ", "予期性悪心・嘔吐のみ", "術後悪心・嘔吐のみ"], correct: 0,
+      explain: "サブスタンスP/NK1受容体経路は遅発性悪心・嘔吐への関与が大きいとされ、NK1受容体拮抗薬は遅発期の抑制に重要な役割を果たします。" },
+    { category: "催吐性リスク分類と薬剤選択", type: "single", q: "パロノセトロンが第1世代5-HT3受容体拮抗薬(オンダンセトロン等)と比較して優れるとされる局面は?",
+      choices: ["遅発期の悪心・嘔吐の抑制", "急性期のみの抑制", "予期性悪心・嘔吐の抑制", "突出性悪心・嘔吐の完全な消失"], correct: 0,
+      explain: "Aapro試験(PMID 16766588)で、デキサメタゾン併用下でのパロノセトロンの遅発期・全期間の完全奏効率がオンダンセトロンより高いことが報告されています。" },
+    { category: "催吐性リスク分類と薬剤選択", type: "single", q: "ホスネツピタントとホスアプレピタントを比較したCONSOLE試験(第III相、日本の医療機関で実施)の結果は?",
+      choices: ["ホスネツピタントのホスアプレピタントに対する非劣性が示された", "ホスネツピタントはホスアプレピタントより明らかに劣っていた", "両薬剤とも無効であることが示された", "ホスアプレピタントの方が経口投与できることが示された"], correct: 0,
+      explain: "完全奏効率(Overall)はホスネツピタント75.2% vs ホスアプレピタント71.0%で、非劣性マージンを満たし非劣性が示されました(Journal of Clinical Oncology 2022;40:180-188)。" },
+    { category: "催吐性リスク分類と薬剤選択", type: "single", q: "AC/EC療法を対象としたCONSOLE-BC試験(PMID 35045185)で、NK1受容体拮抗薬と併用されたデキサメタゾンのday1用量は?",
+      choices: ["9.9mg(静注)", "0.5mg(経口)", "100mg(静注)", "1mg(静注)"], correct: 0,
+      explain: "CONSOLE-BC試験では、ホスネツピタント・ホスアプレピタントのいずれの群でも、day1にパロノセトロン0.75mgとデキサメタゾン9.9mg(静注)が併用されました。" },
+    { category: "催吐性リスク分類と薬剤選択", type: "single", q: "オランザピンを制吐目的で使用する場合の標準的な1日投与量は?",
+      choices: ["5mg/日(添付文書上の制吐目的の最大用量は10mg/日)", "20mg/日", "0.5mg/日", "100mg/日"], correct: 0,
+      explain: "添付文書の制吐目的の用法及び用量では、通常1日1回5mgを経口投与し、患者の状態により1日1回10mgまで増量できるとされています。" },
+    { category: "催吐性リスク分類と薬剤選択", type: "single", q: "突出性悪心・嘔吐が生じた際、予防投与に含まれていなかった薬剤を追加する場合の代表例は?",
+      choices: ["オランザピン(まだ使用していなければ追加)", "同じ5-HT3受容体拮抗薬を倍量にする", "NK1受容体拮抗薬を中止する", "デキサメタゾンを完全に中止する"], correct: 0,
+      explain: "突出性悪心・嘔吐への対応の基本は、予防投与と異なる作用機序の制吐薬を追加することであり、オランザピンが未使用であれば追加が検討されます。" },
+    { category: "催吐性リスク分類と薬剤選択", type: "multi", q: "高度催吐性リスク抗がん薬の代表例として本レポートに挙げられているものをすべて選べ(2つ選択)",
+      choices: ["シスプラチン", "AC療法(アントラサイクリン+シクロホスファミド)", "ドセタキセル(通常量)", "ビンクリスチン"], correct: [0, 1],
+      explain: "シスプラチンとAC/EC療法(分類上は中等度だが高度に準じて扱われる)が代表例です。ドセタキセルは軽度、ビンクリスチンは最小度催吐性リスクに分類されます。" },
+
+    // ══════════ 用法用量・投与タイミング(9問) ══════════
+    { category: "用法用量・投与タイミング", type: "single", q: "アプレピタント(イメンド)の用法用量(day1・day2-3)は?",
+      choices: ["day1に125mg、day2-3に80mgを1日1回経口投与", "3日間とも125mgを1日1回経口投与", "day1のみ80mg投与しday2以降は投与しない", "1日2回、毎日125mgを経口投与"], correct: 0,
+      explain: "他の制吐剤との併用において、抗悪性腫瘍剤投与1日目は125mg、2日目以降は80mgを1日1回経口投与します。" },
+    { category: "用法用量・投与タイミング", type: "single", q: "アプレピタントの1コースにおける投与期間の目安は?",
+      choices: ["3日間(成人5日間、小児3日間を超える投与の安全性は未確立)", "1日間のみ", "14日間", "投与期間の定めはない"], correct: 0,
+      explain: "各コースにおいて投与期間は3日間を目安とし、成人では5日間、12歳以上の小児では3日間を超えて投与した際の有効性・安全性は確立していません。" },
+    { category: "用法用量・投与タイミング", type: "single", q: "ホスアプレピタント(プロイメンド)の成人における用法用量は?",
+      choices: ["150mgを抗悪性腫瘍剤投与1日目に1回点滴静注(単回投与で完結)", "150mgを3日間連続で点滴静注", "50mgを1日3回点滴静注", "経口投与のみで点滴静注はしない"], correct: 0,
+      explain: "ホスアプレピタントはアプレピタントのプロドラッグで、day1の単回点滴静注で完結し、day2以降の追加投与は不要です。" },
+    { category: "用法用量・投与タイミング", type: "single", q: "ホスネツピタント(アロカリス)の用法及び用量は?",
+      choices: ["235mgを抗悪性腫瘍剤投与1日目に1回、30分かけて点滴静注", "100mgを1日2回点滴静注", "235mgを毎日3日間連続で点滴静注", "経口カプセルとして1日1回服用"], correct: 0,
+      explain: "他の制吐剤との併用において、成人にはホスネツピタントとして235mgを投与1日目に1回、30分かけて点滴静注します。" },
+    { category: "用法用量・投与タイミング", type: "single", q: "パロノセトロン(アロキシ)の成人における用法用量は?",
+      choices: ["0.75mgを1日1回静注又は点滴静注", "5mgを1日3回静注", "0.75mgを1日3回点滴静注", "経口投与のみ"], correct: 0,
+      explain: "通常、成人にはパロノセトロンとして0.75mgを1日1回静注又は点滴静注します。" },
+    { category: "用法用量・投与タイミング", type: "single", q: "パロノセトロンの反復投与に関する添付文書上の注意点は?",
+      choices: ["消失半減期が約40時間と長いため、1週間未満の間隔での反復投与は避ける", "24時間ごとに反復投与してよい", "反復投与に関する注意点はない", "1日3回まで反復投与できる"], correct: 0,
+      explain: "消失半減期が約40時間と長く、1週間未満の間隔で本剤をがん患者へ反復投与した経験はないため、短期間での反復投与は避けることとされています。" },
+    { category: "用法用量・投与タイミング", type: "single", q: "グラニセトロン(カイトリル)の抗悪性腫瘍剤投与に伴う消化器症状に対する成人の用法用量は?",
+      choices: ["40μg/kg(体重)を1日1回静注又は点滴静注", "1mgを1日1回経口投与のみ", "10mg/kgを1日1回静注", "40mgを1日1回静注"], correct: 0,
+      explain: "成人はグラニセトロンとして40μg/kg(体重)を1日1回静注又は点滴静注し、症状改善がない場合は追加投与できます。" },
+    { category: "用法用量・投与タイミング", type: "single", q: "オランザピンを制吐目的で使用する際の投与タイミング・投与期間に関する添付文書上の注意は?",
+      choices: ["抗悪性腫瘍剤投与前に投与を開始し、各サイクルの投与期間は6日間までを目安とする", "抗悪性腫瘍剤投与後3日経ってから開始する", "投与期間に制限はなく無期限に継続する", "1コースにつき1回のみの投与とする"], correct: 0,
+      explain: "原則としてコルチコステロイド、5-HT3受容体拮抗薬、NK1受容体拮抗薬等と併用し、抗悪性腫瘍剤投与前に投与を開始し、各サイクルにおける投与期間は6日間までを目安とすることとされています。" },
+    { category: "用法用量・投与タイミング", type: "single", q: "ラモセトロン(ナゼア)の1日投与量の上限は?",
+      choices: ["0.6mg(0.3mgを1日1回投与し、効果不十分な場合は同用量を追加投与できるが1日量として0.6mgを超えない)", "3mg", "0.1mg", "上限の定めはない"], correct: 0,
+      explain: "通常、成人には0.3mgを1日1回静脈内投与し、効果不十分な場合には同用量を追加投与できますが、1日量として0.6mgを超えないこととされています。" },
+
+    // ══════════ 副作用・注意点・相互作用(12問) ══════════
+    { category: "副作用・注意点・相互作用", type: "single", q: "アプレピタント・ホスアプレピタントの添付文書上の併用禁忌薬は?",
+      choices: ["ピモジド(QT延長、心室性不整脈のおそれ)", "ワルファリン", "アセトアミノフェン", "生理食塩液"], correct: 0,
+      explain: "アプレピタント・ホスアプレピタントのCYP3A4阻害作用によりピモジドの血中濃度が上昇し、QT延長、心室性不整脈等の重篤な副作用を起こすおそれがあるため併用禁忌です。" },
+    { category: "副作用・注意点・相互作用", type: "single", q: "アプレピタント使用時にデキサメタゾンを減量した用量で併用することが一般的な理由は?",
+      choices: ["アプレピタントのCYP3A4阻害作用によりデキサメタゾンの血中濃度が上昇するため", "デキサメタゾンの効果を高めるため意図的に減量する", "アプレピタントとデキサメタゾンは併用禁忌であるため", "特に理由はなく慣習的なもの"], correct: 0,
+      explain: "アプレピタントはCYP3A4阻害作用を持ち、デキサメタゾンの代謝を阻害してその血中濃度を上昇させるため、添付文書の相互作用の項に基づき減量した用量で併用されるのが一般的です。" },
+    { category: "副作用・注意点・相互作用", type: "single", q: "オランザピンの添付文書の警告で特に強調されている重大なリスクは?",
+      choices: ["高血糖から糖尿病性ケトアシドーシス・糖尿病性昏睡に至り死亡する場合があること", "重度の下痢", "間質性肺疾患", "低マグネシウム血症"], correct: 0,
+      explain: "著しい血糖値の上昇から、糖尿病性ケトアシドーシス、糖尿病性昏睡等の重大な副作用が発現し、死亡に至る場合があるため、血糖値測定等の観察を十分に行うことが警告に明記されています。" },
+    { category: "副作用・注意点・相互作用", type: "single", q: "オランザピンの添付文書上の併用禁忌薬は?",
+      choices: ["アドレナリン(救急処置・歯科浸潤麻酔時を除く、重篤な血圧降下のおそれ)", "デキサメタゾン", "パロノセトロン", "生理食塩液"], correct: 0,
+      explain: "アドレナリン(ただし心停止等に対する救急処置や歯科領域の浸潤麻酔時の使用を除く)は、重篤な血圧降下を起こすおそれがあるため併用禁忌です。" },
+    { category: "副作用・注意点・相互作用", type: "single", q: "デキサメタゾンの添付文書上の併用禁忌薬として正しいものは?",
+      choices: ["デスモプレシン酢酸塩水和物(低ナトリウム血症のおそれ)", "パロノセトロン", "グラニセトロン", "オランザピン"], correct: 0,
+      explain: "デスモプレシン酢酸塩水和物のほか、ダクラタスビル塩酸塩・アスナプレビル(全身投与時)、リルピビリン塩酸塩等(全身投与で単回投与以外)が併用禁忌に挙げられています。" },
+    { category: "副作用・注意点・相互作用", type: "single", q: "5-HT3受容体拮抗薬(グラニセトロン、オンダンセトロン等)で注意すべきセロトニン症候群のリスクとなる併用薬は?",
+      choices: ["SSRI・SNRI・MAO阻害剤等のセロトニン作用薬", "抗菌薬全般", "利尿薬", "経口避妊薬"], correct: 0,
+      explain: "セロトニン作用薬との併用により、不安、焦燥、興奮、錯乱、発熱、発汗、頻脈、振戦、ミオクローヌス等を特徴とするセロトニン症候群のリスクが注意喚起されています。" },
+    { category: "副作用・注意点・相互作用", type: "single", q: "ラモセトロンの血中濃度を上昇させ副作用増強のおそれがあるとして併用注意とされる薬剤は?",
+      choices: ["フルボキサミン(CYP1A2阻害作用)", "デキサメタゾン", "オランザピン", "生理食塩液"], correct: 0,
+      explain: "フルボキサミンはCYP1A2阻害作用によりラモセトロンの血中濃度を上昇させ、副作用が増強されるおそれがあるとされています。" },
+    { category: "副作用・注意点・相互作用", type: "single", q: "NK1受容体拮抗薬(アプレピタント等)がホルモン避妊薬に与える影響として添付文書に記載されている内容は?",
+      choices: ["ホルモン避妊薬の効果を減弱させるおそれがあるため、代替・補助避妊法が必要", "ホルモン避妊薬の効果を増強する", "相互作用はない", "ホルモン避妊薬と併用禁忌である"], correct: 0,
+      explain: "投与期間中及び最終投与から1ヵ月間は、ホルモン避妊薬の効果減弱に備えて代替・補助避妊法を使用することとされています。" },
+    { category: "副作用・注意点・相互作用", type: "single", q: "5-HT3受容体拮抗薬クラス共通で、添付文書に重大な副作用として記載されているものは?",
+      choices: ["ショック、アナフィラキシー", "間質性肺疾患", "手足症候群", "低マグネシウム血症"], correct: 0,
+      explain: "パロノセトロン・グラニセトロン・オンダンセトロン・ラモセトロンのいずれも、ショック、アナフィラキシーが重大な副作用として記載されています。" },
+    { category: "副作用・注意点・相互作用", type: "multi", q: "アプレピタント・ホスアプレピタントの添付文書に重大な副作用として記載されているものをすべて選べ(2つ選択)",
+      choices: ["皮膚粘膜眼症候群(Stevens-Johnson症候群)", "穿孔性十二指腸潰瘍", "高血糖・糖尿病性ケトアシドーシス", "手足症候群"], correct: [0, 1],
+      explain: "アプレピタント・ホスアプレピタントの重大な副作用は、皮膚粘膜眼症候群(Stevens-Johnson症候群)、穿孔性十二指腸潰瘍、ショック・アナフィラキシー(いずれも頻度不明)です。高血糖・糖尿病性ケトアシドーシスはオランザピン、手足症候群はVEGFR阻害薬クラス等に特徴的な副作用で、NK1受容体拮抗薬の記載ではありません。" },
+    { category: "副作用・注意点・相互作用", type: "single", q: "ホスネツピタント(アロカリス)投与時の適用上の注意として記載されている内容は?",
+      choices: ["本剤は泡立つため緩徐に注入し静かに転倒混和し、30分かけて点滴静注する", "急速静注(5分以内)でよい", "遮光の必要はない", "他剤と混注して同時投与してよい"], correct: 0,
+      explain: "本剤は泡立つため、輸液バッグへの注入時は緩徐に注入し静かに転倒混和すること、30分かけて点滴静注することが適用上の注意に明記されています。" },
+    { category: "副作用・注意点・相互作用", type: "multi", q: "デキサメタゾンの添付文書上の併用禁忌薬をすべて選べ(2つ選択)",
+      choices: ["デスモプレシン酢酸塩水和物", "リルピビリン塩酸塩等(全身投与で単回投与以外)", "ワルファリンカリウム", "フルボキサミン"], correct: [0, 1],
+      explain: "デスモプレシン酢酸塩水和物(低ナトリウム血症)、ダクラタスビル塩酸塩・アスナプレビル、リルピビリン塩酸塩等(全身投与で単回投与以外)が併用禁忌です。ワルファリンカリウムやフルボキサミンは併用注意(作用への影響)にとどまり、併用禁忌ではありません。" },
+
+    // ══════════ 突出性・予期性悪心嘔吐への対応(9問) ══════════
+    { category: "突出性・予期性悪心嘔吐への対応", type: "single", q: "急性悪心・嘔吐の一般的な発現時期と関与する経路は?",
+      choices: ["投与後24時間以内、主に5-HT3(セロトニン)経路が関与", "投与後1週間以降、NK1経路のみが関与", "投与前から出現し条件反射による", "発現時期に一定の傾向はない"], correct: 0,
+      explain: "急性悪心・嘔吐は抗悪性腫瘍剤投与後24時間以内に出現し、主にセロトニン(5-HT3)経路を介する機序が中心とされます。" },
+    { category: "突出性・予期性悪心嘔吐への対応", type: "single", q: "遅発性悪心・嘔吐の一般的な発現時期と主に関与する受容体経路は?",
+      choices: ["投与後24時間~5日程度、サブスタンスP/NK1受容体経路の関与が大きい", "投与直後(1時間以内)のみ、5-HT3経路が全てを説明する", "投与前のみに出現する", "発現機序はドパミン経路のみで説明される"], correct: 0,
+      explain: "遅発性悪心・嘔吐は投与後24時間~5日程度に出現し、サブスタンスP/NK1受容体経路の関与が大きいとされるため、NK1受容体拮抗薬やデキサメタゾンの複数日投与が重要になります。" },
+    { category: "突出性・予期性悪心嘔吐への対応", type: "single", q: "予期性悪心・嘔吐の発生機序は?",
+      choices: ["前回までの化学療法での悪心・嘔吐体験に基づく古典的条件付け", "抗悪性腫瘍剤の直接的な化学受容器引金帯(CTZ)刺激", "腸管の炎症反応", "遺伝子多型による代謝異常"], correct: 0,
+      explain: "予期性悪心・嘔吐は、前回までの化学療法での悪心・嘔吐体験に基づく条件反射(古典的条件付け)により、次回投与前から出現するとされます。" },
+    { category: "突出性・予期性悪心嘔吐への対応", type: "single", q: "予期性悪心・嘔吐に対する最も重要な予防策は?",
+      choices: ["初回サイクルから最適な予防的制吐療法を行い、悪心・嘔吐そのものの発現を防ぐこと", "予期性悪心・嘔吐が起きてから初めて制吐薬を増量すること", "毎回異なる5-HT3受容体拮抗薬に変更すること", "化学療法自体を中止すること以外に対策はない"], correct: 0,
+      explain: "予期性悪心・嘔吐はいったん発現すると薬物療法での対応が限定的とされるため、初回サイクルから最適な予防的制吐療法を行うことが最も重要な対策です。" },
+    { category: "突出性・予期性悪心嘔吐への対応", type: "single", q: "予期性悪心・嘔吐に対する薬物療法として試みられることがあるのは?",
+      choices: ["ベンゾジアゼピン系(ロラゼパム等)", "NK1受容体拮抗薬の増量のみ", "抗菌薬", "利尿薬"], correct: 0,
+      explain: "予期性悪心・嘔吐に対しては、ベンゾジアゼピン系(ロラゼパム等)や行動療法(リラクゼーション、系統的脱感作等)が試みられることがあります。" },
+    { category: "突出性・予期性悪心嘔吐への対応", type: "single", q: "突出性悪心・嘔吐(breakthrough)の定義は?",
+      choices: ["適切な予防的制吐療法を行ったにもかかわらず発現する悪心・嘔吐", "制吐薬を全く使用しなかった場合の悪心・嘔吐", "投与終了後1ヵ月以上経過してから出現する悪心・嘔吐", "抗悪性腫瘍剤を減量した際の悪心・嘔吐"], correct: 0,
+      explain: "突出性悪心・嘔吐は、十分な予防的制吐療法を行ったにもかかわらず発現する悪心・嘔吐と定義されます。" },
+    { category: "突出性・予期性悪心嘔吐への対応", type: "single", q: "突出性悪心・嘔吐への対応の基本方針として適切なものは?",
+      choices: ["予防投与と異なる作用機序の制吐薬を追加し、定時投与への切替も検討する", "予防投与中の薬剤をすべて中止する", "同じ薬剤を同用量のまま様子を見る", "次コースの化学療法を必ず中止する"], correct: 0,
+      explain: "予防投与に含まれていない作用機序の制吐薬を追加し、頓用ではなく定時投与への切替を検討します。次コース以降は予防レジメンの強化も検討します。" },
+    { category: "突出性・予期性悪心嘔吐への対応", type: "single", q: "突出性悪心・嘔吐が生じた場合、次コース以降の対応として推奨される考え方は?",
+      choices: ["予防的制吐療法をより強力なレジメン(より高いリスク層に準じたレジメン)へ強化する", "次コースでは制吐薬を一切使用しない", "抗悪性腫瘍剤の投与量を増やす", "特に対応を変更する必要はない"], correct: 0,
+      explain: "突出性悪心・嘔吐が生じた場合、次コース以降は予防レジメンをより高いリスク層に準じたレジメンへ強化することが検討されます。" },
+    { category: "突出性・予期性悪心嘔吐への対応", type: "multi", q: "CINVの患者側リスク因子(悪心・嘔吐を起こしやすいとされる因子)をすべて選べ(2つ選択)",
+      choices: ["若年であること", "飲酒歴が少ない・ないこと", "高齢であること", "多量飲酒歴があること"], correct: [0, 1],
+      explain: "若年、女性、飲酒歴が少ない・ないこと、乗り物酔いやつわりの既往、不安傾向が高いことがCINVのリスク因子として知られています。逆に高齢であることや多量飲酒歴があることは相対的にリスクが低いとされる因子です。" },
+
+    // ══════════ コスト制度・その他(6問) ══════════
+    { category: "コスト制度・その他", type: "single", q: "ホスネツピタント(アロカリス点滴静注235mg)の薬価目安は?",
+      choices: ["約11,276円/瓶", "約110円/瓶", "約1,100,000円/瓶", "薬価収載されていない"], correct: 0,
+      explain: "アロカリス点滴静注235mgの薬価は約11,276円/瓶とされています(情報源: 公開薬価データベース)。" },
+    { category: "コスト制度・その他", type: "single", q: "パロノセトロン(アロキシ静注0.75mg)の薬価目安は?",
+      choices: ["約7,411円/瓶", "約74円/瓶", "約740,000円/瓶", "無償で提供される"], correct: 0,
+      explain: "アロキシ静注0.75mgの薬価は約7,411円/瓶とされています(点滴静注バッグ0.75mg/50mLは約6,826円/袋)。" },
+    { category: "コスト制度・その他", type: "single", q: "オランザピン(ジプレキサ錠5mg)の薬価目安は?",
+      choices: ["約52.1円/錠", "約5,210円/錠", "約521,000円/錠", "約0.5円/錠"], correct: 0,
+      explain: "ジプレキサ錠5mgの薬価は約52.1円/錠と、制吐薬全体の中でも比較的安価です。" },
+    { category: "コスト制度・その他", type: "single", q: "高額療養費制度において、窓口での支払いを事前に自己負担限度額までに抑えるために取得するとよいものは?",
+      choices: ["限度額適用認定証", "お薬手帳", "健康保険証のコピー", "医療費控除の申告書"], correct: 0,
+      explain: "「限度額適用認定証」を事前に取得すれば、窓口での支払いを自己負担限度額までに抑えることができます。" },
+    { category: "コスト制度・その他", type: "single", q: "制吐薬のコストと高額療養費制度の関係として適切な説明は?",
+      choices: ["制吐薬単独で高額療養費制度の対象となるケースは少なく、主に併用される抗悪性腫瘍剤の薬剤費が制度適用の主因となることが多い", "制吐薬のみで必ず高額療養費制度の対象になる", "高額療養費制度は制吐薬には一切適用されない", "制吐薬は保険適用外である"], correct: 0,
+      explain: "高額療養費制度は暦月ごとの医療費自己負担合計額に対して適用されるものであり、制吐薬単独よりも、併用される分子標的薬・免疫チェックポイント阻害薬等の薬剤費が主因となることが一般的です。" },
+    { category: "コスト制度・その他", type: "single", q: "制吐薬適正使用ガイドライン第3版のWebアンケート調査で判明した、4剤併用療法の実臨床での普及状況は?",
+      choices: ["乳腺領域以外15.7%、乳腺領域16.8%程度とまだ十分に普及していない", "ほぼ100%の施設で標準的に実施されている", "調査時点で全く使用されていなかった", "普及状況は調査されていない"], correct: 0,
+      explain: "日本癌治療学会の初回調査報告書によれば、第3版で新たに推奨された4剤併用療法を使用していると回答した割合は乳腺領域以外で15.7%、乳腺領域で16.8%にとどまり、普及にはなお課題があるとされています。" }
+  ];
+
+  var QUIZ_SESSION_SIZE = 10;
+  var quizOrder = [];     // indices into QUIZ for THIS session (random subset)
+  var quizIndex = 0;
+  var quizAnswers = [];   // per-question(by original index): selected choice index (single) or array of indices (multi)
+  var quizFeedback = {};  // { [questionIndex]: 'good' | 'bad' }
+
+  function quizPickSession() {
+    var all = QUIZ.map(function (_, i) { return i; });
+    quizShuffle(all);
+    quizOrder = all.slice(0, QUIZ_SESSION_SIZE);
+  }
+  function quizShuffle(arr) {
+    for (var i = arr.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = arr[i]; arr[i] = arr[j]; arr[j] = t;
+    }
+    return arr;
+  }
+
+  function quizLoadFeedback() {
+    try {
+      var raw = localStorage.getItem('cinvQuizFeedback_v2');
+      quizFeedback = raw ? JSON.parse(raw) : {};
+    } catch (e) { quizFeedback = {}; }
+  }
+  function quizSaveFeedback() {
+    try { localStorage.setItem('cinvQuizFeedback_v2', JSON.stringify(quizFeedback)); } catch (e) {}
+  }
+  function quizBuildRatingRow(qi) {
+    var row = document.createElement('div');
+    row.className = 'rate-row';
+    var label = document.createElement('span');
+    label.className = 'rate-label';
+    label.textContent = 'この問題の評価:';
+    var goodBtn = document.createElement('button');
+    goodBtn.type = 'button'; goodBtn.className = 'rate-btn'; goodBtn.textContent = '👍 良問';
+    var badBtn = document.createElement('button');
+    badBtn.type = 'button'; badBtn.className = 'rate-btn'; badBtn.textContent = '👎 悪問';
+    function refresh() {
+      goodBtn.classList.toggle('active-good', quizFeedback[qi] === 'good');
+      badBtn.classList.toggle('active-bad', quizFeedback[qi] === 'bad');
+    }
+    goodBtn.onclick = function () {
+      quizFeedback[qi] = (quizFeedback[qi] === 'good') ? null : 'good';
+      if (!quizFeedback[qi]) delete quizFeedback[qi];
+      quizSaveFeedback(); refresh();
+    };
+    badBtn.onclick = function () {
+      quizFeedback[qi] = (quizFeedback[qi] === 'bad') ? null : 'bad';
+      if (!quizFeedback[qi]) delete quizFeedback[qi];
+      quizSaveFeedback(); refresh();
+    };
+    refresh();
+    row.appendChild(label); row.appendChild(goodBtn); row.appendChild(badBtn);
+    return row;
+  }
+  function quizFallbackCopy(text, done) {
+    var ta = document.createElement('textarea');
+    ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); } catch (e) {}
+    document.body.removeChild(ta);
+    done();
+  }
+  function quizChoiceLabel(item) {
+    return item.choices.join(' / ');
+  }
+  function quizCorrectLabel(item) {
+    if (item.type === 'multi') return item.correct.map(function (i) { return item.choices[i]; }).join(' ＋ ');
+    return item.choices[item.correct];
+  }
+  function quizExportFeedback() {
+    var ratedIdx = Object.keys(quizFeedback);
+    if (ratedIdx.length === 0) {
+      alert('まだ評価された問題がありません。各問題に回答した後に表示される「👍 良問」「👎 悪問」ボタンで評価してから、もう一度お試しください。');
+      return;
+    }
+    var goodList = [], badList = [];
+    ratedIdx.forEach(function (idxStr) {
+      var idx = parseInt(idxStr, 10);
+      var item = QUIZ[idx];
+      if (!item) return;
+      var entry = '・[' + item.category + (item.type === 'multi' ? '/複数選択' : '') + '] ' + item.q + '\n  選択肢: ' + quizChoiceLabel(item) + '\n  正解: ' + quizCorrectLabel(item);
+      if (quizFeedback[idx] === 'good') goodList.push(entry);
+      else if (quizFeedback[idx] === 'bad') badList.push(entry);
+    });
+    var text = '【CINV(悪心・嘔吐)クイズ(quiz-cinv.html、全50問プール)フィードバック】\n\n' +
+      '良問と評価された問題(' + goodList.length + '件):\n' + (goodList.length ? goodList.join('\n\n') : '(なし)') + '\n\n' +
+      '悪問と評価された問題(' + badList.length + '件) — 改善・差し替えを検討してください:\n' + (badList.length ? badList.join('\n\n') : '(なし)') + '\n\n' +
+      '参照ファイル: artifacts/html/oncology-reports/quiz-cinv.html\n\n' +
+      '上記フィードバックを踏まえて、「悪問」と評価された問題をレポート本文(artifacts/html/oncology-reports/cinv.html、添付文書情報セクション含む)の内容に基づいて改善・差し替えてください。「良問」と評価された問題は現状を維持してください。';
+    var notify = function () { alert('フィードバックをコピーしました。MulmoClaudeのチャットに貼り付けて送信してください。問題の改善に使います。'); };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(notify).catch(function () { quizFallbackCopy(text, notify); });
+    } else { quizFallbackCopy(text, notify); }
+  }
+  function quizResetFeedback() {
+    if (!confirm('すべての評価をリセットします。よろしいですか?')) return;
+    quizFeedback = {};
+    quizSaveFeedback();
+    alert('評価をリセットしました。');
+  }
+
+  function quizRenderQuestion() {
+    document.getElementById('quiz-result-area').style.display = 'none';
+    document.getElementById('quiz-question-area').style.display = 'block';
+    var qi = quizOrder[quizIndex];
+    var item = QUIZ[qi];
+    document.getElementById('quiz-progress-text').textContent = '問 ' + (quizIndex + 1) + ' / ' + quizOrder.length + '(全' + QUIZ.length + '問中からランダム出題)';
+    document.getElementById('quiz-cat-badge').textContent = item.category;
+    document.getElementById('quiz-type-badge').style.display = (item.type === 'multi') ? 'inline-flex' : 'none';
+    document.getElementById('quiz-progress-fill').style.width = Math.round((quizIndex / quizOrder.length) * 100) + '%';
+    document.getElementById('quiz-question-text').textContent = item.q;
+    document.getElementById('quiz-explain-area').style.display = 'none';
+    document.getElementById('quiz-explain-area').innerHTML = '';
+    document.getElementById('quiz-next-btn').style.display = 'none';
+    document.getElementById('quiz-submit-row').style.display = 'none';
+
+    var wrap = document.getElementById('quiz-choices');
+    wrap.innerHTML = '';
+
+    if (item.type === 'multi') {
+      var selected = {};
+      item.choices.forEach(function (choiceText, idx) {
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'quiz-choice';
+        btn.innerHTML = '<span class="quiz-choice-check">☐</span> ' + choiceText.replace(/</g, '&lt;');
+        btn.onclick = function () {
+          selected[idx] = !selected[idx];
+          btn.classList.toggle('selected', !!selected[idx]);
+          btn.querySelector('.quiz-choice-check').textContent = selected[idx] ? '☑' : '☐';
+        };
+        wrap.appendChild(btn);
+      });
+      document.getElementById('quiz-submit-row').style.display = 'block';
+      document.getElementById('quiz-submit-btn').onclick = function () {
+        var chosen = Object.keys(selected).filter(function (k) { return selected[k]; }).map(Number);
+        quizAnswerMulti(chosen);
+      };
+    } else {
+      item.choices.forEach(function (choiceText, idx) {
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'quiz-choice';
+        btn.textContent = choiceText;
+        btn.onclick = function () { quizAnswerSingle(idx); };
+        wrap.appendChild(btn);
+      });
+    }
+  }
+
+  function quizFinishQuestion(qi, isCorrect, correctText) {
+    var item = QUIZ[qi];
+    var explainArea = document.getElementById('quiz-explain-area');
+    explainArea.className = 'quiz-explain';
+    explainArea.style.display = 'block';
+    explainArea.innerHTML = '<div style="font-weight:700; margin-bottom:4px; color:' + (isCorrect ? 'var(--good)' : 'var(--critical)') + ';">' +
+      (isCorrect ? '✅ 正解' : '❌ 不正解(正解: ' + correctText + ')') + '</div>' +
+      '<div>' + (item.explain || '') + '</div>';
+    explainArea.appendChild(quizBuildRatingRow(qi));
+    document.getElementById('quiz-submit-row').style.display = 'none';
+    document.getElementById('quiz-next-btn').style.display = 'inline-block';
+    document.getElementById('quiz-next-btn').textContent = (quizIndex === quizOrder.length - 1) ? '結果を見る →' : '次の問題 →';
+  }
+
+  function quizAnswerSingle(selectedIdx) {
+    var qi = quizOrder[quizIndex];
+    var item = QUIZ[qi];
+    quizAnswers[qi] = selectedIdx;
+    var buttons = document.getElementById('quiz-choices').querySelectorAll('.quiz-choice');
+    buttons.forEach(function (btn, idx) {
+      btn.disabled = true;
+      if (idx === item.correct) btn.classList.add('correct');
+      else if (idx === selectedIdx) btn.classList.add('wrong');
+    });
+    quizFinishQuestion(qi, selectedIdx === item.correct, item.choices[item.correct]);
+  }
+
+  function quizSubmitMulti() {
+    var qi = quizOrder[quizIndex];
+    var item = QUIZ[qi];
+    var buttons = document.getElementById('quiz-choices').querySelectorAll('.quiz-choice');
+    var chosen = [];
+    buttons.forEach(function (btn, idx) {
+      if (btn.classList.contains('selected')) chosen.push(idx);
+    });
+    quizAnswerMulti(chosen, buttons, item, qi);
+  }
+
+  function quizAnswerMulti(chosen, buttons, item, qi) {
+    qi = (qi === undefined) ? quizOrder[quizIndex] : qi;
+    item = item || QUIZ[qi];
+    buttons = buttons || document.getElementById('quiz-choices').querySelectorAll('.quiz-choice');
+    quizAnswers[qi] = chosen;
+    var correctSet = item.correct.slice().sort();
+    var chosenSet = chosen.slice().sort();
+    var isCorrect = correctSet.length === chosenSet.length && correctSet.every(function (v, i) { return v === chosenSet[i]; });
+    buttons.forEach(function (btn, idx) {
+      btn.disabled = true;
+      var isRight = item.correct.indexOf(idx) !== -1;
+      var wasChosen = chosen.indexOf(idx) !== -1;
+      if (isRight) btn.classList.add('correct');
+      else if (wasChosen) btn.classList.add('wrong');
+    });
+    quizFinishQuestion(qi, isCorrect, quizCorrectLabel(item));
+  }
+
+  function quizNext() {
+    if (quizIndex < quizOrder.length - 1) {
+      quizIndex++;
+      quizRenderQuestion();
+    } else {
+      quizShowResult();
+    }
+  }
+
+  function quizShowResult() {
+    document.getElementById('quiz-progress-fill').style.width = '100%';
+    document.getElementById('quiz-progress-text').textContent = '完了 ' + quizOrder.length + ' / ' + quizOrder.length;
+    document.getElementById('quiz-cat-badge').textContent = '';
+    document.getElementById('quiz-type-badge').style.display = 'none';
+    document.getElementById('quiz-question-area').style.display = 'none';
+
+    var correctCount = 0;
+    var byCategory = {};
+    quizOrder.forEach(function (qi) {
+      var item = QUIZ[qi];
+      if (!byCategory[item.category]) byCategory[item.category] = { correct: 0, total: 0 };
+      byCategory[item.category].total++;
+      var ans = quizAnswers[qi];
+      var isCorrect;
+      if (item.type === 'multi') {
+        var correctSet = item.correct.slice().sort();
+        var chosenSet = (ans || []).slice().sort();
+        isCorrect = correctSet.length === chosenSet.length && correctSet.every(function (v, i) { return v === chosenSet[i]; });
+      } else {
+        isCorrect = ans === item.correct;
+      }
+      if (isCorrect) { correctCount++; byCategory[item.category].correct++; }
+    });
+    var pct = Math.round((correctCount / quizOrder.length) * 100);
+
+    var catHtml = '';
+    Object.keys(byCategory).forEach(function (cat) {
+      var c = byCategory[cat];
+      var p = Math.round((c.correct / c.total) * 100);
+      catHtml += '<div class="cat-result-row"><span class="text-xs" style="width:150px; flex-shrink:0;">' + cat + '</span>' +
+        '<div class="cat-result-bar"><div class="cat-result-fill" style="width:' + p + '%"></div></div>' +
+        '<span class="text-xs muted" style="width:56px; text-align:right;">' + c.correct + '/' + c.total + '</span></div>';
+    });
+
+    var reviewHtml = '';
+    quizOrder.forEach(function (qi) {
+      var item = QUIZ[qi];
+      var ans = quizAnswers[qi];
+      var isCorrect;
+      var yourAnswerText;
+      if (item.type === 'multi') {
+        var correctSet = item.correct.slice().sort();
+        var chosenSet = (ans || []).slice().sort();
+        isCorrect = correctSet.length === chosenSet.length && correctSet.every(function (v, i) { return v === chosenSet[i]; });
+        yourAnswerText = (ans && ans.length) ? ans.map(function (i) { return item.choices[i]; }).join(' ＋ ') : '(未回答)';
+      } else {
+        isCorrect = ans === item.correct;
+        yourAnswerText = (ans != null) ? item.choices[ans] : '(未回答)';
+      }
+      if (!isCorrect) {
+        reviewHtml += '<div class="review-item">' +
+          '<div class="text-sm font-semibold mb-1">' + item.q + '</div>' +
+          '<div class="text-xs muted mb-2">あなたの回答: ' + yourAnswerText + ' / 正解: ' + quizCorrectLabel(item) + '</div>' +
+          '<div class="text-xs" style="line-height:1.6;">' + (item.explain || '') + '</div>' +
+          '</div>';
+      }
+    });
+    if (!reviewHtml) reviewHtml = '<p class="text-sm secondary">全問正解です。見直しの必要な項目はありません 🎉</p>';
+
+    var goodCount = 0, badCount = 0;
+    Object.keys(quizFeedback).forEach(function (k) {
+      if (quizFeedback[k] === 'good') goodCount++;
+      else if (quizFeedback[k] === 'bad') badCount++;
+    });
+
+    var resultArea = document.getElementById('quiz-result-area');
+    resultArea.style.display = 'block';
+    resultArea.innerHTML =
+      '<div class="text-center mb-6">' +
+        '<div class="score-ring-num" style="color:var(--series-new);">' + correctCount + ' / ' + quizOrder.length + '</div>' +
+        '<div class="text-sm muted mt-1">正答率 ' + pct + '%(全' + QUIZ.length + '問プールから今回ランダム抽出された' + quizOrder.length + '問)</div>' +
+      '</div>' +
+      '<div class="mb-6"><div class="text-sm font-semibold mb-3">カテゴリ別正答率(今回出題分)</div>' + catHtml + '</div>' +
+      '<div class="mb-2 text-sm font-semibold">見直し(不正解・未回答の問題)</div>' +
+      '<div class="mb-6">' + reviewHtml + '</div>' +
+      '<div class="mb-6 pt-4 border-t" style="border-color:var(--gridline);">' +
+        '<div class="text-sm font-semibold mb-2">問題の評価状況(全50問プール通算)</div>' +
+        '<div class="text-xs muted mb-3">👍 良問 ' + goodCount + '件 ・ 👎 悪問 ' + badCount + '件</div>' +
+        '<div class="flex flex-wrap gap-3">' +
+          '<button type="button" class="quiz-btn-outline" onclick="quizExportFeedback()">📋 フィードバックをエクスポート(チャットに貼り付け用)</button>' +
+          '<button type="button" class="quiz-btn-outline" onclick="quizResetFeedback()" style="border-color:var(--critical); color:var(--critical);">🗑 評価をリセット</button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="flex flex-wrap gap-3 justify-center">' +
+        '<button type="button" class="quiz-btn" onclick="quizRestart()">🔀 新しい10問でもう一度</button>' +
+        '<a href="cinv.html" class="quiz-btn-outline" style="text-decoration:none; display:inline-block;">レポート本文に戻る</a>' +
+      '</div>';
+  }
+
+  function quizRestart() {
+    quizPickSession();
+    quizIndex = 0;
+    quizAnswers = [];
+    quizRenderQuestion();
+  }
+
+  quizLoadFeedback();
+  quizPickSession();
+  quizRenderQuestion();
+</script>
+
+<footer class="text-center text-xs pb-4" style="color: var(--text-muted);">
+  本クイズは学習・自己点検を目的とした資料です。臨床判断には利用せず、最新の添付文書・ガイドライン原文を優先してください。
+</footer>
+
+</body>
+</html>

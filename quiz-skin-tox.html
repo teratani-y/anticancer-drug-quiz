@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>皮膚障害(EGFR阻害薬・分子標的薬)理解度クイズ 全50問(ランダム10問出題)</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+:root, .viz-root {
+  color-scheme: light;
+  --surface-1: #fcfcfb; --page-plane: #f9f9f7;
+  --text-primary: #0b0b0b; --text-secondary: #52514e; --text-muted: #898781;
+  --gridline: #e1e0d9; --baseline: #c3c2b7;
+  --series-new: #2a78d6; --series-control: #b9b7ae;
+  --good: #0ca30c; --warning: #b9790a; --critical: #d03b3b;
+  --border: rgba(11,11,11,0.10);
+}
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) {
+    color-scheme: dark;
+    --surface-1: #1a1a19; --page-plane: #0d0d0d;
+    --text-primary: #ffffff; --text-secondary: #c3c2b7; --text-muted: #898781;
+    --gridline: #2c2c2a; --baseline: #383835;
+    --series-new: #3987e5; --series-control: #55534c;
+    --good: #0ca30c; --warning: #eab116; --critical: #e66767;
+    --border: rgba(255,255,255,0.10);
+  }
+}
+body { background: var(--page-plane); color: var(--text-primary); font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+.card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+.secondary { color: var(--text-secondary); }
+.muted { color: var(--text-muted); }
+.cat-badge { display:inline-flex; align-items:center; padding:3px 10px; border-radius:9999px; font-size:0.72rem; font-weight:700; background: color-mix(in srgb, var(--series-new) 14%, transparent); color: var(--series-new); }
+.type-badge { display:inline-flex; align-items:center; padding:3px 10px; border-radius:9999px; font-size:0.68rem; font-weight:700; background: color-mix(in srgb, var(--warning) 16%, transparent); color: var(--warning); margin-left:6px; }
+.progress-track { background: var(--gridline); border-radius: 9999px; height: 8px; overflow: hidden; }
+.progress-fill { background: var(--series-new); height: 100%; border-radius: 9999px; transition: width .25s; }
+.quiz-choice { display:block; width:100%; text-align:left; background: var(--page-plane); border: 1.5px solid var(--gridline); border-radius: 10px; padding: 12px 16px; font-size: 0.92rem; cursor: pointer; transition: border-color .12s, background .12s; margin-bottom: 10px; }
+.quiz-choice:last-child { margin-bottom: 0; }
+.quiz-choice:hover:not(:disabled) { border-color: var(--series-new); }
+.quiz-choice:disabled { cursor: default; }
+.quiz-choice.correct { border-color: var(--good); background: color-mix(in srgb, var(--good) 12%, transparent); font-weight: 700; }
+.quiz-choice.wrong { border-color: var(--critical); background: color-mix(in srgb, var(--critical) 10%, transparent); }
+.quiz-choice.selected { border-color: var(--series-new); background: color-mix(in srgb, var(--series-new) 10%, transparent); }
+.quiz-choice-check { display:inline-block; width:16px; }
+.quiz-explain { background: var(--page-plane); border: 1px solid var(--gridline); border-radius: 10px; padding: 14px 16px; margin-top: 14px; font-size: 0.85rem; line-height: 1.7; }
+.quiz-btn { background: var(--series-new); color: #fff; border: none; border-radius: 8px; padding: 10px 22px; font-size: 0.88rem; font-weight: 700; cursor: pointer; }
+.quiz-btn:hover { opacity: 0.9; }
+.quiz-btn:disabled { opacity: 0.4; cursor: default; }
+.quiz-btn-outline { background: transparent; color: var(--series-new); border: 1.5px solid var(--series-new); border-radius: 8px; padding: 9px 20px; font-size: 0.88rem; font-weight: 700; cursor: pointer; }
+.quiz-btn-outline:hover { background: color-mix(in srgb, var(--series-new) 10%, transparent); }
+.score-ring-num { font-size: 2.6rem; font-weight: 800; }
+.cat-result-row { display:flex; align-items:center; gap:10px; margin-bottom: 8px; }
+.cat-result-bar { flex:1; background: var(--gridline); border-radius: 9999px; height: 10px; overflow:hidden; }
+.cat-result-fill { background: var(--series-new); height:100%; border-radius: 9999px; }
+.review-item { border: 1px solid var(--gridline); border-radius: 10px; padding: 12px 14px; margin-bottom: 10px; }
+.review-item:last-child { margin-bottom: 0; }
+.rate-row { display:flex; align-items:center; gap:8px; margin-top:14px; flex-wrap:wrap; }
+.rate-label { font-size:0.75rem; color: var(--text-muted); }
+.rate-btn { background: var(--page-plane); border: 1.5px solid var(--gridline); border-radius: 8px; padding: 6px 12px; font-size: 0.78rem; font-weight:600; cursor:pointer; color: var(--text-secondary); }
+.rate-btn:hover { border-color: var(--series-new); }
+.rate-btn.active-good { border-color: var(--good); background: color-mix(in srgb, var(--good) 14%, transparent); color: var(--good); }
+.rate-btn.active-bad { border-color: var(--critical); background: color-mix(in srgb, var(--critical) 12%, transparent); color: var(--critical); }
+
+/* Compact dosing/prophylaxis timeline diagram, used inside quiz-diagram-area (see skin-tox.html .dg-timeline for the full version) */
+.quiz-diagram-area:empty { display: none; }
+.quiz-diagram-area .dg-timeline { border: 1px solid var(--gridline); border-radius: 8px; padding: 10px 12px 12px; background: var(--page-plane); margin-bottom: 14px; }
+.quiz-diagram-area .dg-tl-title { font-size: 0.76rem; font-weight: 700; color: var(--text-primary); margin-bottom: 8px; }
+.quiz-diagram-area table.dg-tl-table { width: 100%; border-collapse: separate; border-spacing: 3px; font-size: 0.66rem; }
+.quiz-diagram-area table.dg-tl-table th { color: var(--text-muted); font-weight: 700; font-size: 0.58rem; text-transform: uppercase; letter-spacing: .03em; padding: 2px 3px 5px; text-align: center; }
+.quiz-diagram-area table.dg-tl-table th:first-child { text-align: left; }
+.quiz-diagram-area table.dg-tl-table td:first-child { text-align: left; font-weight: 600; color: var(--text-secondary); white-space: nowrap; padding-right: 6px; font-size: 0.64rem; }
+.quiz-diagram-area table.dg-tl-table td { text-align: center; padding: 6px 4px; border-radius: 6px; vertical-align: middle; line-height: 1.25; }
+.quiz-diagram-area td.dg-tl-on { background: color-mix(in srgb, var(--series-new) 14%, transparent); border: 1px solid var(--series-new); color: var(--text-primary); font-weight: 700; }
+.quiz-diagram-area td.dg-tl-on-alt { background: color-mix(in srgb, var(--warning) 16%, transparent); border: 1px dashed var(--warning); color: var(--text-primary); font-weight: 700; }
+.quiz-diagram-area td.dg-tl-off { background: var(--surface-1); border: 1px dashed var(--gridline); color: var(--text-muted); font-weight: 400; }
+.quiz-diagram-area .dg-tl-note { font-size: 0.62rem; color: var(--text-muted); margin-top: 6px; line-height: 1.5; }
+.quiz-diagram-area .dg-tl-legend { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 6px; font-size: 0.6rem; color: var(--text-muted); }
+.quiz-diagram-area .dg-tl-legend span { display: inline-flex; align-items: center; gap: 4px; }
+.quiz-diagram-area .dg-tl-legend i { display: inline-block; width: 9px; height: 9px; border-radius: 3px; }
+.quiz-diagram-area .dg-tl-legend i.on { background: color-mix(in srgb, var(--series-new) 30%, transparent); border: 1px solid var(--series-new); }
+.quiz-diagram-area .dg-tl-legend i.alt { background: color-mix(in srgb, var(--warning) 30%, transparent); border: 1px dashed var(--warning); }
+.quiz-diagram-area .dg-tl-legend i.off { background: var(--surface-1); border: 1px dashed var(--gridline); }
+</style>
+</head>
+<body class="viz-root">
+<div class="max-w-3xl mx-auto px-4 py-8 space-y-5">
+
+  <header class="card">
+    <div class="flex items-center justify-between gap-2 flex-wrap">
+      <div>
+        <h1 class="text-xl font-bold">🧠 皮膚障害(EGFR阻害薬・分子標的薬)理解度クイズ</h1>
+        <p class="text-sm mt-1 secondary">全50問のプールからランダムに10問出題・4択/複数選択混在・医療従事者向け(重症度分類とステップワイズ治療選択・用法用量/予防投与タイミング・薬剤クラス別合併症への対応・薬剤選択の根拠・コスト制度)</p>
+      </div>
+      <a href="skin-tox.html" class="text-xs" style="color:var(--series-new); text-decoration:none; font-weight:600;">← レポート本文に戻る</a>
+    </div>
+    <p class="text-xs mt-3 muted">出題内容はすべて <a href="skin-tox.html" style="color:var(--series-new);">皮膚障害(EGFR阻害薬・分子標的薬の皮膚有害事象)マネジメントレポート</a>(本文および「7. 主要薬剤の添付文書情報」)に記載の情報に基づきます。臨床判断には利用せず、学習・自己点検の目的でご利用ください。ページを再読み込みする、または結果画面の「新しい10問でもう一度」を押すたびに、新しい10問がランダムに選ばれます。</p>
+  </header>
+
+  <!-- Quiz card -->
+  <section class="card" id="quiz-card">
+    <div class="flex items-center justify-between mb-2">
+      <span id="quiz-progress-text" class="text-xs font-semibold muted"></span>
+      <span><span id="quiz-cat-badge" class="cat-badge"></span><span id="quiz-type-badge" class="type-badge" style="display:none;">複数選択</span></span>
+    </div>
+    <div class="progress-track mb-5"><div class="progress-fill" id="quiz-progress-fill" style="width:0%"></div></div>
+
+    <div id="quiz-question-area">
+      <div id="quiz-question-text" class="text-base font-semibold mb-4" style="line-height:1.6;"></div>
+      <div id="quiz-diagram-area" class="quiz-diagram-area"></div>
+      <div id="quiz-choices"></div>
+      <div id="quiz-submit-row" style="display:none;" class="mt-3">
+        <button type="button" class="quiz-btn" id="quiz-submit-btn" onclick="quizSubmitMulti()">この内容で回答する</button>
+      </div>
+      <div id="quiz-explain-area" style="display:none;"></div>
+      <div class="mt-5 flex justify-end">
+        <button type="button" id="quiz-next-btn" class="quiz-btn" style="display:none;" onclick="quizNext()">次の問題 →</button>
+      </div>
+    </div>
+
+    <div id="quiz-result-area" style="display:none;"></div>
+  </section>
+
+</div>
+
+<script>
+  var QUIZ = [
+    // ══════════ 重症度分類とステップワイズ治療選択(14問) ══════════
+    { category: "重症度分類とステップワイズ治療選択", type: "single", q: "EGFR阻害薬によるざ瘡様皮疹のCTCAE v5.0 Grade1の定義は?",
+      choices: ["体表面積の10%未満を占める紅色丘疹および/又は膿疱で、そう痒や圧痛の有無は問わない", "体表面積の30%を超え生命を脅かす状態", "経口抗菌薬を要する局所の重複感染を伴う状態", "静注抗菌薬を要する広範囲の二次感染を伴う状態"], correct: 0,
+      explain: "CTCAE v5.0(JCOG日本語版)では、Grade1は体表面積(BSA)の10%未満を占める紅色丘疹/膿疱で、そう痒や圧痛の有無は問わないと定義されています。" },
+    { category: "重症度分類とステップワイズ治療選択", type: "single", q: "ざ瘡様皮疹がGrade2(BSAの10~30%、社会心理学的影響を伴う)に該当する場合の標準的な追加対応は?",
+      choices: ["外用ステロイドを継続・強化し、改善不十分ならテトラサイクリン系抗菌薬の内服を追加する", "直ちに分子標的薬を永久中止する", "経過観察のみとし治療介入は行わない", "静注抗菌薬を投与する"], correct: 0,
+      explain: "Grade2では外用ステロイドを継続・強化し、改善が不十分な場合にミノサイクリン等のテトラサイクリン系抗菌薬内服(適応外使用)を追加します(出典: 川島ほか、臨床医薬2014;30(11):975-981)。" },
+    { category: "重症度分類とステップワイズ治療選択", type: "single", q: "ざ瘡様皮疹がGrade3(BSAの30%超、経口抗菌薬を要する局所重複感染を伴う)まで進行した場合の対応として適切なのは?",
+      choices: ["分子標的薬の休薬を検討し、必要に応じ経口抗菌薬・ステロイド内服を追加する", "保湿剤のみで経過観察する", "分子標的薬を増量する", "外用ステロイドの使用を中止する"], correct: 0,
+      explain: "皮疹が広範囲であればプレドニゾロン10mg/日を2週間程度使用することを考慮し、分子標的薬の休薬を検討します。Grade1以下への改善を待って再開・減量再開を検討します。" },
+    { category: "重症度分類とステップワイズ治療選択", type: "single", q: "ざ瘡様皮疹のCTCAE v5.0 Grade4の定義として正しいのは?",
+      choices: ["生命を脅かす状態、又は皮疹の範囲によらず静注抗菌薬を要する広範な局所の二次感染を伴う", "体表面積10%未満で無症状", "保湿剤のみで軽快する軽微な皮疹", "経口抗菌薬で速やかに軽快する状態"], correct: 0,
+      explain: "Grade4は生命を脅かす状態、又は紅色丘疹/膿疱が体表のどの程度の面積を占めるかによらず、抗菌薬の静脈内投与を要する広範囲の局所の二次感染を伴う状態と定義されます。" },
+    { category: "重症度分類とステップワイズ治療選択", type: "multi", q: "ざ瘡様皮疹に対する外用ステロイドの強度について、コンセンサス会議報告で示されている内容として正しいものをすべて選べ(2つ選択)",
+      choices: ["顔面にはストロング以上の強度が必要", "躯幹・四肢にはベリーストロング~ストロンゲストの強度が必要", "顔面には最弱のステロイドで十分", "躯幹・四肢にはミディアムで十分"], correct: [0, 1],
+      explain: "コンセンサス会議報告では、顔面にはストロング以上、躯幹・四肢にはベリーストロング~ストロンゲストの強度が必要とされています(出典: 川島ほか、臨床医薬2014;30(11):975-981、表2)。" },
+    { category: "重症度分類とステップワイズ治療選択", type: "single", q: "顔面へのステロイド外用薬の連用について、コンセンサス会議報告が注意喚起している内容は?",
+      choices: ["酒さ様皮膚炎との鑑別が困難になるため、連用は4週間程度までに留める", "何週間でも連用してよい", "1日1回のみ使用すればよい", "顔面には使用禁忌である"], correct: 0,
+      explain: "特に顔面への長期にわたる連用は、ざ瘡様皮疹との鑑別が特に困難な副作用である酒さ様皮膚炎が発現する可能性があるため、その連用は4週間程度までに留める必要があるとされています。" },
+    { category: "重症度分類とステップワイズ治療選択", type: "single", q: "マルチキナーゼ阻害薬による手足症候群(手掌・足底発赤知覚不全症候群)のCTCAE Grade1の定義は?",
+      choices: ["疼痛を伴わないわずかな皮膚の変化(紅斑、浮腫、角質増殖症等)", "疼痛を伴う皮膚変化で身の回り以外の日常生活動作を制限する", "疼痛を伴う高度な皮膚変化で身の回りの日常生活動作を制限する", "生命を脅かす状態"], correct: 0,
+      explain: "CTCAE v5.0では、Grade1は疼痛を伴わないわずかな皮膚の変化又は皮膚炎(例: 紅斑、浮腫、角質増殖症)と定義されます。" },
+    { category: "重症度分類とステップワイズ治療選択", type: "single", q: "手足症候群がGrade2に進行した場合の外用ステロイドの強度変更として適切なのは?",
+      choices: ["ベリーストロングからストロンゲストへランクアップする", "ステロイド外用を中止し保湿剤のみに切り替える", "ミディアムクラスに減弱する", "外用薬は変更せず内服薬のみ追加する"], correct: 0,
+      explain: "Grade1ではベリーストロングのステロイド外用を開始し、症状が強くなればランクアップします。Grade2に進行した場合はストロンゲストのステロイド外用へランクアップします(出典: 川島ほか、臨床医薬2015;31(12):1079-1088、表6)。" },
+    { category: "重症度分類とステップワイズ治療選択", type: "single", q: "手足症候群がGrade3に進行した場合の分子標的薬の取り扱いとして、コンセンサス会議報告が示す考え方は?",
+      choices: ["ストロンゲストのステロイド外用でもGrade3への進行阻止は困難とされるため、休薬する", "ステロイドを増量してでも投与を継続する", "用量を増量して経過をみる", "対応の変更は不要である"], correct: 0,
+      explain: "症状がGrade2に進行したら、ストロンゲストのステロイド外用でもGrade3に進行することを阻止するのは困難なので分子標的薬を休薬するとされています。改善後は休薬・減量の手順に従い投与を再開します。" },
+    { category: "重症度分類とステップワイズ治療選択", type: "single", q: "手足症候群の予防において重要とされるセルフケアは?",
+      choices: ["保湿、角質コントロール、除圧を中心とした予防的スキンケア", "患部を積極的にこすって角質を除去すること", "素足で長時間歩行すること", "患部を温めること"], correct: 0,
+      explain: "足の症状が重篤化するため、保湿、角質コントロール、除圧を中心とした予防的スキンケアが重要とされています。" },
+    { category: "重症度分類とステップワイズ治療選択", type: "single", q: "重篤な薬疹(多形紅斑、Stevens-Johnson症候群/中毒性表皮壊死融解症)が疑われる皮疹が出現した場合の初期対応は?",
+      choices: ["被疑薬を直ちに中止し、皮膚科専門医へ緊急に紹介する", "被疑薬を減量して経過をみる", "抗ヒスタミン薬のみで自宅安静とする", "保湿剤の追加のみで対応する"], correct: 0,
+      explain: "標的様紅斑の拡大、粘膜疹、広範囲の水疱・表皮剥離、発熱を伴う重篤な皮疹が疑われた場合は、被疑薬を直ちに中止し、速やかに皮膚科専門医へ紹介することが重要です。" },
+    { category: "重症度分類とステップワイズ治療選択", type: "single", q: "SJS・TENの発生頻度に関するPMDA資料の記載として正しいのは?",
+      choices: ["人口100万人当たり年間、SJSは1~6人、TENは0.4~1.2人と極めて低い", "人口100人当たり年間数十人と高頻度である", "分子標的薬特有の副作用でありそれ以外の薬剤では発生しない", "発生頻度は明らかにされていない"], correct: 0,
+      explain: "PMDAの資料では、SJS及びTENの発生頻度は人口100万人当たりそれぞれ年間1~6人及び0.4~1.2人と極めて低いものの、発症すると予後不良となる場合があるとされています。" },
+    { category: "重症度分類とステップワイズ治療選択", type: "single", q: "瘙痒・痒疹様皮疹に対する対応として、コンセンサス会議報告が挙げているものは?",
+      choices: ["痒疹様皮疹にはストロンゲストのステロイド外用を行う", "抗ヒスタミン薬は無効であるため使用しない", "保湿剤は禁忌である", "制吐剤は無関係であり言及されていない"], correct: 0,
+      explain: "痒疹様の皮疹に対しては、ストロンゲストのステロイド外用を行うとされています。抗ヒスタミン薬・保湿剤もエビデンスは十分ではないものの使用され、制吐剤のアプレピタントが有効とする報告もあります。" },
+    { category: "重症度分類とステップワイズ治療選択", type: "multi", q: "CTCAE v5.0で体表面積(BSA)に占める割合を基準にGrade分類が行われる皮膚障害をすべて選べ(2つ選択)",
+      choices: ["ざ瘡様皮疹", "皮膚乾燥", "手足症候群(手掌・足底発赤知覚不全症候群)", "爪囲炎"], correct: [0, 1],
+      explain: "ざ瘡様皮疹と皮膚乾燥はいずれも体表面積(BSA)に占める割合(<10%、10~30%、>30%等)を基準にGrade分類されます。手足症候群は疼痛の有無・程度と日常生活動作の制限を基準に、爪囲炎は必要な介入の程度(局所/経口/観血的)を基準に分類されます。" },
+
+    // ══════════ 用法用量・予防投与タイミング(9問、うち2問は図表付き) ══════════
+    { category: "用法用量・予防投与タイミング", type: "single", q: "第II相STEPP試験(パニツムマブ)における予防的スキンケアの開始タイミングは?(下図参照)",
+      choices: ["パニツムマブ投与開始の1日前から開始し、投与開始後6週間継続する", "パニツムマブ投与開始と同時にのみ1回実施する", "皮膚毒性が出現してから開始する", "パニツムマブ投与終了後に開始する"], correct: 0,
+      explain: "STEPP試験の予防的治療レジメンは、パニツムマブ投与開始の1日前から保湿剤・日焼け止め・1%ヒドロコルチゾンクリーム・ドキシサイクリン内服を開始し、6週間継続するものでした(Lacouture ME, et al. J Clin Oncol. 2010;28(8):1351-1357)。",
+      diagram: '<div class="dg-timeline"><div class="dg-tl-title">STEPP試験の予防的スキンケア開始タイミング</div><div class="table-scroll"><table class="dg-tl-table"><thead><tr><th>薬剤・ケア</th><th>前日(Day -1)</th><th>Week1</th><th>Week2~6</th></tr></thead><tbody>' +
+        '<tr><td>パニツムマブ</td><td class="dg-tl-off">投与前</td><td class="dg-tl-on">投与開始</td><td class="dg-tl-on">継続</td></tr>' +
+        '<tr><td>保湿剤・日焼け止め・ステロイド外用・ドキシサイクリン</td><td class="dg-tl-on">開始</td><td class="dg-tl-on">継続</td><td class="dg-tl-on">継続(6週間)</td></tr>' +
+        '</tbody></table></div><div class="dg-tl-legend"><span><i class="on"></i>実施する</span><span><i class="off"></i>投与前</span></div></div>' },
+    { category: "用法用量・予防投与タイミング", type: "single", q: "STEPP試験の予防的治療レジメンに含まれる内服薬の用法用量は?",
+      choices: ["ドキシサイクリン100mgを1日2回内服", "ミノサイクリン400mgを1日1回内服", "プレドニゾロン60mgを1日1回内服", "セフェム系抗菌薬を1日3回内服"], correct: 0,
+      explain: "STEPP試験の予防的治療は、保湿剤・日焼け止め・1%ヒドロコルチゾンクリームに加え、ドキシサイクリン100mgを1日2回内服する組み合わせでした。" },
+    { category: "用法用量・予防投与タイミング", type: "single", q: "STEPP試験の予防的治療レジメンで用いられたステロイド外用薬は?",
+      choices: ["1%ヒドロコルチゾンクリーム", "ストロンゲストクラスのステロイド軟膏", "プレドニゾロン注射", "ベタメタゾン吉草酸エステル軟膏0.12%"], correct: 0,
+      explain: "STEPP試験の予防的レジメンは比較的マイルドなクラスの1%ヒドロコルチゾンクリームを使用しており、既に発現した中等症以上のざ瘡様皮疹の治療で推奨されるストロング以上のクラスとは異なる点に注意が必要です。" },
+    { category: "用法用量・予防投与タイミング", type: "single", q: "日本国内の添付文書上、ドキシサイクリン塩酸塩水和物のEGFR阻害薬による皮膚障害への予防投与はどう位置づけられるか?",
+      choices: ["適応外(効能・効果に含まれない)", "適応内(予防投与として明記されている)", "適応の有無は添付文書に規定されていない", "小児にのみ適応内である"], correct: 0,
+      explain: "ドキシサイクリン塩酸塩水和物の効能・効果は各種細菌感染症であり、「尋常性ざ瘡」やEGFR阻害薬による皮膚障害の予防・治療は含まれていません。この用途への使用は適応外使用です。" },
+    { category: "用法用量・予防投与タイミング", type: "single", q: "ミノサイクリン塩酸塩の尋常性ざ瘡(にきび)への使用は、日本国内の添付文書上どう位置づけられるか?",
+      choices: ["適応外(効能・効果に尋常性ざ瘡の記載はない)", "適応内として明記されている", "小児にのみ適応内である", "保険適用外の医薬品である"], correct: 0,
+      explain: "ミノサイクリン塩酸塩(ミノマイシン)の効能・効果には尋常性ざ瘡の記載はなく、この用途への使用は適応外使用です。" },
+    { category: "用法用量・予防投与タイミング", type: "single", q: "STEPP試験の予防的治療は、パニツムマブ投与開始後何週間まで継続されたか?(下図参照)",
+      choices: ["6週間", "1週間", "24週間", "1年間"], correct: 0,
+      explain: "予防的治療レジメンはパニツムマブ投与開始の1日前から開始し、6週間の治療期間中のGrade2以上皮膚毒性発現率が評価されました。",
+      diagram: '<div class="dg-timeline"><div class="dg-tl-title">STEPP試験の予防的治療の継続期間</div><div class="table-scroll"><table class="dg-tl-table"><thead><tr><th>治療期間</th><th>Week1~5</th><th>Week6</th><th>Week7以降</th></tr></thead><tbody>' +
+        '<tr><td>予防的スキンケア(保湿剤・日焼け止め・ステロイド外用・ドキシサイクリン)</td><td class="dg-tl-on">継続</td><td class="dg-tl-on">継続</td><td class="dg-tl-off">試験の予防投与期間は6週間で終了</td></tr>' +
+        '</tbody></table></div><div class="dg-tl-legend"><span><i class="on"></i>継続する</span><span><i class="off"></i>終了</span></div></div>' },
+    { category: "用法用量・予防投与タイミング", type: "single", q: "コンセンサス会議報告におけるミノサイクリン内服の開始用量と投与期間の目安は?",
+      choices: ["100~200mg/日で開始し、症状軽快に伴い減量・間欠投与へ移行し3ヵ月を目途とする", "1000mg/日で開始し1週間で終了する", "10mg/日で開始し生涯継続する", "開始用量・投与期間の目安は示されていない"], correct: 0,
+      explain: "ミノマイシン内服は100~200mg/日で開始し、症状軽快に伴い減量、間欠投与に移行し、3ヵ月を目途とするとされています。" },
+    { category: "用法用量・予防投与タイミング", type: "single", q: "ドキシサイクリン塩酸塩水和物の添付文書上の(感染症に対する)標準的な用法及び用量は?",
+      choices: ["初日200mg(1回又は2回に分割)、2日目以降100mgを1日1回経口投与", "初日から連日500mgを1日3回投与", "1回のみ50mgを投与して終了", "用法及び用量の定めはない"], correct: 0,
+      explain: "通常成人は初日ドキシサイクリン塩酸塩水和物として1日量200mg(力価)を1回又は2回に分けて経口投与し、2日目より1日量100mg(力価)を1回に経口投与します。" },
+    { category: "用法用量・予防投与タイミング", type: "multi", q: "テトラサイクリン系抗菌薬(ドキシサイクリン、ミノサイクリン)の適用上の注意として、添付文書に共通して記載されているものをすべて選べ(2つ選択)",
+      choices: ["食道潰瘍のリスクがあるため多めの水で服用させる", "特に就寝直前の服用に注意する", "空腹時のみ服用可能である", "服用後直ちに横になることが推奨される"], correct: [0, 1],
+      explain: "両剤とも、食道潰瘍等のリスクを避けるため多めの水で服用させ、特に就寝直前の服用等には注意することが適用上の注意に記載されています。空腹時限定の規定や、服用後すぐに横になることを推奨する記載はありません(むしろ注意すべきとされています)。" },
+
+    // ══════════ 薬剤クラス別合併症への対応(13問) ══════════
+    { category: "薬剤クラス別合併症への対応", type: "single", q: "EGFR阻害薬(セツキシマブ、ゲフィチニブ等)で特徴的な皮膚障害の組み合わせとして代表的なものは?",
+      choices: ["ざ瘡様皮疹、皮膚乾燥、爪囲炎", "手足症候群のみ", "脱毛のみ", "色素沈着のみ"], correct: 0,
+      explain: "EGFR阻害薬ではざ瘡様皮疹、皮膚乾燥(乾皮症)、爪囲炎が代表的な皮膚障害として知られています。" },
+    { category: "薬剤クラス別合併症への対応", type: "single", q: "マルチキナーゼ阻害薬(レゴラフェニブ、ソラフェニブ等)で特に問題となる皮膚障害は?",
+      choices: ["手足症候群(手掌・足底発赤知覚不全症候群)", "ざ瘡様皮疹", "爪囲炎", "酒さ様皮膚炎"], correct: 0,
+      explain: "レゴラフェニブ、ソラフェニブ、スニチニブ、レンバチニブ等のマルチキナーゼ阻害薬では、手足症候群(手掌・足底発赤知覚不全症候群)が最も臨床的に問題となる皮膚障害です。" },
+    { category: "薬剤クラス別合併症への対応", type: "single", q: "爪囲炎への早期対応として適切なものは?",
+      choices: ["洗浄などのケア、テーピング処置", "直ちに抜爪を行う", "経過観察のみで一切介入しない", "免疫チェックポイント阻害薬を追加する"], correct: 0,
+      explain: "爪囲炎の早期では、洗浄などのケア、テーピング処置が中心となります。" },
+    { category: "薬剤クラス別合併症への対応", type: "single", q: "進行した爪囲炎の不良肉芽への対応として挙げられるものは?",
+      choices: ["液体窒素凍結療法、外科的切除、部分抜爪", "保湿剤の追加のみ", "抗ヒスタミン薬の内服のみ", "ビタミンA製剤の中止のみ"], correct: 0,
+      explain: "爪囲炎が進行し不良肉芽が形成された場合、液体窒素凍結療法、外科的切除、部分抜爪が対応として挙げられています。" },
+    { category: "薬剤クラス別合併症への対応", type: "single", q: "爪囲炎の二次感染への対応として挙げられるものは?",
+      choices: ["セフェム系抗菌剤の投与、あるいはミノサイクリンの継続", "抗ウイルス薬の投与", "抗真菌薬の投与のみ", "経過観察のみ"], correct: 0,
+      explain: "爪囲炎の二次感染には、セフェム系抗菌剤の投与、あるいはミノサイクリンの継続が対応として挙げられています。" },
+    { category: "薬剤クラス別合併症への対応", type: "single", q: "手指の角化(重症)への対応として挙げられるものは?",
+      choices: ["ストロンゲストのステロイド外用又はODT(密封療法)", "保湿剤のみで対応する", "ステロイドは禁忌であり使用しない", "抗菌薬の内服のみ"], correct: 0,
+      explain: "手指の角化が重症の場合、ストロンゲストのステロイド外用又はODT(密封療法)が対応として挙げられています。軽症では保湿剤外用・サリチル酸ワセリン外用が中心です。" },
+    { category: "薬剤クラス別合併症への対応", type: "single", q: "踵の角化(重症、深い亀裂を伴う)への対応として挙げられるものは?",
+      choices: ["ヘパリン類似物質製剤・サリチル酸ワセリン外用に加え、亀裂部への被覆治療剤(ドレニゾンテープ等)の併用", "外科的切断", "抗ウイルス薬の全身投与", "特に対応は不要である"], correct: 0,
+      explain: "踵の角化が重症で深い亀裂を伴う場合、ヘパリン類似物質製剤・サリチル酸ワセリン外用と亀裂部へのストロンゲストのステロイド外用に加え、深い亀裂部には被覆治療剤(ドレニゾンテープ、デュオアクティブ、オプサイト等)を併用します。" },
+    { category: "薬剤クラス別合併症への対応", type: "single", q: "瘙痒に対して有効とする報告がある、制吐目的にも用いられる薬剤は?",
+      choices: ["アプレピタント", "オンダンセトロン", "デキサメタゾン", "グラニセトロン"], correct: 0,
+      explain: "制吐剤のアプレピタント(NK1受容体拮抗薬)が瘙痒に有効とする報告があるとされています。" },
+    { category: "薬剤クラス別合併症への対応", type: "single", q: "皮膚乾燥に対する保湿剤の成分として、有用性を示す報告があるとされるものは?",
+      choices: ["ヘパリン類似物質製剤", "ワルファリン", "メトトレキサート", "ジゴキシン"], correct: 0,
+      explain: "皮膚乾燥に対しては保湿剤の外用が基本であり、ヘパリン類似物質製剤などの有用性を示す報告があるとされています。" },
+    { category: "薬剤クラス別合併症への対応", type: "single", q: "タクロリムス外用のざ瘡様皮疹への使用に関するコンセンサス会議報告の評価は?",
+      choices: ["奏功する可能性があるが、エビデンスは十分ではない", "第一選択として推奨される", "禁忌とされている", "小児にのみ有効性が確認されている"], correct: 0,
+      explain: "タクロリムス外用は奏功する可能性があるが、エビデンスは十分ではないとされています。" },
+    { category: "薬剤クラス別合併症への対応", type: "multi", q: "ざ瘡様皮疹への対応としてコンセンサス会議報告に挙げられているものをすべて選べ(2つ選択)",
+      choices: ["ステロイド外用", "ミノサイクリン内服", "免疫チェックポイント阻害薬の追加", "抗ウイルス薬の内服"], correct: [0, 1],
+      explain: "ざ瘡様皮疹への対応として、ステロイド外用、タクロリムス外用、ミノサイクリン内服、ステロイド内服、抗菌剤外用、保湿剤外用等が挙げられています。免疫チェックポイント阻害薬の追加や抗ウイルス薬の内服は言及されていません。" },
+    { category: "薬剤クラス別合併症への対応", type: "single", q: "リウマチ様血管炎を思わせる皮疹が出現した場合の対応は?",
+      choices: ["皮膚潰瘍の治療に準じて対応する", "保湿剤のみで経過観察する", "分子標的薬を直ちに増量する", "特に対応は不要である"], correct: 0,
+      explain: "瘙痒・痒疹に関連してリウマチ様血管炎を思わせる皮疹が出現した場合は、皮膚潰瘍の治療に準じて対応するとされています。" },
+
+    // ══════════ 薬剤選択の根拠(9問) ══════════
+    { category: "薬剤選択の根拠", type: "single", q: "第II相STEPP試験(Lacouture et al, J Clin Oncol 2010)の対象とされたEGFR阻害薬は?",
+      choices: ["パニツムマブ", "セツキシマブ", "ゲフィチニブ", "オシメルチニブ"], correct: 0,
+      explain: "STEPP試験(Skin Toxicity Evaluation Protocol With Panitumumab)は、パニツムマブを含む治療を受ける転移性大腸癌患者を対象としました。" },
+    { category: "薬剤選択の根拠", type: "single", q: "STEPP試験の結果、6週間の治療期間中の予防的治療群と反応性治療群のGrade2以上皮膚毒性発現率はそれぞれ何%だったか?",
+      choices: ["予防的治療群29%、反応性治療群62%", "予防的治療群62%、反応性治療群29%", "両群とも50%で差はなかった", "予防的治療群0%、反応性治療群100%"], correct: 0,
+      explain: "予防的スキンケアを行った群でGrade2以上皮膚毒性発現率が29%、皮膚毒性出現後に対症療法を開始した反応性治療群で62%でした。" },
+    { category: "薬剤選択の根拠", type: "single", q: "STEPP試験におけるDLQI(Dermatology Life Quality Index)スコアのベースラインから3週目までの変化について正しいのは?",
+      choices: ["予防的治療群1.3点、反応性治療群4.2点と、予防的治療群の方が変化(悪化)が小さかった", "予防的治療群の方が変化が大きかった", "両群で差はなかった", "DLQIは測定されていない"], correct: 0,
+      explain: "予防的治療群の方がDLQIスコアの悪化(上昇)が小さく、皮膚症状によるQOLへの影響が反応性治療群より少なかったことが示唆されています。" },
+    { category: "薬剤選択の根拠", type: "single", q: "MASCC Skin Toxicity Study Groupが開発した、EGFR阻害薬による皮膚毒性専用の重症度評価ツールは?",
+      choices: ["MASCC EGFR Inhibitor Skin Toxicity Tool(MESTT)", "MASCCリスクインデックス", "DLQI", "Cairo-Bishop基準"], correct: 0,
+      explain: "MESTTは、NCI-CTCAEがEGFR阻害薬に特有の皮膚症状を過小評価しうるとの問題意識から、MASCC Skin Toxicity Study Groupが提案したEGFR阻害薬特化型の重症度評価ツールです(Lacouture et al, 2010, PMID 20145956)。MASCCリスクインデックスは発熱性好中球減少症の外来管理判断、Cairo-Bishop基準は腫瘍崩壊症候群のリスク層別化に用いる別のツールです。" },
+    { category: "薬剤選択の根拠", type: "multi", q: "MASCC(Multinational Association of Supportive Care in Cancer)がEGFR阻害薬関連皮膚毒性に関して行った取り組みとして正しいものをすべて選べ(2つ選択)",
+      choices: ["MASCC Skin Toxicity Study Groupによる専用重症度評価ツール(MESTT)の開発", "Lacoutureらによるエビデンスに基づく予防・治療ガイドラインの策定", "MASCCリスクインデックスによる用法用量の決定", "Cairo-Bishop分類の策定"], correct: [0, 1],
+      explain: "MASCC Skin Toxicity Study Groupは、EGFR阻害薬による皮膚毒性専用の評価ツール(MESTT)の開発と、エビデンスに基づく予防・治療ガイドラインの策定を行っています。MASCCリスクインデックスは発熱性好中球減少症(FN)の外来管理判断に用いるスコアであり、Cairo-Bishop分類は腫瘍崩壊症候群のリスク層別化に用いるもので、いずれもEGFR阻害薬皮膚毒性とは別の文脈のツールです。" },
+    { category: "薬剤選択の根拠", type: "single", q: "日本がんサポーティブケア学会「がん治療におけるアピアランスケアガイドライン」の発行形態として正しいのは?",
+      choices: ["CQ・BQ形式でエビデンスを評価した診療ガイドライン", "単なる体験談の集成であり推奨は示されていない", "患者向けパンフレットのみで構成される", "海外ガイドラインの単純な翻訳版である"], correct: 0,
+      explain: "「がん治療におけるアピアランスケアガイドライン2021年版」は、CQ(Clinical Question)・BQ(Background Question)形式でエビデンスを評価する診療ガイドラインとして日本がんサポーティブケア学会が発行しています。" },
+    { category: "薬剤選択の根拠", type: "single", q: "日本臨床腫瘍学会の後援を受けた皮膚科・腫瘍内科有志コンセンサス会議の報告が最初にセミナーとして提言を行ったのはいつか?",
+      choices: ["2013年の第112回日本皮膚科学会総会", "2020年のASCO年次総会", "2023年のNCCN総会", "2010年のJCOG総会"], correct: 0,
+      explain: "2013年の第112回日本皮膚科学会総会において、日本臨床腫瘍学会の後援を得て、分子標的薬に起因する皮膚障害とその対策をテーマにセミナーが開催されたことが、その後の第1回コンセンサス会議(2014年2月)開催の契機となりました。" },
+    { category: "薬剤選択の根拠", type: "single", q: "「Clinical practice guidelines for the prevention and treatment of EGFR inhibitor-associated dermatologic toxicities」(Lacouture et al, Support Care Cancer 2011)が推奨対象として扱っていない皮膚毒性はどれか?",
+      choices: ["腫瘍崩壊症候群", "丘疹膿疱疹様発疹(ざ瘡様)", "爪囲炎", "乾皮症/裂創"], correct: 0,
+      explain: "本ガイドラインは、丘疹膿疱疹様発疹(ざ瘡様)、毛髪変化、放射線皮膚炎、瘙痒症、粘膜炎、乾皮症/裂創、爪周囲炎の7領域を対象としています。腫瘍崩壊症候群は全く別の支持療法トピックであり、対象に含まれません。" },
+    { category: "薬剤選択の根拠", type: "single", q: "NCCN「Management of Immunotherapy-Related Toxicities」ガイドラインが対象とする皮膚有害事象と、EGFR阻害薬によるざ瘡様皮疹との関係として正しい理解は?",
+      choices: ["免疫チェックポイント阻害薬による皮膚有害事象を対象としており、EGFR阻害薬によるざ瘡様皮疹とは発現機序・臨床像が異なる", "全く同一の病態であり区別する必要はない", "EGFR阻害薬による皮膚障害のみを対象としたガイドラインである", "手足症候群のみを対象としたガイドラインである"], correct: 0,
+      explain: "NCCNのこのガイドラインは免疫チェックポイント阻害薬による免疫関連有害事象(irAE)としての皮膚障害を対象としており、EGFR阻害薬による(主作用と相関する)ざ瘡様皮疹とは発現機序・臨床像が異なる点に注意が必要です。" },
+
+    // ══════════ コスト制度・その他(6問) ══════════
+    { category: "コスト制度・その他", type: "single", q: "ドキシサイクリン塩酸塩水和物(ビブラマイシン錠100mg)の薬価の目安は?",
+      choices: ["約22.0円/錠", "約2,200円/錠", "約0.2円/錠", "約22,000円/錠"], correct: 0,
+      explain: "ビブラマイシン錠100mgの薬価は約22.0円/錠とされています。" },
+    { category: "コスト制度・その他", type: "single", q: "ミノサイクリン塩酸塩(ミノマイシン錠50mg)の薬価の目安は?",
+      choices: ["約12.5円/錠", "約1,250円/錠", "約125円/錠", "約0.1円/錠"], correct: 0,
+      explain: "ミノマイシン錠50mgの薬価は約12.5円/錠とされています(100mg錠は約22円/錠)。" },
+    { category: "コスト制度・その他", type: "single", q: "ベタメタゾン吉草酸エステル軟膏0.12%(リンデロン-V軟膏、ストロングクラス)の薬価の目安は?",
+      choices: ["約14.3円/g", "約1,430円/g", "約143円/g", "約1.4円/g"], correct: 0,
+      explain: "リンデロン-V軟膏0.12%の薬価は約14.3円/gとされています。" },
+    { category: "コスト制度・その他", type: "single", q: "分子標的薬による皮膚障害への対症療法(保湿剤・外用ステロイド・抗菌薬)と、高額療養費制度の関係として適切な説明は?",
+      choices: ["対症療法自体の薬剤費は低額であり、原因となる分子標的薬自体の薬剤費が制度適用の主因となることが多い", "対症療法のみで必ず高額療養費制度の対象になる", "高額療養費制度は皮膚障害の治療には一切適用されない", "対症療法は保険適用外である"], correct: 0,
+      explain: "保湿剤・外用ステロイド・テトラサイクリン系抗菌薬はいずれも1錠・1gあたり数十円程度と低額であり、高額療養費制度が適用される主因は、多くの場合、原因となるEGFR阻害薬・マルチキナーゼ阻害薬等の分子標的薬自体の薬剤費です。" },
+    { category: "コスト制度・その他", type: "single", q: "皮膚障害による減量・休薬が治療全体に与える影響として適切な理解は?",
+      choices: ["適切な皮膚症状のコントロールによる治療継続が重要であり、医療費全体の観点からも意義がある", "皮膚障害は治療効果と無関係であり考慮不要である", "皮膚障害が重篤化するほど治療効果が高まる", "休薬は治療成績に一切影響しない"], correct: 0,
+      explain: "分子標的薬による皮膚障害は薬剤の効果と正の相関を示す特徴があるとされる一方、重度な皮膚障害は減量・休薬につながり治療継続を妨げうるため、適切な皮膚症状のコントロールによる治療継続が、患者QOLだけでなく医療費全体の観点からも重要とされています。" },
+    { category: "コスト制度・その他", type: "single", q: "分子標的薬に起因する皮膚障害の特徴として、コンセンサス会議報告の背景で述べられている考え方は?",
+      choices: ["薬剤の効果と皮膚障害の程度との間に正の相関を示す特徴があり、副作用ではなく主作用の結果として発現すると推測されている", "皮膚障害は薬剤の効果と全く無関係である", "皮膚障害は必ず薬剤アレルギーによるものである", "皮膚障害の発現は治療効果の低下を意味する"], correct: 0,
+      explain: "分子標的薬に起因する皮膚障害は、薬剤の効果と皮膚障害の程度との間に正の相関を示す特徴を有し、薬剤の副反応としてではなく、薬剤の主作用の結果として発現することが推測されているとされています。このため、治療の継続を念頭においた皮膚症状のコントロールが求められます。" }
+  ];
+
+  var QUIZ_SESSION_SIZE = 10;
+  var quizOrder = [];     // indices into QUIZ for THIS session (random subset)
+  var quizIndex = 0;
+  var quizAnswers = [];   // per-question(by original index): selected choice index (single) or array of indices (multi)
+  var quizFeedback = {};  // { [questionIndex]: 'good' | 'bad' }
+
+  function quizPickSession() {
+    var all = QUIZ.map(function (_, i) { return i; });
+    quizShuffle(all);
+    quizOrder = all.slice(0, QUIZ_SESSION_SIZE);
+  }
+  function quizShuffle(arr) {
+    for (var i = arr.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = arr[i]; arr[i] = arr[j]; arr[j] = t;
+    }
+    return arr;
+  }
+
+  function quizLoadFeedback() {
+    try {
+      var raw = localStorage.getItem('skinToxQuizFeedback_v2');
+      quizFeedback = raw ? JSON.parse(raw) : {};
+    } catch (e) { quizFeedback = {}; }
+  }
+  function quizSaveFeedback() {
+    try { localStorage.setItem('skinToxQuizFeedback_v2', JSON.stringify(quizFeedback)); } catch (e) {}
+  }
+  function quizBuildRatingRow(qi) {
+    var row = document.createElement('div');
+    row.className = 'rate-row';
+    var label = document.createElement('span');
+    label.className = 'rate-label';
+    label.textContent = 'この問題の評価:';
+    var goodBtn = document.createElement('button');
+    goodBtn.type = 'button'; goodBtn.className = 'rate-btn'; goodBtn.textContent = '👍 良問';
+    var badBtn = document.createElement('button');
+    badBtn.type = 'button'; badBtn.className = 'rate-btn'; badBtn.textContent = '👎 悪問';
+    function refresh() {
+      goodBtn.classList.toggle('active-good', quizFeedback[qi] === 'good');
+      badBtn.classList.toggle('active-bad', quizFeedback[qi] === 'bad');
+    }
+    goodBtn.onclick = function () {
+      quizFeedback[qi] = (quizFeedback[qi] === 'good') ? null : 'good';
+      if (!quizFeedback[qi]) delete quizFeedback[qi];
+      quizSaveFeedback(); refresh();
+    };
+    badBtn.onclick = function () {
+      quizFeedback[qi] = (quizFeedback[qi] === 'bad') ? null : 'bad';
+      if (!quizFeedback[qi]) delete quizFeedback[qi];
+      quizSaveFeedback(); refresh();
+    };
+    refresh();
+    row.appendChild(label); row.appendChild(goodBtn); row.appendChild(badBtn);
+    return row;
+  }
+  function quizFallbackCopy(text, done) {
+    var ta = document.createElement('textarea');
+    ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); } catch (e) {}
+    document.body.removeChild(ta);
+    done();
+  }
+  function quizChoiceLabel(item) {
+    return item.choices.join(' / ');
+  }
+  function quizCorrectLabel(item) {
+    if (item.type === 'multi') return item.correct.map(function (i) { return item.choices[i]; }).join(' ＋ ');
+    return item.choices[item.correct];
+  }
+  function quizExportFeedback() {
+    var ratedIdx = Object.keys(quizFeedback);
+    if (ratedIdx.length === 0) {
+      alert('まだ評価された問題がありません。各問題に回答した後に表示される「👍 良問」「👎 悪問」ボタンで評価してから、もう一度お試しください。');
+      return;
+    }
+    var goodList = [], badList = [];
+    ratedIdx.forEach(function (idxStr) {
+      var idx = parseInt(idxStr, 10);
+      var item = QUIZ[idx];
+      if (!item) return;
+      var entry = '・[' + item.category + (item.type === 'multi' ? '/複数選択' : '') + '] ' + item.q + '\n  選択肢: ' + quizChoiceLabel(item) + '\n  正解: ' + quizCorrectLabel(item);
+      if (quizFeedback[idx] === 'good') goodList.push(entry);
+      else if (quizFeedback[idx] === 'bad') badList.push(entry);
+    });
+    var text = '【皮膚障害(EGFR阻害薬・分子標的薬)クイズ(quiz-skin-tox.html、全50問プール)フィードバック】\n\n' +
+      '良問と評価された問題(' + goodList.length + '件):\n' + (goodList.length ? goodList.join('\n\n') : '(なし)') + '\n\n' +
+      '悪問と評価された問題(' + badList.length + '件) — 改善・差し替えを検討してください:\n' + (badList.length ? badList.join('\n\n') : '(なし)') + '\n\n' +
+      '参照ファイル: artifacts/html/oncology-reports/quiz-skin-tox.html\n\n' +
+      '上記フィードバックを踏まえて、「悪問」と評価された問題をレポート本文(artifacts/html/oncology-reports/skin-tox.html、添付文書情報セクション含む)の内容に基づいて改善・差し替えてください。「良問」と評価された問題は現状を維持してください。';
+    var notify = function () { alert('フィードバックをコピーしました。MulmoClaudeのチャットに貼り付けて送信してください。問題の改善に使います。'); };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(notify).catch(function () { quizFallbackCopy(text, notify); });
+    } else { quizFallbackCopy(text, notify); }
+  }
+  function quizResetFeedback() {
+    if (!confirm('すべての評価をリセットします。よろしいですか?')) return;
+    quizFeedback = {};
+    quizSaveFeedback();
+    alert('評価をリセットしました。');
+  }
+
+  function quizRenderQuestion() {
+    document.getElementById('quiz-result-area').style.display = 'none';
+    document.getElementById('quiz-question-area').style.display = 'block';
+    var qi = quizOrder[quizIndex];
+    var item = QUIZ[qi];
+    document.getElementById('quiz-progress-text').textContent = '問 ' + (quizIndex + 1) + ' / ' + quizOrder.length + '(全' + QUIZ.length + '問中からランダム出題)';
+    document.getElementById('quiz-cat-badge').textContent = item.category;
+    document.getElementById('quiz-type-badge').style.display = (item.type === 'multi') ? 'inline-flex' : 'none';
+    document.getElementById('quiz-progress-fill').style.width = Math.round((quizIndex / quizOrder.length) * 100) + '%';
+    document.getElementById('quiz-question-text').textContent = item.q;
+    document.getElementById('quiz-diagram-area').innerHTML = item.diagram || '';
+    document.getElementById('quiz-explain-area').style.display = 'none';
+    document.getElementById('quiz-explain-area').innerHTML = '';
+    document.getElementById('quiz-next-btn').style.display = 'none';
+    document.getElementById('quiz-submit-row').style.display = 'none';
+
+    var wrap = document.getElementById('quiz-choices');
+    wrap.innerHTML = '';
+
+    if (item.type === 'multi') {
+      var selected = {};
+      item.choices.forEach(function (choiceText, idx) {
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'quiz-choice';
+        btn.innerHTML = '<span class="quiz-choice-check">☐</span> ' + choiceText.replace(/</g, '&lt;');
+        btn.onclick = function () {
+          selected[idx] = !selected[idx];
+          btn.classList.toggle('selected', !!selected[idx]);
+          btn.querySelector('.quiz-choice-check').textContent = selected[idx] ? '☑' : '☐';
+        };
+        wrap.appendChild(btn);
+      });
+      document.getElementById('quiz-submit-row').style.display = 'block';
+      document.getElementById('quiz-submit-btn').onclick = function () {
+        var chosen = Object.keys(selected).filter(function (k) { return selected[k]; }).map(Number);
+        quizAnswerMulti(chosen);
+      };
+    } else {
+      item.choices.forEach(function (choiceText, idx) {
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'quiz-choice';
+        btn.textContent = choiceText;
+        btn.onclick = function () { quizAnswerSingle(idx); };
+        wrap.appendChild(btn);
+      });
+    }
+  }
+
+  function quizFinishQuestion(qi, isCorrect, correctText) {
+    var item = QUIZ[qi];
+    var explainArea = document.getElementById('quiz-explain-area');
+    explainArea.className = 'quiz-explain';
+    explainArea.style.display = 'block';
+    explainArea.innerHTML = '<div style="font-weight:700; margin-bottom:4px; color:' + (isCorrect ? 'var(--good)' : 'var(--critical)') + ';">' +
+      (isCorrect ? '✅ 正解' : '❌ 不正解(正解: ' + correctText + ')') + '</div>' +
+      '<div>' + (item.explain || '') + '</div>';
+    explainArea.appendChild(quizBuildRatingRow(qi));
+    document.getElementById('quiz-submit-row').style.display = 'none';
+    document.getElementById('quiz-next-btn').style.display = 'inline-block';
+    document.getElementById('quiz-next-btn').textContent = (quizIndex === quizOrder.length - 1) ? '結果を見る →' : '次の問題 →';
+  }
+
+  function quizAnswerSingle(selectedIdx) {
+    var qi = quizOrder[quizIndex];
+    var item = QUIZ[qi];
+    quizAnswers[qi] = selectedIdx;
+    var buttons = document.getElementById('quiz-choices').querySelectorAll('.quiz-choice');
+    buttons.forEach(function (btn, idx) {
+      btn.disabled = true;
+      if (idx === item.correct) btn.classList.add('correct');
+      else if (idx === selectedIdx) btn.classList.add('wrong');
+    });
+    quizFinishQuestion(qi, selectedIdx === item.correct, item.choices[item.correct]);
+  }
+
+  function quizSubmitMulti() {
+    var qi = quizOrder[quizIndex];
+    var item = QUIZ[qi];
+    var buttons = document.getElementById('quiz-choices').querySelectorAll('.quiz-choice');
+    var chosen = [];
+    buttons.forEach(function (btn, idx) {
+      if (btn.classList.contains('selected')) chosen.push(idx);
+    });
+    quizAnswerMulti(chosen, buttons, item, qi);
+  }
+
+  function quizAnswerMulti(chosen, buttons, item, qi) {
+    qi = (qi === undefined) ? quizOrder[quizIndex] : qi;
+    item = item || QUIZ[qi];
+    buttons = buttons || document.getElementById('quiz-choices').querySelectorAll('.quiz-choice');
+    quizAnswers[qi] = chosen;
+    var correctSet = item.correct.slice().sort();
+    var chosenSet = chosen.slice().sort();
+    var isCorrect = correctSet.length === chosenSet.length && correctSet.every(function (v, i) { return v === chosenSet[i]; });
+    buttons.forEach(function (btn, idx) {
+      btn.disabled = true;
+      var isRight = item.correct.indexOf(idx) !== -1;
+      var wasChosen = chosen.indexOf(idx) !== -1;
+      if (isRight) btn.classList.add('correct');
+      else if (wasChosen) btn.classList.add('wrong');
+    });
+    quizFinishQuestion(qi, isCorrect, quizCorrectLabel(item));
+  }
+
+  function quizNext() {
+    if (quizIndex < quizOrder.length - 1) {
+      quizIndex++;
+      quizRenderQuestion();
+    } else {
+      quizShowResult();
+    }
+  }
+
+  function quizShowResult() {
+    document.getElementById('quiz-progress-fill').style.width = '100%';
+    document.getElementById('quiz-progress-text').textContent = '完了 ' + quizOrder.length + ' / ' + quizOrder.length;
+    document.getElementById('quiz-cat-badge').textContent = '';
+    document.getElementById('quiz-type-badge').style.display = 'none';
+    document.getElementById('quiz-question-area').style.display = 'none';
+
+    var correctCount = 0;
+    var byCategory = {};
+    quizOrder.forEach(function (qi) {
+      var item = QUIZ[qi];
+      if (!byCategory[item.category]) byCategory[item.category] = { correct: 0, total: 0 };
+      byCategory[item.category].total++;
+      var ans = quizAnswers[qi];
+      var isCorrect;
+      if (item.type === 'multi') {
+        var correctSet = item.correct.slice().sort();
+        var chosenSet = (ans || []).slice().sort();
+        isCorrect = correctSet.length === chosenSet.length && correctSet.every(function (v, i) { return v === chosenSet[i]; });
+      } else {
+        isCorrect = ans === item.correct;
+      }
+      if (isCorrect) { correctCount++; byCategory[item.category].correct++; }
+    });
+    var pct = Math.round((correctCount / quizOrder.length) * 100);
+
+    var catHtml = '';
+    Object.keys(byCategory).forEach(function (cat) {
+      var c = byCategory[cat];
+      var p = Math.round((c.correct / c.total) * 100);
+      catHtml += '<div class="cat-result-row"><span class="text-xs" style="width:190px; flex-shrink:0;">' + cat + '</span>' +
+        '<div class="cat-result-bar"><div class="cat-result-fill" style="width:' + p + '%"></div></div>' +
+        '<span class="text-xs muted" style="width:56px; text-align:right;">' + c.correct + '/' + c.total + '</span></div>';
+    });
+
+    var reviewHtml = '';
+    quizOrder.forEach(function (qi) {
+      var item = QUIZ[qi];
+      var ans = quizAnswers[qi];
+      var isCorrect;
+      var yourAnswerText;
+      if (item.type === 'multi') {
+        var correctSet = item.correct.slice().sort();
+        var chosenSet = (ans || []).slice().sort();
+        isCorrect = correctSet.length === chosenSet.length && correctSet.every(function (v, i) { return v === chosenSet[i]; });
+        yourAnswerText = (ans && ans.length) ? ans.map(function (i) { return item.choices[i]; }).join(' ＋ ') : '(未回答)';
+      } else {
+        isCorrect = ans === item.correct;
+        yourAnswerText = (ans != null) ? item.choices[ans] : '(未回答)';
+      }
+      if (!isCorrect) {
+        reviewHtml += '<div class="review-item">' +
+          '<div class="text-sm font-semibold mb-1">' + item.q + '</div>' +
+          '<div class="text-xs muted mb-2">あなたの回答: ' + yourAnswerText + ' / 正解: ' + quizCorrectLabel(item) + '</div>' +
+          '<div class="text-xs" style="line-height:1.6;">' + (item.explain || '') + '</div>' +
+          '</div>';
+      }
+    });
+    if (!reviewHtml) reviewHtml = '<p class="text-sm secondary">全問正解です。見直しの必要な項目はありません 🎉</p>';
+
+    var goodCount = 0, badCount = 0;
+    Object.keys(quizFeedback).forEach(function (k) {
+      if (quizFeedback[k] === 'good') goodCount++;
+      else if (quizFeedback[k] === 'bad') badCount++;
+    });
+
+    var resultArea = document.getElementById('quiz-result-area');
+    resultArea.style.display = 'block';
+    resultArea.innerHTML =
+      '<div class="text-center mb-6">' +
+        '<div class="score-ring-num" style="color:var(--series-new);">' + correctCount + ' / ' + quizOrder.length + '</div>' +
+        '<div class="text-sm muted mt-1">正答率 ' + pct + '%(全' + QUIZ.length + '問プールから今回ランダム抽出された' + quizOrder.length + '問)</div>' +
+      '</div>' +
+      '<div class="mb-6"><div class="text-sm font-semibold mb-3">カテゴリ別正答率(今回出題分)</div>' + catHtml + '</div>' +
+      '<div class="mb-2 text-sm font-semibold">見直し(不正解・未回答の問題)</div>' +
+      '<div class="mb-6">' + reviewHtml + '</div>' +
+      '<div class="mb-6 pt-4 border-t" style="border-color:var(--gridline);">' +
+        '<div class="text-sm font-semibold mb-2">問題の評価状況(全50問プール通算)</div>' +
+        '<div class="text-xs muted mb-3">👍 良問 ' + goodCount + '件 ・ 👎 悪問 ' + badCount + '件</div>' +
+        '<div class="flex flex-wrap gap-3">' +
+          '<button type="button" class="quiz-btn-outline" onclick="quizExportFeedback()">📋 フィードバックをエクスポート(チャットに貼り付け用)</button>' +
+          '<button type="button" class="quiz-btn-outline" onclick="quizResetFeedback()" style="border-color:var(--critical); color:var(--critical);">🗑 評価をリセット</button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="flex flex-wrap gap-3 justify-center">' +
+        '<button type="button" class="quiz-btn" onclick="quizRestart()">🔀 新しい10問でもう一度</button>' +
+        '<a href="skin-tox.html" class="quiz-btn-outline" style="text-decoration:none; display:inline-block;">レポート本文に戻る</a>' +
+      '</div>';
+  }
+
+  function quizRestart() {
+    quizPickSession();
+    quizIndex = 0;
+    quizAnswers = [];
+    quizRenderQuestion();
+  }
+
+  quizLoadFeedback();
+  quizPickSession();
+  quizRenderQuestion();
+</script>
+
+<footer class="text-center text-xs pb-4" style="color: var(--text-muted);">
+  本クイズは学習・自己点検を目的とした資料です。臨床判断には利用せず、最新の添付文書・ガイドライン原文を優先してください。
+</footer>
+
+</body>
+</html>

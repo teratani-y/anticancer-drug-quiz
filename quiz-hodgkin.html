@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ホジキンリンパ腫理解度クイズ 全50問(ランダム10問出題)</title>
+<title>ホジキンリンパ腫理解度クイズ 全52問(ランダム10問出題)</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
 :root, .viz-root {
@@ -60,6 +60,21 @@ body { background: var(--page-plane); color: var(--text-primary); font-family: s
 .rate-btn:hover { border-color: var(--series-new); }
 .rate-btn.active-good { border-color: var(--good); background: color-mix(in srgb, var(--good) 14%, transparent); color: var(--good); }
 .rate-btn.active-bad { border-color: var(--critical); background: color-mix(in srgb, var(--critical) 12%, transparent); color: var(--critical); }
+
+/* Compact regimen dosing timeline diagram, embeddable in a quiz question via item.diagram */
+.quiz-diagram-area:empty { display: none; }
+.quiz-diagram-area { margin: 0 0 16px; }
+.dg-timeline { border: 1px solid var(--gridline); border-radius: 10px; padding: 12px 14px 14px; background: var(--page-plane); }
+.dg-tl-title { font-size: 0.8rem; font-weight: 700; color: var(--text-primary); margin-bottom: 2px; }
+.dg-tl-subtitle { font-size: 0.68rem; color: var(--text-muted); margin-bottom: 8px; line-height: 1.45; }
+table.dg-tl-table { width: 100%; border-collapse: separate; border-spacing: 3px; font-size: 0.7rem; }
+table.dg-tl-table th { color: var(--text-muted); font-weight: 700; font-size: 0.6rem; text-transform: uppercase; letter-spacing: .03em; padding: 2px 3px 5px; text-align: center; }
+table.dg-tl-table th:first-child { text-align: left; }
+table.dg-tl-table td:first-child { text-align: left; font-weight: 600; color: var(--text-secondary); white-space: nowrap; padding-right: 8px; font-size: 0.68rem; }
+table.dg-tl-table td { text-align: center; padding: 6px 4px; border-radius: 6px; vertical-align: middle; line-height: 1.25; }
+td.dg-tl-on { background: color-mix(in srgb, var(--series-new) 14%, transparent); border: 1px solid var(--series-new); color: var(--text-primary); font-weight: 700; }
+td.dg-tl-off { background: var(--surface-1); border: 1px dashed var(--gridline); color: var(--text-muted); font-weight: 400; }
+.dg-tl-note { font-size: 0.62rem; color: var(--text-muted); margin-top: 7px; line-height: 1.5; }
 </style>
 </head>
 <body class="viz-root">
@@ -69,7 +84,7 @@ body { background: var(--page-plane); color: var(--text-primary); font-family: s
     <div class="flex items-center justify-between gap-2 flex-wrap">
       <div>
         <h1 class="text-xl font-bold">🧠 ホジキンリンパ腫理解度クイズ</h1>
-        <p class="text-sm mt-1 secondary">全50問のプールからランダムに10問出題・4択/複数選択混在・医療従事者向け(治療ライン選択・用法用量・投与スケジュール・用量規制因子/モニタリング・添付文書の警告/禁忌/重大な副作用・バイオマーカー・コスト制度)</p>
+        <p class="text-sm mt-1 secondary">全52問のプールからランダムに10問出題・4択/複数選択混在・医療従事者向け(治療ライン選択・用法用量・投与スケジュール・用量規制因子/モニタリング・添付文書の警告/禁忌/重大な副作用・バイオマーカー・コスト制度)</p>
       </div>
       <a href="hodgkin.html" class="text-xs" style="color:var(--series-new); text-decoration:none; font-weight:600;">← レポート本文に戻る</a>
     </div>
@@ -86,6 +101,7 @@ body { background: var(--page-plane); color: var(--text-primary); font-family: s
 
     <div id="quiz-question-area">
       <div id="quiz-question-text" class="text-base font-semibold mb-4" style="line-height:1.6;"></div>
+      <div id="quiz-diagram-area" class="quiz-diagram-area"></div>
       <div id="quiz-choices"></div>
       <div id="quiz-submit-row" style="display:none;" class="mt-3">
         <button type="button" class="quiz-btn" id="quiz-submit-btn" onclick="quizSubmitMulti()">この内容で回答する</button>
@@ -175,6 +191,24 @@ body { background: var(--page-plane); color: var(--text-primary); font-family: s
     { category: "用法用量・投与スケジュール", type: "multi", q: "本レポートに記載された薬剤のうち、投与間隔が「3週間毎」を基本とする用法用量を持つものをすべて選べ(2つ選択)",
       choices: ["再発・難治性へのブレンツキシマブベドチン単剤(1.8mg/kg)", "ペムブロリズマブ(200mg)", "未治療例へのブレンツキシマブベドチン(1.2mg/kg、AVD併用)", "ニボルマブ単剤(240mg)"], correct: [0, 1],
       explain: "未治療例のBV+AVDは2週間間隔、ニボルマブ単剤(240mg)は2週間間隔(480mgなら4週間間隔)が基本です。" },
+    { category: "用法用量・投与スケジュール", type: "single", q: "下図のように、ABVD療法(ドキソルビシン+ブレオマイシン+ビンブラスチン+ダカルバジン)は28日サイクルのうちどの日に4剤を投与するか?",
+      choices: ["Day1とDay15", "Day1のみ単回", "Day1〜5の連日投与", "Day1・8・15・22の週1回投与"], correct: 0,
+      explain: "ABVD療法は28日を1サイクルとし、Day1とDay15に4剤をまとめて点滴静注し、Day2〜14・Day16〜28は休薬する(Day29が次サイクルのDay1)。国内のダカルバジン添付文書の「375mg/m²を投与し13日間休薬、2回繰り返して1コース」という記載もこのDay1・15パターンに相当する。ドキソルビシン25mg/m²・ブレオマイシン10単位/m²・ビンブラスチン6mg/m²・ダカルバジン375mg/m²は代表的な体表面積換算量(NHS等の標準プロトコルに基づく代表値、要確認)。",
+      diagram: '<div class="dg-timeline"><div class="dg-tl-title">ABVD療法 28日サイクルの投与パターン</div><div class="table-scroll"><table class="dg-tl-table"><thead><tr><th>薬剤</th><th>Day1</th><th>Day2〜14</th><th>Day15</th><th>Day16〜28</th></tr></thead><tbody>' +
+        '<tr><td>ドキソルビシン</td><td class="dg-tl-on">25mg/m²</td><td class="dg-tl-off">—</td><td class="dg-tl-on">25mg/m²</td><td class="dg-tl-off">—</td></tr>' +
+        '<tr><td>ブレオマイシン</td><td class="dg-tl-on">10単位/m²</td><td class="dg-tl-off">—</td><td class="dg-tl-on">10単位/m²</td><td class="dg-tl-off">—</td></tr>' +
+        '<tr><td>ビンブラスチン</td><td class="dg-tl-on">6mg/m²</td><td class="dg-tl-off">—</td><td class="dg-tl-on">6mg/m²</td><td class="dg-tl-off">—</td></tr>' +
+        '<tr><td>ダカルバジン</td><td class="dg-tl-on">375mg/m²</td><td class="dg-tl-off">—</td><td class="dg-tl-on">375mg/m²</td><td class="dg-tl-off">—</td></tr>' +
+        '</tbody></table></div><div class="dg-tl-note">Day29が次サイクルのDay1。用量詳細・出典はレポート本文2章・8章を参照。</div></div>' },
+    { category: "用法用量・投与スケジュール", type: "single", q: "BV+AVD療法では、ABVDのブレオマイシンをブレンツキシマブベドチンに置き換える。このブレンツキシマブベドチンの投与タイミングは、ABVDのブレオマイシンと比べてどうか?",
+      choices: ["ABVDと同じくDay1・Day15、28日サイクル", "Day1のみの単回投与で完結する", "毎週(週1回)投与に変更される", "Day8・Day22に投与タイミングがずれる"], correct: 0,
+      explain: "ブレンツキシマブベドチンの添付文書は「未治療CD30陽性ホジキンリンパ腫: AVDとの併用において、成人には1回1.2mg/kg(体重)を2週間間隔で点滴静注(最大12回)」と規定しており、ABVDと同じDay1・Day15・28日サイクルの骨格を維持したまま、ブレオマイシンをブレンツキシマブベドチンに置き換える形になる(最大12回=6サイクル相当)。ブレオマイシンとブレンツキシマブベドチンの併用は肺毒性増強リスクのため添付文書上の禁忌である。",
+      diagram: '<div class="dg-timeline"><div class="dg-tl-title">BV+AVD療法 28日サイクルの投与パターン</div><div class="dg-tl-subtitle">ブレオマイシンの代わりにブレンツキシマブベドチンを投与(ブレオマイシンとの併用は禁忌)</div><div class="table-scroll"><table class="dg-tl-table"><thead><tr><th>薬剤</th><th>Day1</th><th>Day2〜14</th><th>Day15</th><th>Day16〜28</th></tr></thead><tbody>' +
+        '<tr><td>ブレンツキシマブベドチン</td><td class="dg-tl-on">1.2mg/kg</td><td class="dg-tl-off">—</td><td class="dg-tl-on">1.2mg/kg</td><td class="dg-tl-off">—</td></tr>' +
+        '<tr><td>ドキソルビシン</td><td class="dg-tl-on">25mg/m²</td><td class="dg-tl-off">—</td><td class="dg-tl-on">25mg/m²</td><td class="dg-tl-off">—</td></tr>' +
+        '<tr><td>ビンブラスチン</td><td class="dg-tl-on">6mg/m²</td><td class="dg-tl-off">—</td><td class="dg-tl-on">6mg/m²</td><td class="dg-tl-off">—</td></tr>' +
+        '<tr><td>ダカルバジン</td><td class="dg-tl-on">375mg/m²</td><td class="dg-tl-off">—</td><td class="dg-tl-on">375mg/m²</td><td class="dg-tl-off">—</td></tr>' +
+        '</tbody></table></div><div class="dg-tl-note">最大12回投与(=6サイクル相当)。用量詳細・出典はレポート本文2章・8章を参照。</div></div>' },
 
     // ══════════ 用量規制因子・モニタリング ══════════
     { category: "用量規制因子・モニタリング", type: "single", q: "ブレオマイシン投与中に特にモニタリングが必要な検査・症状は?",
@@ -352,7 +386,7 @@ body { background: var(--page-plane); color: var(--text-primary); font-family: s
       if (quizFeedback[idx] === 'good') goodList.push(entry);
       else if (quizFeedback[idx] === 'bad') badList.push(entry);
     });
-    var text = '【ホジキンリンパ腫クイズ(quiz-hodgkin.html、全50問プール)フィードバック】\n\n' +
+    var text = '【ホジキンリンパ腫クイズ(quiz-hodgkin.html、全52問プール)フィードバック】\n\n' +
       '良問と評価された問題(' + goodList.length + '件):\n' + (goodList.length ? goodList.join('\n\n') : '(なし)') + '\n\n' +
       '悪問と評価された問題(' + badList.length + '件) — 改善・差し替えを検討してください:\n' + (badList.length ? badList.join('\n\n') : '(なし)') + '\n\n' +
       '参照ファイル: artifacts/html/oncology-reports/quiz-hodgkin.html\n\n' +
@@ -379,6 +413,7 @@ body { background: var(--page-plane); color: var(--text-primary); font-family: s
     document.getElementById('quiz-type-badge').style.display = (item.type === 'multi') ? 'inline-flex' : 'none';
     document.getElementById('quiz-progress-fill').style.width = Math.round((quizIndex / quizOrder.length) * 100) + '%';
     document.getElementById('quiz-question-text').textContent = item.q;
+    document.getElementById('quiz-diagram-area').innerHTML = item.diagram || '';
     document.getElementById('quiz-explain-area').style.display = 'none';
     document.getElementById('quiz-explain-area').innerHTML = '';
     document.getElementById('quiz-next-btn').style.display = 'none';
@@ -560,7 +595,7 @@ body { background: var(--page-plane); color: var(--text-primary); font-family: s
       '<div class="mb-2 text-sm font-semibold">見直し(不正解・未回答の問題)</div>' +
       '<div class="mb-6">' + reviewHtml + '</div>' +
       '<div class="mb-6 pt-4 border-t" style="border-color:var(--gridline);">' +
-        '<div class="text-sm font-semibold mb-2">問題の評価状況(全50問プール通算)</div>' +
+        '<div class="text-sm font-semibold mb-2">問題の評価状況(全52問プール通算)</div>' +
         '<div class="text-xs muted mb-3">👍 良問 ' + goodCount + '件 ・ 👎 悪問 ' + badCount + '件</div>' +
         '<div class="flex flex-wrap gap-3">' +
           '<button type="button" class="quiz-btn-outline" onclick="quizExportFeedback()">📋 フィードバックをエクスポート(チャットに貼り付け用)</button>' +

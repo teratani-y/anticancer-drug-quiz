@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>化学療法誘発性末梢神経障害(CIPN)理解度クイズ 全50問(ランダム10問出題)</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+:root, .viz-root {
+  color-scheme: light;
+  --surface-1: #fcfcfb; --page-plane: #f9f9f7;
+  --text-primary: #0b0b0b; --text-secondary: #52514e; --text-muted: #898781;
+  --gridline: #e1e0d9; --baseline: #c3c2b7;
+  --series-new: #2a78d6; --series-control: #b9b7ae;
+  --good: #0ca30c; --warning: #b9790a; --critical: #d03b3b;
+  --border: rgba(11,11,11,0.10);
+}
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) {
+    color-scheme: dark;
+    --surface-1: #1a1a19; --page-plane: #0d0d0d;
+    --text-primary: #ffffff; --text-secondary: #c3c2b7; --text-muted: #898781;
+    --gridline: #2c2c2a; --baseline: #383835;
+    --series-new: #3987e5; --series-control: #55534c;
+    --good: #0ca30c; --warning: #eab116; --critical: #e66767;
+    --border: rgba(255,255,255,0.10);
+  }
+}
+body { background: var(--page-plane); color: var(--text-primary); font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+.card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+.secondary { color: var(--text-secondary); }
+.muted { color: var(--text-muted); }
+.cat-badge { display:inline-flex; align-items:center; padding:3px 10px; border-radius:9999px; font-size:0.72rem; font-weight:700; background: color-mix(in srgb, var(--series-new) 14%, transparent); color: var(--series-new); }
+.type-badge { display:inline-flex; align-items:center; padding:3px 10px; border-radius:9999px; font-size:0.68rem; font-weight:700; background: color-mix(in srgb, var(--warning) 16%, transparent); color: var(--warning); margin-left:6px; }
+.progress-track { background: var(--gridline); border-radius: 9999px; height: 8px; overflow: hidden; }
+.progress-fill { background: var(--series-new); height: 100%; border-radius: 9999px; transition: width .25s; }
+.quiz-choice { display:block; width:100%; text-align:left; background: var(--page-plane); border: 1.5px solid var(--gridline); border-radius: 10px; padding: 12px 16px; font-size: 0.92rem; cursor: pointer; transition: border-color .12s, background .12s; margin-bottom: 10px; }
+.quiz-choice:last-child { margin-bottom: 0; }
+.quiz-choice:hover:not(:disabled) { border-color: var(--series-new); }
+.quiz-choice:disabled { cursor: default; }
+.quiz-choice.correct { border-color: var(--good); background: color-mix(in srgb, var(--good) 12%, transparent); font-weight: 700; }
+.quiz-choice.wrong { border-color: var(--critical); background: color-mix(in srgb, var(--critical) 10%, transparent); }
+.quiz-choice.selected { border-color: var(--series-new); background: color-mix(in srgb, var(--series-new) 10%, transparent); }
+.quiz-choice-check { display:inline-block; width:16px; }
+.quiz-explain { background: var(--page-plane); border: 1px solid var(--gridline); border-radius: 10px; padding: 14px 16px; margin-top: 14px; font-size: 0.85rem; line-height: 1.7; }
+.quiz-btn { background: var(--series-new); color: #fff; border: none; border-radius: 8px; padding: 10px 22px; font-size: 0.88rem; font-weight: 700; cursor: pointer; }
+.quiz-btn:hover { opacity: 0.9; }
+.quiz-btn:disabled { opacity: 0.4; cursor: default; }
+.quiz-btn-outline { background: transparent; color: var(--series-new); border: 1.5px solid var(--series-new); border-radius: 8px; padding: 9px 20px; font-size: 0.88rem; font-weight: 700; cursor: pointer; }
+.quiz-btn-outline:hover { background: color-mix(in srgb, var(--series-new) 10%, transparent); }
+.score-ring-num { font-size: 2.6rem; font-weight: 800; }
+.cat-result-row { display:flex; align-items:center; gap:10px; margin-bottom: 8px; }
+.cat-result-bar { flex:1; background: var(--gridline); border-radius: 9999px; height: 10px; overflow:hidden; }
+.cat-result-fill { background: var(--series-new); height:100%; border-radius: 9999px; }
+.review-item { border: 1px solid var(--gridline); border-radius: 10px; padding: 12px 14px; margin-bottom: 10px; }
+.review-item:last-child { margin-bottom: 0; }
+.rate-row { display:flex; align-items:center; gap:8px; margin-top:14px; flex-wrap:wrap; }
+.rate-label { font-size:0.75rem; color: var(--text-muted); }
+.rate-btn { background: var(--page-plane); border: 1.5px solid var(--gridline); border-radius: 8px; padding: 6px 12px; font-size: 0.78rem; font-weight:600; cursor:pointer; color: var(--text-secondary); }
+.rate-btn:hover { border-color: var(--series-new); }
+.rate-btn.active-good { border-color: var(--good); background: color-mix(in srgb, var(--good) 14%, transparent); color: var(--good); }
+.rate-btn.active-bad { border-color: var(--critical); background: color-mix(in srgb, var(--critical) 12%, transparent); color: var(--critical); }
+
+/* Compact dosing/timeline diagram, used inside quiz-diagram-area (see neuropathy.html .dg-timeline for the full version) */
+.quiz-diagram-area:empty { display: none; }
+.quiz-diagram-area .dg-timeline { border: 1px solid var(--gridline); border-radius: 8px; padding: 10px 12px 12px; background: var(--page-plane); margin-bottom: 14px; }
+.quiz-diagram-area .dg-tl-title { font-size: 0.76rem; font-weight: 700; color: var(--text-primary); margin-bottom: 8px; }
+.quiz-diagram-area table.dg-tl-table { width: 100%; border-collapse: separate; border-spacing: 3px; font-size: 0.66rem; }
+.quiz-diagram-area table.dg-tl-table th { color: var(--text-muted); font-weight: 700; font-size: 0.58rem; text-transform: uppercase; letter-spacing: .03em; padding: 2px 3px 5px; text-align: center; }
+.quiz-diagram-area table.dg-tl-table th:first-child { text-align: left; }
+.quiz-diagram-area table.dg-tl-table td:first-child { text-align: left; font-weight: 600; color: var(--text-secondary); white-space: nowrap; padding-right: 6px; font-size: 0.64rem; }
+.quiz-diagram-area table.dg-tl-table td { text-align: center; padding: 6px 4px; border-radius: 6px; vertical-align: middle; line-height: 1.25; }
+.quiz-diagram-area td.dg-tl-on { background: color-mix(in srgb, var(--series-new) 14%, transparent); border: 1px solid var(--series-new); color: var(--text-primary); font-weight: 700; }
+.quiz-diagram-area td.dg-tl-on-alt { background: color-mix(in srgb, var(--warning) 16%, transparent); border: 1px dashed var(--warning); color: var(--text-primary); font-weight: 700; }
+.quiz-diagram-area td.dg-tl-off { background: var(--surface-1); border: 1px dashed var(--gridline); color: var(--text-muted); font-weight: 400; }
+.quiz-diagram-area .dg-tl-note { font-size: 0.62rem; color: var(--text-muted); margin-top: 6px; line-height: 1.5; }
+.quiz-diagram-area .dg-tl-legend { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 6px; font-size: 0.6rem; color: var(--text-muted); }
+.quiz-diagram-area .dg-tl-legend span { display: inline-flex; align-items: center; gap: 4px; }
+.quiz-diagram-area .dg-tl-legend i { display: inline-block; width: 9px; height: 9px; border-radius: 3px; }
+.quiz-diagram-area .dg-tl-legend i.on { background: color-mix(in srgb, var(--series-new) 30%, transparent); border: 1px solid var(--series-new); }
+.quiz-diagram-area .dg-tl-legend i.alt { background: color-mix(in srgb, var(--warning) 30%, transparent); border: 1px dashed var(--warning); }
+.quiz-diagram-area .dg-tl-legend i.off { background: var(--surface-1); border: 1px dashed var(--gridline); }
+</style>
+</head>
+<body class="viz-root">
+<div class="max-w-3xl mx-auto px-4 py-8 space-y-5">
+
+  <header class="card">
+    <div class="flex items-center justify-between gap-2 flex-wrap">
+      <div>
+        <h1 class="text-xl font-bold">🧠 化学療法誘発性末梢神経障害(CIPN)理解度クイズ</h1>
+        <p class="text-sm mt-1 secondary">全50問のプールからランダムに10問出題・4択/複数選択混在・医療従事者向け(原因薬剤別リスクと重症度分類・用量調整/休薬基準のタイミング・合併症/症状パターンへの対応・薬剤選択の根拠・コスト制度)</p>
+      </div>
+      <a href="neuropathy.html" class="text-xs" style="color:var(--series-new); text-decoration:none; font-weight:600;">← レポート本文に戻る</a>
+    </div>
+    <p class="text-xs mt-3 muted">出題内容はすべて <a href="neuropathy.html" style="color:var(--series-new);">化学療法誘発性末梢神経障害(CIPN)レポート</a>(本文および「7. 主要薬剤の添付文書情報」)に記載の情報に基づきます。臨床判断には利用せず、学習・自己点検の目的でご利用ください。ページを再読み込みする、または結果画面の「シャッフルしてもう一度」を押すたびに、新しい10問がランダムに選ばれます。</p>
+  </header>
+
+  <!-- Quiz card -->
+  <section class="card" id="quiz-card">
+    <div class="flex items-center justify-between mb-2">
+      <span id="quiz-progress-text" class="text-xs font-semibold muted"></span>
+      <span><span id="quiz-cat-badge" class="cat-badge"></span><span id="quiz-type-badge" class="type-badge" style="display:none;">複数選択</span></span>
+    </div>
+    <div class="progress-track mb-5"><div class="progress-fill" id="quiz-progress-fill" style="width:0%"></div></div>
+
+    <div id="quiz-question-area">
+      <div id="quiz-question-text" class="text-base font-semibold mb-4" style="line-height:1.6;"></div>
+      <div id="quiz-diagram-area" class="quiz-diagram-area"></div>
+      <div id="quiz-choices"></div>
+      <div id="quiz-submit-row" style="display:none;" class="mt-3">
+        <button type="button" class="quiz-btn" id="quiz-submit-btn" onclick="quizSubmitMulti()">この内容で回答する</button>
+      </div>
+      <div id="quiz-explain-area" style="display:none;"></div>
+      <div class="mt-5 flex justify-end">
+        <button type="button" id="quiz-next-btn" class="quiz-btn" style="display:none;" onclick="quizNext()">次の問題 →</button>
+      </div>
+    </div>
+
+    <div id="quiz-result-area" style="display:none;"></div>
+  </section>
+
+</div>
+
+<script>
+  var QUIZ = [
+    // ══════════ 原因薬剤別リスクと重症度分類(14問) ══════════
+    { category: "原因薬剤別リスクと重症度分類", type: "single", q: "タキサン系(パクリタキセル、ドセタキセル)によるCIPNの特徴として正しいのは?",
+      choices: ["主に感覚性で、グローブ&ストッキング型分布の用量依存性・蓄積性ニューロパチーである", "主に自律神経性で起立性低血圧が中心である", "冷感刺激により誘発される急性型が主体である", "運動性の症状のみで感覚性の症状は伴わない"], correct: 0,
+      explain: "タキサン系のCIPNは主に感覚性で、グローブ&ストッキング型分布を示す用量依存性・蓄積性のニューロパチーです。冷感誘発性の急性型はオキサリプラチンに特徴的な所見です。" },
+    { category: "原因薬剤別リスクと重症度分類", type: "single", q: "パクリタキセルとドセタキセルの末梢神経障害の頻度・重症度の傾向として一般的に言われているのは?",
+      choices: ["パクリタキセルの方が高頻度・重度の傾向がある", "ドセタキセルの方が明らかに高頻度・重度である", "両者に差はない", "ドセタキセルでは末梢神経障害は報告されていない"], correct: 0,
+      explain: "同じタキサン系の中では、パクリタキセルはドセタキセルより末梢神経障害が高頻度・重度の傾向があるとされています。" },
+    { category: "原因薬剤別リスクと重症度分類", type: "single", q: "オキサリプラチンによる末梢神経障害が他の原因薬剤クラスと大きく異なる点は?",
+      choices: ["冷感誘発性の急性型と、総投与量依存性の慢性蓄積型という2種類の時間経過の異なる病態を呈する", "運動性の症状しか呈しない", "投与直後から生涯不可逆の症状のみを呈する", "自律神経症状のみを呈する"], correct: 0,
+      explain: "オキサリプラチンは、投与後5日以内に出現し冷感刺激により誘発・悪化する急性型と、総投与量の増加に伴い発現率が上昇する慢性蓄積型という、時間経過の全く異なる2種類の末梢神経障害を呈する点が特徴的です。" },
+    { category: "原因薬剤別リスクと重症度分類", type: "single", q: "シスプラチンによる末梢神経障害が、オキサリプラチンと比較して臨床的に異なる点は?",
+      choices: ["急性冷感誘発性の症状が目立たず、主に感覚性・蓄積性で聴器毒性を合併しやすい", "冷感誘発性の急性症状が主体である", "自律神経症状が主体である", "感覚性の症状を全く伴わない"], correct: 0,
+      explain: "シスプラチンは主に感覚性・蓄積性の末梢神経障害を呈し、オキサリプラチンのような急性冷感誘発性の症状は目立ちません。一方で高頻度の聴器毒性・腎毒性を合併しやすい点が特徴です。" },
+    { category: "原因薬剤別リスクと重症度分類", type: "multi", q: "ビンクリスチンによる末梢神経障害として報告されているものをすべて選べ(2つ選択)",
+      choices: ["感覚性ニューロパチー(知覚異常、知覚消失、神経痛)", "自律神経性ニューロパチー(起立性低血圧、尿閉)", "冷感刺激による急性誘発症状", "皮下投与時のみに出現する症状"], correct: [0, 1],
+      explain: "ビンクリスチンは感覚性・運動性・自律神経性(起立性低血圧、尿閉)が混在する多彩な神経障害パターンを呈します。冷感刺激による急性誘発はオキサリプラチンに特徴的な所見で、ビンクリスチンには該当しません。" },
+    { category: "原因薬剤別リスクと重症度分類", type: "single", q: "ビンクリスチンによる末梢神経障害が他の原因薬剤クラスに比べて特徴的とされる所見は?",
+      choices: ["起立性低血圧・尿閉等の自律神経性ニューロパチーを来しうること", "冷感刺激により誘発されること", "聴器毒性を高頻度に合併すること", "皮下投与により発現頻度が明確に低下すること"], correct: 0,
+      explain: "起立性低血圧・尿閉等の自律神経性ニューロパチーは他の原因薬剤クラスでは比較的まれで、ビンクリスチンに特徴的な所見です。" },
+    { category: "原因薬剤別リスクと重症度分類", type: "single", q: "ボルテゾミブによる末梢性ニューロパチーの添付文書記載上の発現率(代表値)は?",
+      choices: ["末梢性感覚ニューロパチー28.2%", "末梢性感覚ニューロパチー0.1%未満", "末梢性感覚ニューロパチーはほぼ100%に発現する", "発現率は不明とのみ記載されている"], correct: 0,
+      explain: "ボルテゾミブの添付文書には、末梢性感覚ニューロパチーの発現率が28.2%と記載されています。" },
+    { category: "原因薬剤別リスクと重症度分類", type: "single", q: "ボルテゾミブの投与経路と末梢性ニューロパチーの発現頻度の関係として言われているのは?",
+      choices: ["皮下投与は静脈内投与より発現頻度が低いとされる", "皮下投与は静脈内投与より発現頻度が高いとされる", "投与経路による発現頻度の差はない", "経口投与のみが承認されている"], correct: 0,
+      explain: "ボルテゾミブは皮下投与の方が静脈内投与より末梢性ニューロパチーの発現頻度が低いとされ、投与経路選択時の考慮点となります。" },
+    { category: "原因薬剤別リスクと重症度分類", type: "single", q: "CTCAE v5.0における末梢性感覚ニューロパチーGrade1の定義は?",
+      choices: ["症状なし、または臨床所見・検査所見のみ(治療介入は不要)", "中等度の症状で身の回り以外の日常生活動作の制限", "高度の症状で身の回りの日常生活動作の制限", "生命を脅かす状態で緊急処置を要する"], correct: 0,
+      explain: "CTCAE v5.0のGrade1は症状なし、または臨床所見・検査所見のみで治療介入は不要とされる状態です。" },
+    { category: "原因薬剤別リスクと重症度分類", type: "single", q: "CTCAE v5.0における末梢性感覚ニューロパチーGrade3の定義は?",
+      choices: ["高度の症状で、身の回りの日常生活動作(セルフケアADL)の制限がある", "症状なし、または臨床所見のみ", "中等度の症状で身の回り以外の日常生活動作の制限", "生命を脅かす状態で緊急処置を要する"], correct: 0,
+      explain: "Grade3は高度の症状で、身の回りの日常生活動作(セルフケアADL)の制限がある状態と定義されます。Grade4は生命を脅かす状態です。" },
+    { category: "原因薬剤別リスクと重症度分類", type: "single", q: "CTCAE v5.0における末梢性感覚ニューロパチーGrade2の定義は?",
+      choices: ["中等度の症状で、身の回り以外の日常生活動作(道具的ADL)の制限がある", "高度の症状で身の回りの日常生活動作の制限", "症状なし、または臨床所見のみ", "生命を脅かす状態で緊急処置を要する"], correct: 0,
+      explain: "Grade2は中等度の症状で、身の回り以外の日常生活動作(道具的ADL)の制限がある状態です。" },
+    { category: "原因薬剤別リスクと重症度分類", type: "multi", q: "感覚性・運動性・自律神経性のすべての要素が混在する多彩な末梢神経障害パターンを呈するとされる原因薬剤クラスとその代表薬を選べ(2つ選択)",
+      choices: ["ビンカアルカロイド系", "ビンクリスチン", "ボルテゾミブ", "パクリタキセル"], correct: [0, 1],
+      explain: "ビンカアルカロイド系(代表薬ビンクリスチン)は、感覚性・運動性・自律神経性が混在する多彩な神経障害パターンを呈します。ボルテゾミブは主に有痛性の感覚性ニューロパチー、パクリタキセルは主に感覚性のニューロパチーが中心です。" },
+    { category: "原因薬剤別リスクと重症度分類", type: "single", q: "nab-パクリタキセル(アルブミン懸濁型パクリタキセル)の末梢神経障害に関して言われていることは?",
+      choices: ["Cremophor ELを含まない分、通常製剤(溶剤法)と発現プロファイルが異なるとの報告があるが詳細は要確認とされる", "末梢神経障害を全く起こさない", "感覚性の症状は起こさず運動性のみである", "冷感刺激により誘発される"], correct: 0,
+      explain: "nab-パクリタキセルは溶媒(Cremophor EL)を含まない製剤であり、通常のパクリタキセル製剤と末梢神経障害の発現プロファイルが異なるとの報告がありますが、詳細は個別に確認が必要です。" },
+    { category: "原因薬剤別リスクと重症度分類", type: "single", q: "オキサリプラチンの累積投与量と末梢神経障害の発現率の関係として報告されている目安は?",
+      choices: ["780/1,170/1,560mg/m²でそれぞれ約10/50/75%", "投与量に関わらず常に100%に発現する", "累積投与量とは無関係である", "50mg/m²で既に100%に発現する"], correct: 0,
+      explain: "複数の報告に基づく目安として、累積投与量780mg/m²、1,170mg/m²、1,560mg/m²でそれぞれ約10%、50%、75%の発現率が報告されています。" },
+
+    // ══════════ 用量調整・休薬基準のタイミング(9問、うち2問は図表付き) ══════════
+    { category: "用量調整・休薬基準のタイミング", type: "single", q: "オキサリプラチンの急性神経障害はいつ出現するとされているか?(下図参照)",
+      choices: ["投与後5日以内に出現する一過性の症状", "投与後1ヵ月以上経ってから初めて出現する", "投与前にのみ出現する", "総投与量が最大量に達したときのみ出現する"], correct: 0,
+      explain: "添付文書上、急性型は投与後5日以内に出現する一過性の症状とされ、低温・冷たいものへの曝露により誘発・悪化します。多くは投与間欠期に軽快しますが、投与のたびに再燃します。",
+      diagram: '<div class="dg-timeline"><div class="dg-tl-title">オキサリプラチン急性神経障害の時間経過(1コース内)</div><div class="table-scroll"><table class="dg-tl-table"><thead><tr><th>症状</th><th>投与中~直後</th><th>投与後1~2日</th><th>投与後3~5日</th><th>投与後6日目以降</th></tr></thead><tbody>' +
+        '<tr><td>末梢・口周囲のしびれ</td><td class="dg-tl-on">出現・増悪</td><td class="dg-tl-on">持続</td><td class="dg-tl-on-alt">軽快傾向</td><td class="dg-tl-off">消失</td></tr>' +
+        '</tbody></table></div><div class="dg-tl-legend"><span><i class="on"></i>出現・要注意</span><span><i class="alt"></i>軽快傾向</span><span><i class="off"></i>消失</span></div></div>' },
+    { category: "用量調整・休薬基準のタイミング", type: "single", q: "オキサリプラチンの慢性蓄積性神経障害は、急性神経障害と比べてどのような時間経過を示すか?(下図参照)",
+      choices: ["冷感誘発性ではなく、総投与量の増加とともに発現率・重症度が上昇し、休薬後も回復に時間を要することがある", "急性神経障害と全く同じ時間経過で1コース内に消失する", "投与開始直後にのみ一過性に出現する", "投与を継続してもリスクは一定で増加しない"], correct: 0,
+      explain: "慢性蓄積性神経障害は急性型と異なり冷感誘発性ではなく、総投与量の増加とともに発現率・重症度が上昇します。休薬後も回復に時間を要する、または不可逆となることがあります。",
+      diagram: '<div class="dg-timeline"><div class="dg-tl-title">オキサリプラチン慢性蓄積性神経障害の発現率(累積投与量ベース)</div><div class="table-scroll"><table class="dg-tl-table"><thead><tr><th>総投与量の目安</th><th>~780mg/m²</th><th>~1,170mg/m²</th><th>1,560mg/m²以上</th></tr></thead><tbody>' +
+        '<tr><td>発現率の目安</td><td class="dg-tl-on">約10%</td><td class="dg-tl-on-alt">約50%</td><td class="dg-tl-on-alt">約75%</td></tr>' +
+        '</tbody></table></div><div class="dg-tl-legend"><span><i class="on"></i>相対的に低リスク</span><span><i class="alt"></i>相対的に高リスク</span></div></div>' },
+    { category: "用量調整・休薬基準のタイミング", type: "single", q: "ボルテゾミブによる末梢性ニューロパチーがGrade1(疼痛を伴わない)の場合の添付文書上の対応は?",
+      choices: ["用量調整なし", "直ちに投与中止", "1.3mg/m²から1.0mg/m²への減量", "週1回投与への変更"], correct: 0,
+      explain: "ボルテゾミブの添付文書では、Grade1(疼痛を伴わない)の場合は用量調整なしとされています。" },
+    { category: "用量調整・休薬基準のタイミング", type: "single", q: "ボルテゾミブによる末梢性ニューロパチーがGrade1(疼痛を伴う)またはGrade2の場合の対応は?",
+      choices: ["減量(1.3mg/m²→1.0mg/m²、または1.0mg/m²→0.7mg/m²)", "用量調整なし", "直ちに投与中止", "デュロキセチンを併用すれば減量は不要"], correct: 0,
+      explain: "Grade1(疼痛を伴う)またはGrade2の場合は、1.3mg/m²から1.0mg/m²、または1.0mg/m²から0.7mg/m²への減量が行われます。" },
+    { category: "用量調整・休薬基準のタイミング", type: "single", q: "ボルテゾミブによる末梢性ニューロパチーがGrade2(疼痛を伴う)またはGrade3の場合の対応は?",
+      choices: ["回復するまで休薬し、回復後は0.7mg/m²に減量した上で週1回投与に変更して再開する", "用量調整せずそのまま継続する", "直ちに投与中止とし再開しない", "1.0mg/m²へ減量するのみで休薬はしない"], correct: 0,
+      explain: "Grade2(疼痛を伴う)またはGrade3の場合は、回復するまで休薬し、回復した場合は0.7mg/m²に減量した上で週1回投与に変更して再開します。" },
+    { category: "用量調整・休薬基準のタイミング", type: "single", q: "ボルテゾミブによる末梢性ニューロパチーがGrade4に至った場合の対応は?",
+      choices: ["投与中止", "0.7mg/m²・週1回投与への変更", "1.0mg/m²への減量", "経過観察のみ"], correct: 0,
+      explain: "Grade4(生命を脅かす、緊急処置を要する)に至った場合は投与中止となります。" },
+    { category: "用量調整・休薬基準のタイミング", type: "single", q: "パクリタキセルの添付文書における末梢神経障害への対応の考え方は?",
+      choices: ["高度(Grade3)になった場合、軽快又は回復(Grade1以下)まで投与を延期し、次回投与量を減量する", "Grade1の時点で直ちに投与中止する", "末梢神経障害は用量調整の対象とされていない", "症状の程度に関わらず用量は一定に保つ"], correct: 0,
+      explain: "パクリタキセルの添付文書には、症状が高度(Grade3)になった場合には軽快又は回復(Grade1以下)するまで投与を延期し、次回の投与量を減量することが記載されています。" },
+    { category: "用量調整・休薬基準のタイミング", type: "single", q: "オキサリプラチン・タキサン系・ビンクリスチンと、ボルテゾミブの添付文書における末梢神経障害への対応記載の違いは?",
+      choices: ["ボルテゾミブは疼痛の有無を含めたGrade別の詳細な数値基準が明記されているが、他の3クラスは「感覚性の機能障害が現れた場合には減量、休薬、中止等の適切な処置を行う」という一般的な記載にとどまる", "いずれも全く同じ詳細な数値基準が明記されている", "オキサリプラチン・タキサン系・ビンクリスチンの方がより詳細な数値基準を持つ", "いずれも数値基準の記載は一切ない"], correct: 0,
+      explain: "ボルテゾミブは疼痛の有無を含めた詳細なGrade別用量調整基準が添付文書に明記されている点が他の3クラスと異なります。オキサリプラチン・タキサン系・ビンクリスチンは一般的な記載にとどまり、レジメンや施設プロトコルでの補完が必要です。" },
+    { category: "用量調整・休薬基準のタイミング", type: "multi", q: "CTCAE Gradeに基づく一般的な対応の目安として正しい組み合わせをすべて選べ(2つ選択)",
+      choices: ["Grade2: 原因薬剤の減量を検討", "Grade4: 原則中止", "Grade1: 直ちに原因薬剤を中止", "Grade3: そのまま同用量で継続"], correct: [0, 1],
+      explain: "Grade2では原因薬剤の減量を検討し、Grade4では原則中止となります。Grade1は経過観察が基本で直ちに中止する必要はなく、Grade3は軽快(Grade1以下)まで休薬した上で減量することが基本方針です。" },
+
+    // ══════════ 合併症・症状パターンへの対応(12問) ══════════
+    { category: "合併症・症状パターンへの対応", type: "single", q: "オキサリプラチン投与中の患者に対する日常生活指導として適切なものは?",
+      choices: ["冷たい飲み物・氷の使用を避け、低温時には皮膚の露出を避けるよう指導する", "積極的に冷水で手足を冷やすよう指導する", "室温に関する指導は特に必要ない", "熱い飲食物のみを避けるよう指導する"], correct: 0,
+      explain: "オキサリプラチンの急性神経障害は低温・冷たいものへの曝露により誘発・悪化するため、冷たい飲み物や氷の使用を避け、低温時には皮膚の露出を避けることが基本的な患者指導となります。" },
+    { category: "合併症・症状パターンへの対応", type: "single", q: "ビンクリスチンにより自律神経性ニューロパチー(起立性低血圧、尿閉)が疑われた場合の基本方針は?",
+      choices: ["症状に応じて減量、休薬、中止等の適切な処置を行う", "自律神経症状は治療対象外であり経過観察のみとする", "直ちに他クラスの薬剤へ問答無用で切り替える", "デュロキセチンを追加すれば減量は不要である"], correct: 0,
+      explain: "ビンクリスチンの添付文書には、感覚性・運動性・自律神経性のいずれの症状があらわれた場合にも、減量、休薬、中止等の適切な処置を行うことが明記されています。" },
+    { category: "合併症・症状パターンへの対応", type: "single", q: "オキサリプラチンの慢性蓄積性神経障害について、治療終了後の経過として知られていることは?",
+      choices: ["休薬・治療終了後も遅れて改善する例が報告されている", "治療終了と同時に必ず完全に消失する", "治療終了後にむしろ新規に発症することはない", "慢性型は急性型と同じく数日以内に必ず消失する"], correct: 0,
+      explain: "慢性蓄積性神経障害は、治療終了後も回復に時間を要し、遅れて改善する例が報告されています。急性型のように短期間で消失するとは限りません。" },
+    { category: "合併症・症状パターンへの対応", type: "single", q: "シスプラチンによる神経障害で合併しやすいとされる、聴覚に関する有害事象は?",
+      choices: ["聴器毒性(高音域からの聴力低下)", "末梢神経障害とは無関係の中耳炎", "聴覚には影響しない", "低音域からの聴力低下が特徴的である"], correct: 0,
+      explain: "シスプラチンは高頻度の聴器毒性(高音域からの聴力低下)を合併しやすく、末梢神経障害と併せて評価すべき有害事象です。" },
+    { category: "合併症・症状パターンへの対応", type: "single", q: "タキサン系による末梢神経障害の分布として典型的なものは?",
+      choices: ["グローブ&ストッキング型(手袋・靴下型)の分布", "顔面のみに限局する分布", "片側の上肢のみに限局する分布", "口腔内のみに限局する分布"], correct: 0,
+      explain: "タキサン系のCIPNは、手先・足先から始まるグローブ&ストッキング型(手袋・靴下型)の感覚性分布を示すことが典型的です。" },
+    { category: "合併症・症状パターンへの対応", type: "single", q: "ボルテゾミブによる末梢性ニューロパチーで、他クラスと比較して特徴的とされる症状の性質は?",
+      choices: ["疼痛を伴うことが多い感覚性ニューロパチーである", "疼痛を伴わないことがほとんどである", "運動性の症状が主体である", "自律神経性の症状が主体である"], correct: 0,
+      explain: "ボルテゾミブによる末梢性ニューロパチーは、疼痛を伴うことが多い感覚性ニューロパチーが中心である点が特徴です。" },
+    { category: "合併症・症状パターンへの対応", type: "single", q: "オキサリプラチンの急性神経障害でみられる、四肢以外の特異な症状は?",
+      choices: ["咽頭喉頭絞扼感、顎部痛", "視力の完全な消失", "聴力の完全な消失", "四肢以外には症状は出現しない"], correct: 0,
+      explain: "オキサリプラチンの急性神経障害では、四肢のしびれに加えて咽頭喉頭絞扼感や顎部痛等、他の原因薬剤にはあまりみられない特異な症状を伴うことがあります。" },
+    { category: "合併症・症状パターンへの対応", type: "multi", q: "感覚性ニューロパチーの症状として一般的に挙げられるものをすべて選べ(2つ選択)",
+      choices: ["知覚異常(しびれ感)", "知覚消失", "筋力低下", "起立性低血圧"], correct: [0, 1],
+      explain: "知覚異常(しびれ感)、知覚消失、神経痛等は感覚性ニューロパチーの症状です。筋力低下は運動性ニューロパチー、起立性低血圧は自律神経性ニューロパチーの症状に分類されます。" },
+    { category: "合併症・症状パターンへの対応", type: "multi", q: "運動性ニューロパチーの症状として一般的に挙げられるものをすべて選べ(2つ選択)",
+      choices: ["筋力低下", "歩行困難", "知覚異常", "起立性低血圧"], correct: [0, 1],
+      explain: "筋力低下、歩行困難、痙攣、言語障害、筋萎縮等は運動性ニューロパチーの症状です。知覚異常は感覚性、起立性低血圧は自律神経性ニューロパチーに分類されます。" },
+    { category: "合併症・症状パターンへの対応", type: "single", q: "CIPNの評価において、症状の性質(感覚性/運動性/自律神経性)を区別する臨床的な意義は?",
+      choices: ["原因薬剤クラスの推定や重症度評価、対応方針の判断に役立つ", "区別する臨床的意義は特にない", "運動性の症状は常に感覚性より軽症である", "自律神経性の症状は必ず感覚性を伴う"], correct: 0,
+      explain: "症状の性質を区別することで、原因薬剤クラスの推定(例:自律神経症状があればビンクリスチンを疑う)や重症度評価、対応方針の判断に役立ちます。" },
+    { category: "合併症・症状パターンへの対応", type: "single", q: "ビンクリスチンによる脳神経障害として報告されているものは?",
+      choices: ["視神経萎縮、眩暈等の平衡感覚障害", "聴器毒性のみ", "嗅覚障害のみ", "脳神経障害は報告されていない"], correct: 0,
+      explain: "ビンクリスチンでは視神経萎縮、味覚障害、眩暈、眼振等の平衡感覚障害といった脳神経障害、下肢深部反射の減弱・消失も報告されています。" },
+    { category: "合併症・症状パターンへの対応", type: "single", q: "累積投与量が主要なリスク因子となるのはどのタイプの末梢神経障害か?",
+      choices: ["オキサリプラチンの慢性蓄積性神経障害", "オキサリプラチンの急性神経障害", "いずれのタイプも累積投与量とは無関係である", "ボルテゾミブの1回目投与時の症状"], correct: 0,
+      explain: "オキサリプラチンの慢性蓄積性神経障害は、総投与量(累積投与量)が最大のリスク因子です。急性神経障害は冷感刺激によって誘発される一過性の症状であり、累積投与量よりも個々の投与のタイミングに依存します。" },
+
+    // ══════════ 薬剤選択の根拠(デュロキセチン等)(9問) ══════════
+    { category: "薬剤選択の根拠", type: "single", q: "デュロキセチン(サインバルタ)をCIPNによる疼痛に使用することは、日本国内の添付文書上どう位置づけられるか?",
+      choices: ["適応外(効能・効果にCIPNは含まれていない)", "適応内として明記されている", "小児にのみ適応内である", "添付文書に規定がなく判断できない"], correct: 0,
+      explain: "デュロキセチンの効能・効果は「うつ病・うつ状態」「糖尿病性神経障害に伴う疼痛」「線維筋痛症に伴う疼痛」「慢性腰痛症に伴う疼痛」「変形性関節症に伴う疼痛」であり、CIPNは含まれていません。日本国内での使用は適応外使用です。" },
+    { category: "薬剤選択の根拠", type: "single", q: "ASCO2020ガイドラインが既存の有痛性CIPNの治療において位置づけている薬剤は?",
+      choices: ["デュロキセチンをエビデンスに基づき推奨できる唯一の薬剤としている", "プレガバリンを第一選択薬としている", "ガバペンチンを強く推奨している", "アセチル-L-カルニチンを治療の第一選択としている"], correct: 0,
+      explain: "ASCO2020ガイドラインは、Smith et al. JAMA 2013試験のエビデンスに基づき、デュロキセチンを既存の有痛性CIPNの治療において推奨できる唯一の薬剤としています。" },
+    { category: "薬剤選択の根拠", type: "single", q: "Smith et al. JAMA 2013試験の対象患者として正しいのは?",
+      choices: ["タキサン系またはオキサリプラチンによるGrade1以上のCIPNかつ疼痛スコア4/10以上の患者", "ボルテゾミブによるCIPNのみを有する患者", "末梢神経障害のない健常人", "小児がん患者のみ"], correct: 0,
+      explain: "本試験は、タキサン系またはオキサリプラチンによるGrade1以上のCIPNを有し、疼痛スコアが4/10以上の25歳以上の患者231名を対象としました。" },
+    { category: "薬剤選択の根拠", type: "single", q: "Smith et al. JAMA 2013試験におけるデュロキセチンの用法は?",
+      choices: ["1週目1日1回30mg、2~5週目1日2回30mg(1日60mg)", "初日から1日1回60mgを投与", "1日1回200mgを単回投与のみ", "1日3回20mgを継続投与"], correct: 0,
+      explain: "本試験では1週目に1日1回30mg、2週目以降4週間は1日2回30mg(1日60mg)のデュロキセチンが投与されました。" },
+    { category: "薬剤選択の根拠", type: "single", q: "Smith et al. JAMA 2013試験の主要評価項目である疼痛スコアの5週間での変化として正しいのは?",
+      choices: ["デュロキセチン群-1.06点 vs プラセボ群-0.34点(群間差0.73点、P=.003)", "両群とも変化はみられなかった", "プラセボ群の方が有意に改善した", "デュロキセチン群で疼痛が悪化した"], correct: 0,
+      explain: "Brief Pain Inventory-Short Formの平均疼痛スコアはデュロキセチン群で-1.06点、プラセボ群で-0.34点低下し、群間差0.73点(P=.003、効果量0.513)と統計学的に有意な差が認められました。" },
+    { category: "薬剤選択の根拠", type: "single", q: "プレガバリン(リリカ)の日本国内における効能・効果の記載として正しいのは?",
+      choices: ["「神経障害性疼痛」「線維筋痛症に伴う疼痛」であり、原因疾患を限定しない記載である", "「化学療法誘発性末梢神経障害」と明記されている", "「糖尿病性神経障害」のみに限定されている", "がん患者以外への使用は禁忌である"], correct: 0,
+      explain: "プレガバリンの効能・効果は「神経障害性疼痛」「線維筋痛症に伴う疼痛」であり、原因疾患を限定しない記載です。デュロキセチンが「糖尿病性神経障害に伴う疼痛」と原因を限定しているのとは対照的です。" },
+    { category: "薬剤選択の根拠", type: "single", q: "ASCO2020ガイドラインによるプレガバリン(ガバペンチノイド)のCIPNへの使用に関する見解は?",
+      choices: ["予防目的の2件のRCTで有意な効果が示せず、臨床試験の枠組み以外での使用を推奨しない", "予防・治療の両方について強く推奨している", "小児にのみ推奨している", "デュロキセチンより優先して使用すべきとしている"], correct: 0,
+      explain: "パクリタキセル・オキサリプラチンを対象とした2件の予防的RCTでプラセボに対する有意な効果が確認されず、ASCO2020ガイドラインは臨床試験の枠組み以外でのCIPN予防・治療目的の使用を推奨していません。" },
+    { category: "薬剤選択の根拠", type: "single", q: "デュロキセチンとプレガバリンのCIPNへの使用に関する「適応」と「エビデンス」の対比として正しい理解は?",
+      choices: ["デュロキセチンは適応外だがエビデンスがあり、プレガバリンは適応内(神経障害性疼痛)だがCIPNに特化した有効性のエビデンスは確立していない", "両薬剤とも適応内でエビデンスも確立している", "両薬剤とも適応外でエビデンスもない", "デュロキセチンは適応内だがエビデンスがない"], correct: 0,
+      explain: "デュロキセチンは日本の添付文書上CIPNへの使用は適応外ですが、Smith et al. JAMA 2013試験等のエビデンスがあります。一方プレガバリンは「神経障害性疼痛」という広い適応内に含まれ得ますが、CIPNに特化した有効性のエビデンスは確立していません。この非対称性を理解することが重要です。" },
+    { category: "薬剤選択の根拠", type: "single", q: "ASCO2020ガイドラインが、CIPN予防目的でのアセチル-L-カルニチンの使用についてとった立場は?",
+      choices: ["積極的に使用しないことを推奨した", "積極的に使用することを強く推奨した", "小児にのみ使用を推奨した", "特に見解を示していない"], correct: 0,
+      explain: "ASCO2020ガイドラインは、CIPN予防に関して十分な有効性のエビデンスを示した薬剤はないとし、特にアセチル-L-カルニチンについては積極的に使用しないよう推奨しています。" },
+
+    // ══════════ コスト制度・その他(6問) ══════════
+    { category: "コスト制度・その他", type: "single", q: "ボルテゾミブ(ベルケイド注射用3mg)の薬価目安は?",
+      choices: ["約66,114円/瓶(改定時期により差異あり)", "約660円/瓶", "約6,600,000円/瓶", "薬価収載されていない"], correct: 0,
+      explain: "ベルケイド注射用3mgの薬価は約66,114円/瓶とされています(薬価改定の時期・情報源により差異があり要確認)。" },
+    { category: "コスト制度・その他", type: "single", q: "オキサリプラチン(エルプラット点滴静注液100mg)の薬価目安は?",
+      choices: ["約16,840円/瓶", "約168円/瓶", "約1,684,000円/瓶", "無償で提供される"], correct: 0,
+      explain: "エルプラット点滴静注液100mgの薬価は約16,840円/瓶とされています(50mgは約8,074円/瓶、200mgは約21,535円/瓶)。" },
+    { category: "コスト制度・その他", type: "single", q: "デュロキセチン(サインバルタカプセル20mg、先発品)の薬価目安は?",
+      choices: ["約62.3円/カプセル", "約6,230円/カプセル", "約0.6円/カプセル", "約623,000円/カプセル"], correct: 0,
+      explain: "サインバルタカプセル20mg(先発品)の薬価は約62.3円/カプセルとされ、後発品はさらに安価(約23~47円/カプセル)です。" },
+    { category: "コスト制度・その他", type: "single", q: "CIPNの原因薬剤と治療薬(デュロキセチン、プレガバリン)のコスト構造の関係として適切な説明は?",
+      choices: ["治療薬自体は1カプセル数十円程度と安価で、コスト面で意味を持つのは原因薬剤(オキサリプラチン、ボルテゾミブ等)側である", "治療薬の方が原因薬剤より高額である", "両者のコストは常にほぼ同額である", "治療薬は保険適用外である"], correct: 0,
+      explain: "デュロキセチン・プレガバリンはいずれも1カプセルあたり数十円程度と安価で、医療費全体に占める割合は小さい。コスト面で意味を持つのはむしろ高額療養費制度の対象となりやすい原因薬剤(オキサリプラチン、ボルテゾミブ等)側です。" },
+    { category: "コスト制度・その他", type: "single", q: "高額療養費制度において、窓口での支払いを事前に自己負担限度額までに抑えるために取得するとよいものは?",
+      choices: ["限度額適用認定証", "お薬手帳", "健康保険証のコピーのみ", "医療費控除の申告書"], correct: 0,
+      explain: "「限度額適用認定証」を事前に取得すれば、窓口での支払いを暦月ごとの自己負担限度額までに抑えることができます。" },
+    { category: "コスト制度・その他", type: "single", q: "デュロキセチンをCIPNに適応外使用する場合の保険診療上の留意点として適切な理解は?",
+      choices: ["適応外使用であっても保険診療の枠組み自体は否定されないが、審査上の扱いは施設・保険者により異なりうるため個別に確認が必要である", "適応外使用は常に保険適用外(自由診療)となる", "適応外使用は違法であり実施できない", "適応外使用でも査定リスクは一切ない"], correct: 0,
+      explain: "適応外使用であっても保険診療の枠組み自体が直ちに否定されるわけではありませんが、審査上の扱い(査定リスク等)は施設や保険者により異なりうるため、個別に確認することが望ましいとされています。" }
+  ];
+
+  var QUIZ_SESSION_SIZE = 10;
+  var quizOrder = [];     // indices into QUIZ for THIS session (random subset)
+  var quizIndex = 0;
+  var quizAnswers = [];   // per-question(by original index): selected choice index (single) or array of indices (multi)
+  var quizFeedback = {};  // { [questionIndex]: 'good' | 'bad' }
+
+  function quizPickSession() {
+    var all = QUIZ.map(function (_, i) { return i; });
+    quizShuffle(all);
+    quizOrder = all.slice(0, QUIZ_SESSION_SIZE);
+  }
+  function quizShuffle(arr) {
+    for (var i = arr.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = arr[i]; arr[i] = arr[j]; arr[j] = t;
+    }
+    return arr;
+  }
+
+  function quizLoadFeedback() {
+    try {
+      var raw = localStorage.getItem('neuropathyQuizFeedback_v2');
+      quizFeedback = raw ? JSON.parse(raw) : {};
+    } catch (e) { quizFeedback = {}; }
+  }
+  function quizSaveFeedback() {
+    try { localStorage.setItem('neuropathyQuizFeedback_v2', JSON.stringify(quizFeedback)); } catch (e) {}
+  }
+  function quizBuildRatingRow(qi) {
+    var row = document.createElement('div');
+    row.className = 'rate-row';
+    var label = document.createElement('span');
+    label.className = 'rate-label';
+    label.textContent = 'この問題の評価:';
+    var goodBtn = document.createElement('button');
+    goodBtn.type = 'button'; goodBtn.className = 'rate-btn'; goodBtn.textContent = '👍 良問';
+    var badBtn = document.createElement('button');
+    badBtn.type = 'button'; badBtn.className = 'rate-btn'; badBtn.textContent = '👎 悪問';
+    function refresh() {
+      goodBtn.classList.toggle('active-good', quizFeedback[qi] === 'good');
+      badBtn.classList.toggle('active-bad', quizFeedback[qi] === 'bad');
+    }
+    goodBtn.onclick = function () {
+      quizFeedback[qi] = (quizFeedback[qi] === 'good') ? null : 'good';
+      if (!quizFeedback[qi]) delete quizFeedback[qi];
+      quizSaveFeedback(); refresh();
+    };
+    badBtn.onclick = function () {
+      quizFeedback[qi] = (quizFeedback[qi] === 'bad') ? null : 'bad';
+      if (!quizFeedback[qi]) delete quizFeedback[qi];
+      quizSaveFeedback(); refresh();
+    };
+    refresh();
+    row.appendChild(label); row.appendChild(goodBtn); row.appendChild(badBtn);
+    return row;
+  }
+  function quizFallbackCopy(text, done) {
+    var ta = document.createElement('textarea');
+    ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); } catch (e) {}
+    document.body.removeChild(ta);
+    done();
+  }
+  function quizChoiceLabel(item) {
+    return item.choices.join(' / ');
+  }
+  function quizCorrectLabel(item) {
+    if (item.type === 'multi') return item.correct.map(function (i) { return item.choices[i]; }).join(' ＋ ');
+    return item.choices[item.correct];
+  }
+  function quizExportFeedback() {
+    var ratedIdx = Object.keys(quizFeedback);
+    if (ratedIdx.length === 0) {
+      alert('まだ評価された問題がありません。各問題に回答した後に表示される「👍 良問」「👎 悪問」ボタンで評価してから、もう一度お試しください。');
+      return;
+    }
+    var goodList = [], badList = [];
+    ratedIdx.forEach(function (idxStr) {
+      var idx = parseInt(idxStr, 10);
+      var item = QUIZ[idx];
+      if (!item) return;
+      var entry = '・[' + item.category + (item.type === 'multi' ? '/複数選択' : '') + '] ' + item.q + '\n  選択肢: ' + quizChoiceLabel(item) + '\n  正解: ' + quizCorrectLabel(item);
+      if (quizFeedback[idx] === 'good') goodList.push(entry);
+      else if (quizFeedback[idx] === 'bad') badList.push(entry);
+    });
+    var text = '【CIPN(末梢神経障害)クイズ(quiz-neuropathy.html、全50問プール)フィードバック】\n\n' +
+      '良問と評価された問題(' + goodList.length + '件):\n' + (goodList.length ? goodList.join('\n\n') : '(なし)') + '\n\n' +
+      '悪問と評価された問題(' + badList.length + '件) — 改善・差し替えを検討してください:\n' + (badList.length ? badList.join('\n\n') : '(なし)') + '\n\n' +
+      '参照ファイル: artifacts/html/oncology-reports/quiz-neuropathy.html\n\n' +
+      '上記フィードバックを踏まえて、「悪問」と評価された問題をレポート本文(artifacts/html/oncology-reports/neuropathy.html、添付文書情報セクション含む)の内容に基づいて改善・差し替えてください。「良問」と評価された問題は現状を維持してください。';
+    var notify = function () { alert('フィードバックをコピーしました。MulmoClaudeのチャットに貼り付けて送信してください。問題の改善に使います。'); };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(notify).catch(function () { quizFallbackCopy(text, notify); });
+    } else { quizFallbackCopy(text, notify); }
+  }
+  function quizResetFeedback() {
+    if (!confirm('すべての評価をリセットします。よろしいですか?')) return;
+    quizFeedback = {};
+    quizSaveFeedback();
+    alert('評価をリセットしました。');
+  }
+
+  function quizRenderQuestion() {
+    document.getElementById('quiz-result-area').style.display = 'none';
+    document.getElementById('quiz-question-area').style.display = 'block';
+    var qi = quizOrder[quizIndex];
+    var item = QUIZ[qi];
+    document.getElementById('quiz-progress-text').textContent = '問 ' + (quizIndex + 1) + ' / ' + quizOrder.length + '(全' + QUIZ.length + '問中からランダム出題)';
+    document.getElementById('quiz-cat-badge').textContent = item.category;
+    document.getElementById('quiz-type-badge').style.display = (item.type === 'multi') ? 'inline-flex' : 'none';
+    document.getElementById('quiz-progress-fill').style.width = Math.round((quizIndex / quizOrder.length) * 100) + '%';
+    document.getElementById('quiz-question-text').textContent = item.q;
+    document.getElementById('quiz-diagram-area').innerHTML = item.diagram || '';
+    document.getElementById('quiz-explain-area').style.display = 'none';
+    document.getElementById('quiz-explain-area').innerHTML = '';
+    document.getElementById('quiz-next-btn').style.display = 'none';
+    document.getElementById('quiz-submit-row').style.display = 'none';
+
+    var wrap = document.getElementById('quiz-choices');
+    wrap.innerHTML = '';
+
+    if (item.type === 'multi') {
+      var selected = {};
+      item.choices.forEach(function (choiceText, idx) {
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'quiz-choice';
+        btn.innerHTML = '<span class="quiz-choice-check">☐</span> ' + choiceText.replace(/</g, '&lt;');
+        btn.onclick = function () {
+          selected[idx] = !selected[idx];
+          btn.classList.toggle('selected', !!selected[idx]);
+          btn.querySelector('.quiz-choice-check').textContent = selected[idx] ? '☑' : '☐';
+        };
+        wrap.appendChild(btn);
+      });
+      document.getElementById('quiz-submit-row').style.display = 'block';
+      document.getElementById('quiz-submit-btn').onclick = function () {
+        var chosen = Object.keys(selected).filter(function (k) { return selected[k]; }).map(Number);
+        quizAnswerMulti(chosen);
+      };
+    } else {
+      item.choices.forEach(function (choiceText, idx) {
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'quiz-choice';
+        btn.textContent = choiceText;
+        btn.onclick = function () { quizAnswerSingle(idx); };
+        wrap.appendChild(btn);
+      });
+    }
+  }
+
+  function quizFinishQuestion(qi, isCorrect, correctText) {
+    var item = QUIZ[qi];
+    var explainArea = document.getElementById('quiz-explain-area');
+    explainArea.className = 'quiz-explain';
+    explainArea.style.display = 'block';
+    explainArea.innerHTML = '<div style="font-weight:700; margin-bottom:4px; color:' + (isCorrect ? 'var(--good)' : 'var(--critical)') + ';">' +
+      (isCorrect ? '✅ 正解' : '❌ 不正解(正解: ' + correctText + ')') + '</div>' +
+      '<div>' + (item.explain || '') + '</div>';
+    explainArea.appendChild(quizBuildRatingRow(qi));
+    document.getElementById('quiz-submit-row').style.display = 'none';
+    document.getElementById('quiz-next-btn').style.display = 'inline-block';
+    document.getElementById('quiz-next-btn').textContent = (quizIndex === quizOrder.length - 1) ? '結果を見る →' : '次の問題 →';
+  }
+
+  function quizAnswerSingle(selectedIdx) {
+    var qi = quizOrder[quizIndex];
+    var item = QUIZ[qi];
+    quizAnswers[qi] = selectedIdx;
+    var buttons = document.getElementById('quiz-choices').querySelectorAll('.quiz-choice');
+    buttons.forEach(function (btn, idx) {
+      btn.disabled = true;
+      if (idx === item.correct) btn.classList.add('correct');
+      else if (idx === selectedIdx) btn.classList.add('wrong');
+    });
+    quizFinishQuestion(qi, selectedIdx === item.correct, item.choices[item.correct]);
+  }
+
+  function quizSubmitMulti() {
+    var qi = quizOrder[quizIndex];
+    var item = QUIZ[qi];
+    var buttons = document.getElementById('quiz-choices').querySelectorAll('.quiz-choice');
+    var chosen = [];
+    buttons.forEach(function (btn, idx) {
+      if (btn.classList.contains('selected')) chosen.push(idx);
+    });
+    quizAnswerMulti(chosen, buttons, item, qi);
+  }
+
+  function quizAnswerMulti(chosen, buttons, item, qi) {
+    qi = (qi === undefined) ? quizOrder[quizIndex] : qi;
+    item = item || QUIZ[qi];
+    buttons = buttons || document.getElementById('quiz-choices').querySelectorAll('.quiz-choice');
+    quizAnswers[qi] = chosen;
+    var correctSet = item.correct.slice().sort();
+    var chosenSet = chosen.slice().sort();
+    var isCorrect = correctSet.length === chosenSet.length && correctSet.every(function (v, i) { return v === chosenSet[i]; });
+    buttons.forEach(function (btn, idx) {
+      btn.disabled = true;
+      var isRight = item.correct.indexOf(idx) !== -1;
+      var wasChosen = chosen.indexOf(idx) !== -1;
+      if (isRight) btn.classList.add('correct');
+      else if (wasChosen) btn.classList.add('wrong');
+    });
+    quizFinishQuestion(qi, isCorrect, quizCorrectLabel(item));
+  }
+
+  function quizNext() {
+    if (quizIndex < quizOrder.length - 1) {
+      quizIndex++;
+      quizRenderQuestion();
+    } else {
+      quizShowResult();
+    }
+  }
+
+  function quizShowResult() {
+    document.getElementById('quiz-progress-fill').style.width = '100%';
+    document.getElementById('quiz-progress-text').textContent = '完了 ' + quizOrder.length + ' / ' + quizOrder.length;
+    document.getElementById('quiz-cat-badge').textContent = '';
+    document.getElementById('quiz-type-badge').style.display = 'none';
+    document.getElementById('quiz-question-area').style.display = 'none';
+
+    var correctCount = 0;
+    var byCategory = {};
+    quizOrder.forEach(function (qi) {
+      var item = QUIZ[qi];
+      if (!byCategory[item.category]) byCategory[item.category] = { correct: 0, total: 0 };
+      byCategory[item.category].total++;
+      var ans = quizAnswers[qi];
+      var isCorrect;
+      if (item.type === 'multi') {
+        var correctSet = item.correct.slice().sort();
+        var chosenSet = (ans || []).slice().sort();
+        isCorrect = correctSet.length === chosenSet.length && correctSet.every(function (v, i) { return v === chosenSet[i]; });
+      } else {
+        isCorrect = ans === item.correct;
+      }
+      if (isCorrect) { correctCount++; byCategory[item.category].correct++; }
+    });
+    var pct = Math.round((correctCount / quizOrder.length) * 100);
+
+    var catHtml = '';
+    Object.keys(byCategory).forEach(function (cat) {
+      var c = byCategory[cat];
+      var p = Math.round((c.correct / c.total) * 100);
+      catHtml += '<div class="cat-result-row"><span class="text-xs" style="width:150px; flex-shrink:0;">' + cat + '</span>' +
+        '<div class="cat-result-bar"><div class="cat-result-fill" style="width:' + p + '%"></div></div>' +
+        '<span class="text-xs muted" style="width:56px; text-align:right;">' + c.correct + '/' + c.total + '</span></div>';
+    });
+
+    var reviewHtml = '';
+    quizOrder.forEach(function (qi) {
+      var item = QUIZ[qi];
+      var ans = quizAnswers[qi];
+      var isCorrect;
+      var yourAnswerText;
+      if (item.type === 'multi') {
+        var correctSet = item.correct.slice().sort();
+        var chosenSet = (ans || []).slice().sort();
+        isCorrect = correctSet.length === chosenSet.length && correctSet.every(function (v, i) { return v === chosenSet[i]; });
+        yourAnswerText = (ans && ans.length) ? ans.map(function (i) { return item.choices[i]; }).join(' ＋ ') : '(未回答)';
+      } else {
+        isCorrect = ans === item.correct;
+        yourAnswerText = (ans != null) ? item.choices[ans] : '(未回答)';
+      }
+      if (!isCorrect) {
+        reviewHtml += '<div class="review-item">' +
+          '<div class="text-sm font-semibold mb-1">' + item.q + '</div>' +
+          '<div class="text-xs muted mb-2">あなたの回答: ' + yourAnswerText + ' / 正解: ' + quizCorrectLabel(item) + '</div>' +
+          '<div class="text-xs" style="line-height:1.6;">' + (item.explain || '') + '</div>' +
+          '</div>';
+      }
+    });
+    if (!reviewHtml) reviewHtml = '<p class="text-sm secondary">全問正解です。見直しの必要な項目はありません 🎉</p>';
+
+    var goodCount = 0, badCount = 0;
+    Object.keys(quizFeedback).forEach(function (k) {
+      if (quizFeedback[k] === 'good') goodCount++;
+      else if (quizFeedback[k] === 'bad') badCount++;
+    });
+
+    var resultArea = document.getElementById('quiz-result-area');
+    resultArea.style.display = 'block';
+    resultArea.innerHTML =
+      '<div class="text-center mb-6">' +
+        '<div class="score-ring-num" style="color:var(--series-new);">' + correctCount + ' / ' + quizOrder.length + '</div>' +
+        '<div class="text-sm muted mt-1">正答率 ' + pct + '%(全' + QUIZ.length + '問プールから今回ランダム抽出された' + quizOrder.length + '問)</div>' +
+      '</div>' +
+      '<div class="mb-6"><div class="text-sm font-semibold mb-3">カテゴリ別正答率(今回出題分)</div>' + catHtml + '</div>' +
+      '<div class="mb-2 text-sm font-semibold">見直し(不正解・未回答の問題)</div>' +
+      '<div class="mb-6">' + reviewHtml + '</div>' +
+      '<div class="mb-6 pt-4 border-t" style="border-color:var(--gridline);">' +
+        '<div class="text-sm font-semibold mb-2">問題の評価状況(全50問プール通算)</div>' +
+        '<div class="text-xs muted mb-3">👍 良問 ' + goodCount + '件 ・ 👎 悪問 ' + badCount + '件</div>' +
+        '<div class="flex flex-wrap gap-3">' +
+          '<button type="button" class="quiz-btn-outline" onclick="quizExportFeedback()">📋 フィードバックをエクスポート(チャットに貼り付け用)</button>' +
+          '<button type="button" class="quiz-btn-outline" onclick="quizResetFeedback()" style="border-color:var(--critical); color:var(--critical);">🗑 評価をリセット</button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="flex flex-wrap gap-3 justify-center">' +
+        '<button type="button" class="quiz-btn" onclick="quizRestart()">🔀 新しい10問でもう一度</button>' +
+        '<a href="neuropathy.html" class="quiz-btn-outline" style="text-decoration:none; display:inline-block;">レポート本文に戻る</a>' +
+      '</div>';
+  }
+
+  function quizRestart() {
+    quizPickSession();
+    quizIndex = 0;
+    quizAnswers = [];
+    quizRenderQuestion();
+  }
+
+  quizLoadFeedback();
+  quizPickSession();
+  quizRenderQuestion();
+</script>
+
+<footer class="text-center text-xs pb-4" style="color: var(--text-muted);">
+  本クイズは学習・自己点検を目的とした資料です。臨床判断には利用せず、最新の添付文書・ガイドライン原文を優先してください。
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>発熱性好中球減少症(FN)・G-CSF理解度クイズ 全50問(ランダム10問出題)</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+:root, .viz-root {
+  color-scheme: light;
+  --surface-1: #fcfcfb; --page-plane: #f9f9f7;
+  --text-primary: #0b0b0b; --text-secondary: #52514e; --text-muted: #898781;
+  --gridline: #e1e0d9; --baseline: #c3c2b7;
+  --series-new: #2a78d6; --series-control: #b9b7ae;
+  --good: #0ca30c; --warning: #b9790a; --critical: #d03b3b;
+  --border: rgba(11,11,11,0.10);
+}
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) {
+    color-scheme: dark;
+    --surface-1: #1a1a19; --page-plane: #0d0d0d;
+    --text-primary: #ffffff; --text-secondary: #c3c2b7; --text-muted: #898781;
+    --gridline: #2c2c2a; --baseline: #383835;
+    --series-new: #3987e5; --series-control: #55534c;
+    --good: #0ca30c; --warning: #eab116; --critical: #e66767;
+    --border: rgba(255,255,255,0.10);
+  }
+}
+body { background: var(--page-plane); color: var(--text-primary); font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+.card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+.secondary { color: var(--text-secondary); }
+.muted { color: var(--text-muted); }
+.cat-badge { display:inline-flex; align-items:center; padding:3px 10px; border-radius:9999px; font-size:0.72rem; font-weight:700; background: color-mix(in srgb, var(--series-new) 14%, transparent); color: var(--series-new); }
+.type-badge { display:inline-flex; align-items:center; padding:3px 10px; border-radius:9999px; font-size:0.68rem; font-weight:700; background: color-mix(in srgb, var(--warning) 16%, transparent); color: var(--warning); margin-left:6px; }
+.progress-track { background: var(--gridline); border-radius: 9999px; height: 8px; overflow: hidden; }
+.progress-fill { background: var(--series-new); height: 100%; border-radius: 9999px; transition: width .25s; }
+.quiz-choice { display:block; width:100%; text-align:left; background: var(--page-plane); border: 1.5px solid var(--gridline); border-radius: 10px; padding: 12px 16px; font-size: 0.92rem; cursor: pointer; transition: border-color .12s, background .12s; margin-bottom: 10px; }
+.quiz-choice:last-child { margin-bottom: 0; }
+.quiz-choice:hover:not(:disabled) { border-color: var(--series-new); }
+.quiz-choice:disabled { cursor: default; }
+.quiz-choice.correct { border-color: var(--good); background: color-mix(in srgb, var(--good) 12%, transparent); font-weight: 700; }
+.quiz-choice.wrong { border-color: var(--critical); background: color-mix(in srgb, var(--critical) 10%, transparent); }
+.quiz-choice.selected { border-color: var(--series-new); background: color-mix(in srgb, var(--series-new) 10%, transparent); }
+.quiz-choice-check { display:inline-block; width:16px; }
+.quiz-explain { background: var(--page-plane); border: 1px solid var(--gridline); border-radius: 10px; padding: 14px 16px; margin-top: 14px; font-size: 0.85rem; line-height: 1.7; }
+.quiz-btn { background: var(--series-new); color: #fff; border: none; border-radius: 8px; padding: 10px 22px; font-size: 0.88rem; font-weight: 700; cursor: pointer; }
+.quiz-btn:hover { opacity: 0.9; }
+.quiz-btn:disabled { opacity: 0.4; cursor: default; }
+.quiz-btn-outline { background: transparent; color: var(--series-new); border: 1.5px solid var(--series-new); border-radius: 8px; padding: 9px 20px; font-size: 0.88rem; font-weight: 700; cursor: pointer; }
+.quiz-btn-outline:hover { background: color-mix(in srgb, var(--series-new) 10%, transparent); }
+.score-ring-num { font-size: 2.6rem; font-weight: 800; }
+.cat-result-row { display:flex; align-items:center; gap:10px; margin-bottom: 8px; }
+.cat-result-bar { flex:1; background: var(--gridline); border-radius: 9999px; height: 10px; overflow:hidden; }
+.cat-result-fill { background: var(--series-new); height:100%; border-radius: 9999px; }
+.review-item { border: 1px solid var(--gridline); border-radius: 10px; padding: 12px 14px; margin-bottom: 10px; }
+.review-item:last-child { margin-bottom: 0; }
+.rate-row { display:flex; align-items:center; gap:8px; margin-top:14px; flex-wrap:wrap; }
+.rate-label { font-size:0.75rem; color: var(--text-muted); }
+.rate-btn { background: var(--page-plane); border: 1.5px solid var(--gridline); border-radius: 8px; padding: 6px 12px; font-size: 0.78rem; font-weight:600; cursor:pointer; color: var(--text-secondary); }
+.rate-btn:hover { border-color: var(--series-new); }
+.rate-btn.active-good { border-color: var(--good); background: color-mix(in srgb, var(--good) 14%, transparent); color: var(--good); }
+.rate-btn.active-bad { border-color: var(--critical); background: color-mix(in srgb, var(--critical) 12%, transparent); color: var(--critical); }
+
+/* Compact dosing schedule timeline diagram, used inside quiz-diagram-area (see fn.html .dg-timeline for the full version) */
+.quiz-diagram-area:empty { display: none; }
+.quiz-diagram-area .dg-timeline { border: 1px solid var(--gridline); border-radius: 8px; padding: 10px 12px 12px; background: var(--page-plane); margin-bottom: 14px; }
+.quiz-diagram-area .dg-tl-title { font-size: 0.76rem; font-weight: 700; color: var(--text-primary); margin-bottom: 8px; }
+.quiz-diagram-area table.dg-tl-table { width: 100%; border-collapse: separate; border-spacing: 3px; font-size: 0.66rem; }
+.quiz-diagram-area table.dg-tl-table th { color: var(--text-muted); font-weight: 700; font-size: 0.58rem; text-transform: uppercase; letter-spacing: .03em; padding: 2px 3px 5px; text-align: center; }
+.quiz-diagram-area table.dg-tl-table th:first-child { text-align: left; }
+.quiz-diagram-area table.dg-tl-table td:first-child { text-align: left; font-weight: 600; color: var(--text-secondary); white-space: nowrap; padding-right: 6px; font-size: 0.64rem; }
+.quiz-diagram-area table.dg-tl-table td { text-align: center; padding: 6px 4px; border-radius: 6px; vertical-align: middle; line-height: 1.25; }
+.quiz-diagram-area td.dg-tl-on { background: color-mix(in srgb, var(--series-new) 14%, transparent); border: 1px solid var(--series-new); color: var(--text-primary); font-weight: 700; }
+.quiz-diagram-area td.dg-tl-on-alt { background: color-mix(in srgb, var(--warning) 16%, transparent); border: 1px dashed var(--warning); color: var(--text-primary); font-weight: 700; }
+.quiz-diagram-area td.dg-tl-off { background: var(--surface-1); border: 1px dashed var(--gridline); color: var(--text-muted); font-weight: 400; }
+.quiz-diagram-area .dg-tl-note { font-size: 0.62rem; color: var(--text-muted); margin-top: 6px; line-height: 1.5; }
+.quiz-diagram-area .dg-tl-legend { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 6px; font-size: 0.6rem; color: var(--text-muted); }
+.quiz-diagram-area .dg-tl-legend span { display: inline-flex; align-items: center; gap: 4px; }
+.quiz-diagram-area .dg-tl-legend i { display: inline-block; width: 9px; height: 9px; border-radius: 3px; }
+.quiz-diagram-area .dg-tl-legend i.on { background: color-mix(in srgb, var(--series-new) 30%, transparent); border: 1px solid var(--series-new); }
+.quiz-diagram-area .dg-tl-legend i.alt { background: color-mix(in srgb, var(--warning) 30%, transparent); border: 1px dashed var(--warning); }
+.quiz-diagram-area .dg-tl-legend i.off { background: var(--surface-1); border: 1px dashed var(--gridline); }
+</style>
+</head>
+<body class="viz-root">
+<div class="max-w-3xl mx-auto px-4 py-8 space-y-5">
+
+  <header class="card">
+    <div class="flex items-center justify-between gap-2 flex-wrap">
+      <div>
+        <h1 class="text-xl font-bold">🧠 発熱性好中球減少症(FN)・G-CSF理解度クイズ</h1>
+        <p class="text-sm mt-1 secondary">全50問のプールからランダムに10問出題・4択/複数選択混在・医療従事者向け(リスク層別化と一次予防の適応判断・用法用量/投与タイミング・副作用/注意点・MASCC risk index/外来管理判断・コスト制度)</p>
+      </div>
+      <a href="fn.html" class="text-xs" style="color:var(--series-new); text-decoration:none; font-weight:600;">← レポート本文に戻る</a>
+    </div>
+    <p class="text-xs mt-3 muted">出題内容はすべて <a href="fn.html" style="color:var(--series-new);">発熱性好中球減少症(FN)・G-CSF適正使用レポート</a>(本文および「7. 主要薬剤の添付文書情報」)に記載の情報に基づきます。臨床判断には利用せず、学習・自己点検の目的でご利用ください。ページを再読み込みする、または結果画面の「シャッフルしてもう一度」を押すたびに、新しい10問がランダムに選ばれます。</p>
+  </header>
+
+  <!-- Quiz card -->
+  <section class="card" id="quiz-card">
+    <div class="flex items-center justify-between mb-2">
+      <span id="quiz-progress-text" class="text-xs font-semibold muted"></span>
+      <span><span id="quiz-cat-badge" class="cat-badge"></span><span id="quiz-type-badge" class="type-badge" style="display:none;">複数選択</span></span>
+    </div>
+    <div class="progress-track mb-5"><div class="progress-fill" id="quiz-progress-fill" style="width:0%"></div></div>
+
+    <div id="quiz-question-area">
+      <div id="quiz-question-text" class="text-base font-semibold mb-4" style="line-height:1.6;"></div>
+      <div id="quiz-diagram-area" class="quiz-diagram-area"></div>
+      <div id="quiz-choices"></div>
+      <div id="quiz-submit-row" style="display:none;" class="mt-3">
+        <button type="button" class="quiz-btn" id="quiz-submit-btn" onclick="quizSubmitMulti()">この内容で回答する</button>
+      </div>
+      <div id="quiz-explain-area" style="display:none;"></div>
+      <div class="mt-5 flex justify-end">
+        <button type="button" id="quiz-next-btn" class="quiz-btn" style="display:none;" onclick="quizNext()">次の問題 →</button>
+      </div>
+    </div>
+
+    <div id="quiz-result-area" style="display:none;"></div>
+  </section>
+
+</div>
+
+<script>
+  var QUIZ = [
+    // ══════════ リスク層別化と一次予防の適応判断(14問) ══════════
+    { category: "リスク層別化と一次予防の適応判断", type: "single", q: "FN発症率が概ね20%以上と評価されるレジメン(高リスク)に対する国際ガイドライン(NCCN/ASCO/EORTC)共通の推奨は?",
+      choices: ["同等の有効性・安全性を持つG-CSF不要の代替レジメンがない限り、一次予防的G-CSF投与を推奨", "G-CSFは一切使用すべきでない", "FNを発症してから初めてG-CSFを検討する", "MASCCスコアが低リスクの場合のみ投与する"], correct: 0,
+      explain: "高リスク(FN発症率概ね20%以上)のレジメンでは、同等の有効性・安全性を持つG-CSF不要のレジメンが利用可能でない限り、一次予防的G-CSF投与が推奨されます。2026年のASCOガイドライン更新でもこの考え方が踏襲されています。" },
+    { category: "リスク層別化と一次予防の適応判断", type: "single", q: "FN発症率が10~20%程度(中間リスク)のレジメンに対する一次予防的G-CSF投与の考え方は?",
+      choices: ["ルーチンの投与は必須ではなく、患者側リスク因子を考慮して個別に判断する", "高リスクと全く同じ扱いで必ず投与する", "低リスクと全く同じ扱いで投与しない", "MASCCスコアのみで判断する"], correct: 0,
+      explain: "中間リスクのレジメンでは一次予防投与がルーチンに推奨されるわけではなく、高齢、既往FN歴、骨髄浸潤等の患者側リスク因子を有する場合に投与を検討します。" },
+    { category: "リスク層別化と一次予防の適応判断", type: "single", q: "FN発症率が10%未満(低リスク)のレジメンに対する一次予防的G-CSF投与の考え方は?",
+      choices: ["ルーチンの一次予防的G-CSF投与は推奨されない", "必ず一次予防投与を行う", "MASCCスコアが21点未満の場合のみ投与する", "レノグラスチムのみ使用可能"], correct: 0,
+      explain: "低リスクのレジメンでは、ルーチンの一次予防的G-CSF投与は推奨されません。" },
+    { category: "リスク層別化と一次予防の適応判断", type: "multi", q: "一次予防的G-CSF投与の判断に影響する患者側リスク因子として適切なものをすべて選べ(2つ選択)",
+      choices: ["65歳以上で通常量の化学療法を受ける", "前コースでのFN既往", "40歳未満であること", "多量飲酒歴があること"], correct: [0, 1],
+      explain: "65歳以上で治癒を目指した通常量の化学療法を受けること、前コースでのFN既往や用量制限的な好中球減少の経験は、一次予防的G-CSF投与を検討する患者側リスク因子として挙げられます。40歳未満であることや多量飲酒歴はG-CSF投与の判断に関わるリスク因子として一般的には挙げられません。" },
+    { category: "リスク層別化と一次予防の適応判断", type: "single", q: "日本癌治療学会「G-CSF適正使用ガイドライン」第2版(2022年10月改訂)における最大の変更点は?",
+      choices: ["FN発症率20%という固定閾値を廃止し、がん種別のCQに基づく推奨へ転換した", "G-CSFの使用を全面的に禁止した", "MASCCリスクインデックスを新たに導入した", "対象疾患を血液悪性腫瘍のみに限定した"], correct: 0,
+      explain: "第2版は、科学的根拠に乏しいとされた第1版(2013年)のFN発症率20%という一律の固定閾値を廃止し、がん種ごとに設定した46項目のCQ(うち一次予防投与関連24項目)にシステマティックレビューを実施して個別に推奨を提示する方式へ転換しました。" },
+    { category: "リスク層別化と一次予防の適応判断", type: "single", q: "NCCN/ASCO/EORTC等の国際ガイドラインで共通して用いられる、レジメンのFNリスクによる分類区分は?",
+      choices: ["高リスク(概ね≥20%)/中間リスク(10~20%)/低リスク(<10%)", "重症/中等症/軽症の3区分", "Stage I~IVの4区分", "グレード1~5の5区分"], correct: 0,
+      explain: "NCCN・ASCO・EORTCはいずれも、レジメンのFN発症率(G-CSF非投与時)を高リスク(概ね20%以上)・中間リスク(10~20%)・低リスク(10%未満)の3区分に分類する枠組みを用いています。" },
+    { category: "リスク層別化と一次予防の適応判断", type: "single", q: "国内第III相プラセボ対照試験(Kosaka et al, 2015)において、TC療法(ドセタキセル+シクロホスファミド)を受ける乳癌患者はFNリスク分類上どこに位置づけられるか?",
+      choices: ["高リスク(プラセボ群のFN発症率は68.8%と高値)", "低リスク(プラセボ群のFN発症率は5%未満)", "分類不能", "中間リスクで一致している"], correct: 0,
+      explain: "Kosaka試験のプラセボ群ではFN発症率が68.8%と非常に高く、TC療法は高リスクレジメンの代表例として位置づけられます。ペグフィルグラスチム投与群ではFN発症率が1.2%まで抑制されました。" },
+    { category: "リスク層別化と一次予防の適応判断", type: "single", q: "dose-dense(2週間隔)レジメンでG-CSFのサポートが特に必要とされる主な理由は?",
+      choices: ["スケジュール短縮による用量強度の維持のために、好中球回復を早める必要があるため", "G-CSF自体に直接的な抗腫瘍効果があるため", "悪心・嘔吐を防ぐため", "薬価を下げるため"], correct: 0,
+      explain: "dose-dense化学療法は通常の3週間隔より投与間隔を短縮するため、次サイクルまでに好中球数を回復させる必要があり、G-CSFによるサポートが標準的に併用されます。" },
+    { category: "リスク層別化と一次予防の適応判断", type: "single", q: "二次予防投与(secondary prophylaxis)が検討される典型的な場面は?",
+      choices: ["前コースでFN又は用量制限的な好中球減少を経験し、次コース以降のレジメン強度を維持したい場合", "初回コースから予防的に投与する場合", "治療終了後、経過観察のみを行う場合", "MASCCスコアが21点以上の場合"], correct: 0,
+      explain: "二次予防投与は、前コースでFNまたは用量制限的な好中球減少を経験した患者に対し、次コース以降のG-CSF投与によって化学療法の用量強度を維持することを目的として検討されます。" },
+    { category: "リスク層別化と一次予防の適応判断", type: "single", q: "一次予防的G-CSF投与の主な目的として適切なものは?",
+      choices: ["FN発症率の低下、化学療法の用量強度の維持、それに伴う予定外入院・抗菌薬使用の減少", "抗がん薬そのものの腫瘍縮小効果を直接増強すること", "悪心・嘔吐の予防", "肝機能障害の予防"], correct: 0,
+      explain: "G-CSFはあくまで好中球減少症・FNへの支持療法であり、抗腫瘍効果を直接持つものではありません。主な目的はFN発症率の低下と、それに伴う化学療法の用量強度維持、予定外入院・抗菌薬使用の減少です。" },
+    { category: "リスク層別化と一次予防の適応判断", type: "multi", q: "高リスク(FN発症率概ね20%以上)に分類される代表的なレジメンの例として一般的に挙げられるものをすべて選べ(2つ選択)",
+      choices: ["TC療法(ドセタキセル+シクロホスファミド)", "dose-dense AC→T療法(2週間隔)", "通常量の5-FU単独療法", "ビンクリスチン単剤療法"], correct: [0, 1],
+      explain: "TC療法やdose-dense AC→T療法は高リスクレジメンの代表例として挙げられます。5-FU単独やビンクリスチン単剤は一般に骨髄抑制が軽度で低リスクに分類されます。" },
+    { category: "リスク層別化と一次予防の適応判断", type: "single", q: "治癒を目指さない緩和的化学療法において一次予防的G-CSF投与を検討する際に重視される点は?",
+      choices: ["レジメンのFNリスク・患者側リスク因子と、患者のQOL・治療継続の必要性とのバランス", "必ず高リスクレジメンと同じ扱いで投与する", "G-CSFは緩和的治療では一切使用しない", "MASCCスコアのみで判断する"], correct: 0,
+      explain: "緩和的化学療法であっても、レジメンのFNリスクが高ければ一次予防投与の適応は同様に検討されます。治療の目的(治癒的か緩和的か)にかかわらず、レジメンのリスクと患者側因子、QOL・治療継続の必要性を総合的に判断します。" },
+    { category: "リスク層別化と一次予防の適応判断", type: "single", q: "MASCCリスクインデックスとレジメン単位のFNリスク分類(高/中間/低リスク)の関係として正しい記述は?",
+      choices: ["MASCCは既にFNを発症した患者の管理方針判定に用いるもので、化学療法開始前の一次予防投与の適応判断(レジメンのリスク分類)とは異なる評価軸である", "両者は全く同じ目的で使われる", "MASCCスコアが高ければ一次予防投与は不要と判断できる", "レジメンのリスク分類はMASCCスコアから自動的に算出される"], correct: 0,
+      explain: "レジメン単位のFNリスク分類は化学療法開始前の一次予防投与の適応を判断するためのものであり、MASCCリスクインデックスは既にFNを発症した患者の重症度評価・外来管理適応の判断に用いるものです。目的が異なる評価軸である点に注意が必要です。" },
+    { category: "リスク層別化と一次予防の適応判断", type: "single", q: "標準的な急性骨髄性白血病(AML)の寛解導入療法は、一般的にFNリスク分類上どこに位置づけられるか?",
+      choices: ["高リスク(強い骨髄抑制を伴うため)", "低リスク", "分類対象外", "常に中間リスクに固定される"], correct: 0,
+      explain: "標準的なAML寛解導入療法は強い骨髄抑制を伴うため、高リスクレジメンの代表例のひとつとして扱われます。" },
+
+    // ══════════ 用法用量・投与タイミング(9問、うち2問は図表付き) ══════════
+    { category: "用法用量・投与タイミング", type: "single", q: "フィルグラスチム(グラン)の連日投与を化学療法終了後いつから開始するのが添付文書上のルールか?(下図参照)",
+      choices: ["化学療法剤投与終了後24時間以降(24時間以内の投与は避ける)", "化学療法剤投与終了直後(同日中)", "化学療法剤投与開始と同時", "いつ開始してもよい"], correct: 0,
+      explain: "添付文書には「がん化学療法剤の投与前24時間以内及び投与終了後24時間以内の本剤の投与は避けること」と規定されています。増殖中の骨髄前駆細胞が化学療法の影響を受け、好中球減少がかえって増悪することを避けるためとされます。",
+      diagram: '<div class="dg-timeline"><div class="dg-tl-title">フィルグラスチム連日投与の開始タイミング</div><div class="table-scroll"><table class="dg-tl-table"><thead><tr><th>薬剤</th><th>Day1(化学療法)</th><th>Day2(24h以内)</th><th>Day3以降</th></tr></thead><tbody>' +
+        '<tr><td>化学療法剤</td><td class="dg-tl-on">投与</td><td class="dg-tl-off">—</td><td class="dg-tl-off">—</td></tr>' +
+        '<tr><td>フィルグラスチム</td><td class="dg-tl-off">投与しない</td><td class="dg-tl-off">投与しない</td><td class="dg-tl-on">開始(24時間経過後)</td></tr>' +
+        '</tbody></table></div><div class="dg-tl-legend"><span><i class="on"></i>投与する</span><span><i class="off"></i>投与しない</span></div></div>' },
+    { category: "用法用量・投与タイミング", type: "single", q: "ペグフィルグラスチム(ジーラスタ)の、がん化学療法による発熱性好中球減少症の発症抑制における用法及び用量は?",
+      choices: ["3.6mgを化学療法1サイクルあたり1回皮下投与", "3.6mgを1日1回、5日間連日皮下投与", "7.2mgを化学療法1サイクルあたり1回皮下投与", "36mgを1回静脈内投与"], correct: 0,
+      explain: "通常、成人にはペグフィルグラスチムとして3.6mgを、がん化学療法剤の1投与サイクルあたり1回皮下投与します。7.2mgは造血幹細胞の末梢血中への動員という別の適応での用量です。" },
+    { category: "用法用量・投与タイミング", type: "single", q: "ペグフィルグラスチムは次サイクルの化学療法開始前、いつまでに投与しておく必要があるか(下図参照、添付文書上の安全性未確立の期間に基づく)?",
+      choices: ["次サイクルの化学療法開始10日以上前まで(10日以内の投与は安全性未確立)", "次サイクルの化学療法開始当日でよい", "次サイクルの化学療法開始1ヵ月以上前まで", "いつ投与してもよく制約はない"], correct: 0,
+      explain: "添付文書には「がん化学療法剤の投与開始10日前から投与終了後24時間以内に本剤を投与した場合の安全性は確立していない」と規定されています。単回投与で1サイクル分をカバーする持続型製剤であるため、次サイクル開始に近い時期の投与は避ける必要があります。",
+      diagram: '<div class="dg-timeline"><div class="dg-tl-title">ペグフィルグラスチムと次サイクル開始前の投与制限</div><div class="table-scroll"><table class="dg-tl-table"><thead><tr><th></th><th>次サイクル開始<br>10日以上前</th><th>次サイクル開始<br>10日前~当日</th></tr></thead><tbody>' +
+        '<tr><td>ペグフィルグラスチム投与</td><td class="dg-tl-on">投与可能な期間</td><td class="dg-tl-off">安全性未確立<br>(投与を避ける)</td></tr>' +
+        '</tbody></table></div><div class="dg-tl-legend"><span><i class="on"></i>投与可能</span><span><i class="off"></i>投与を避ける</span></div></div>' },
+    { category: "用法用量・投与タイミング", type: "single", q: "フィルグラスチムを悪性リンパ腫・小細胞肺癌等の好中球減少症に用いる場合の皮下投与量は?",
+      choices: ["50μg/m²を1日1回", "500μg/m²を1日1回", "5μg/m²を1日1回", "50mg/m²を1日1回"], correct: 0,
+      explain: "悪性リンパ腫、小細胞肺癌等では、通常フィルグラスチムとして50μg/m²を1日1回皮下投与します(皮下投与が困難な場合は100μg/m²を1日1回静脈内投与)。" },
+    { category: "用法用量・投与タイミング", type: "single", q: "レノグラスチムをその他のがん腫の好中球減少症に用いる場合の皮下投与用量および開始基準は?",
+      choices: ["2μg/kgを1日1回皮下投与、好中球数1,000/mm³未満で発熱又は500/mm³未満となった時点から開始", "20μg/kgを1日1回皮下投与、好中球数が正常化してから開始", "0.2μg/kgを1日1回皮下投与、開始基準の定めはない", "2mg/kgを1日1回皮下投与"], correct: 0,
+      explain: "その他のがん腫では、好中球数が1,000/mm³未満で発熱を伴う場合、又は500/mm³未満となった時点から、通常2μg/kgを1日1回皮下投与します。" },
+    { category: "用法用量・投与タイミング", type: "single", q: "ペグフィルグラスチムの造血幹細胞の末梢血中への動員を目的とした用量は?",
+      choices: ["7.2mgを1回皮下投与(発熱性好中球減少症の発症抑制目的の3.6mgとは異なる)", "3.6mgを1日2回皮下投与", "0.72mgを1回皮下投与", "72mgを1回静脈内投与"], correct: 0,
+      explain: "造血幹細胞の末梢血中への動員を目的とする場合は7.2mgを1回皮下投与します。がん化学療法による発熱性好中球減少症の発症抑制を目的とする場合の3.6mgとは適応・用量が異なる点に注意が必要です。" },
+    { category: "用法用量・投与タイミング", type: "single", q: "ペグフィルグラスチム投与後、末梢血幹細胞採取を行う目安の日数(造血幹細胞動員の適応)は?",
+      choices: ["本剤投与日を1日目として4~6日目を目安に施行", "投与当日(1日目)のみ", "投与後30日目以降", "投与後1日目から毎日連続して施行"], correct: 0,
+      explain: "添付文書の用法及び用量に関連する注意には、本剤投与日を1日目として、末梢血幹細胞採取は4~6日目を目安に施行することが記載されています。" },
+    { category: "用法用量・投与タイミング", type: "single", q: "フィルグラスチムを急性白血病の好中球減少症に用いる場合、投与開始の目安として添付文書に記載されている条件は?",
+      choices: ["化学療法剤投与終了後(翌日以降)で、骨髄中の芽球が十分減少し末梢血液中に芽球が認められない時点から", "化学療法剤投与開始と同時に無条件で開始", "白血球数が50,000/mm³を超えた時点から", "投与終了後1ヵ月経過してから"], correct: 0,
+      explain: "急性白血病では、がん化学療法剤投与終了後(翌日以降)で骨髄中の芽球が十分減少し末梢血液中に芽球が認められない時点から投与を開始することとされています。" },
+    { category: "用法用量・投与タイミング", type: "multi", q: "フィルグラスチム・レノグラスチムに共通する「用法及び用量に関連する注意」として正しいものをすべて選べ(該当するものをすべて選択、実際は1つ)",
+      choices: ["がん化学療法剤の投与前24時間以内及び投与終了後24時間以内の投与を避ける", "化学療法剤投与開始10日前からの投与を避ける(ペグフィルグラスチムのみの規定)", "1回の投与で1サイクル分の効果をカバーするよう設計されている(ペグフィルグラスチムの特徴)", "末梢血幹細胞採取は投与後4~6日目を目安に施行する(ペグフィルグラスチムの動員適応の規定)"], correct: [0],
+      explain: "「がん化学療法剤の投与前24時間以内及び投与終了後24時間以内の投与を避けること」はフィルグラスチム・レノグラスチムに共通する連日投与タイプの注意です。10日前ルールや単回投与での1サイクルカバー、4~6日目の幹細胞採取はいずれもペグフィルグラスチムに特有の記載であり、連日投与タイプには当てはまりません。" },
+
+    // ══════════ 副作用・注意点(12問) ══════════
+    { category: "副作用・注意点", type: "single", q: "発熱性好中球減少症(FN)の定義における好中球数(ANC)基準は?(IDSA 2010年アップデート版に基づく代表的な定義)",
+      choices: ["500/μL未満、又は1,000/μL未満で48時間以内に500/μL未満に低下すると予測される状態", "1,500/μL未満であれば常に該当", "白血球数(WBC)が3,000/μL未満", "血小板数が10万/μL未満"], correct: 0,
+      explain: "IDSA 2010年アップデート版(Freifeld et al, 2011)に基づく代表的な定義では、ANC500/μL未満、又は1,000/μL未満で48時間以内に500/μL未満に低下すると予測される状態が好中球数の基準とされます。" },
+    { category: "副作用・注意点", type: "single", q: "発熱性好中球減少症(FN)の定義における体温基準は?",
+      choices: ["口腔温38.3℃以上を1回、又は38.0℃以上が1時間以上持続", "口腔温37.0℃以上を1回でも満たせば該当", "体温基準は定められていない", "腋窩温40.0℃以上のみが該当"], correct: 0,
+      explain: "IDSAの代表的な定義では、口腔温38.3℃以上を1回、又は38.0℃以上が1時間以上持続することが体温基準とされます。施設によっては腋窩温を用いる等、運用に幅がある場合があります。" },
+    { category: "副作用・注意点", type: "single", q: "フィルグラスチム・ペグフィルグラスチム・レノグラスチムに共通する添付文書上の禁忌病態は?",
+      choices: ["骨髄中の芽球が十分減少していない骨髄性白血病の患者", "腎機能障害のある患者すべて", "妊婦すべて", "70歳以上の患者すべて"], correct: 0,
+      explain: "3剤いずれも、骨髄中の芽球が十分減少していない(又は末梢血液中に骨髄芽球が認められる)骨髄性白血病の患者への投与が禁忌とされています(レノグラスチムでは再発・難治性AMLへの併用療法等、一部例外規定あり)。" },
+    { category: "副作用・注意点", type: "single", q: "G-CSF投与で比較的高頻度にみられ、NSAIDs等で対症療法されることが多い副作用は?",
+      choices: ["骨痛(骨・関節痛)", "重度の下痢", "口内炎", "手足症候群"], correct: 0,
+      explain: "骨痛(骨・関節痛)は骨髄での造血細胞増殖に伴うと考えられ、G-CSF製剤で比較的高頻度にみられる副作用です。NSAIDsやアセトアミノフェン等による対症療法が中心となります。" },
+    { category: "副作用・注意点", type: "single", q: "G-CSFの重大な副作用として添付文書に記載されている、急激な体重増加・低血圧・浮腫・血液濃縮を特徴とする病態は?",
+      choices: ["毛細血管漏出症候群", "腫瘍崩壊症候群", "セロトニン症候群", "インフュージョンリアクション"], correct: 0,
+      explain: "毛細血管漏出症候群は、急激な体重増加・低血圧・浮腫・血液濃縮を特徴とする重大な副作用として3剤共通で添付文書に記載されています。重篤化すると多臓器不全に至ることがあります。" },
+    { category: "副作用・注意点", type: "single", q: "G-CSF投与中に左上腹部痛・肩への放散痛が出現した場合に鑑別すべき重大な副作用は?",
+      choices: ["脾腫・脾破裂", "間質性肺疾患", "毛細血管漏出症候群", "アナフィラキシー"], correct: 0,
+      explain: "左上腹部痛や肩への放散痛は脾腫・脾破裂を疑う重要な症状であり、G-CSF製剤の重大な副作用として記載されています。まれですが重篤な有害事象です。" },
+    { category: "副作用・注意点", type: "single", q: "G-CSF投与中の発熱・咳嗽・呼吸困難で疑うべき重大な副作用は?",
+      choices: ["間質性肺疾患・急性呼吸窮迫症候群", "腫瘍崩壊症候群", "骨痛", "脾破裂"], correct: 0,
+      explain: "間質性肺疾患・急性呼吸窮迫症候群は3剤いずれの添付文書にも重大な副作用として記載されており、発熱・咳嗽・呼吸困難等の症状出現時は投与中止のうえ画像検査等での評価が必要です。" },
+    { category: "副作用・注意点", type: "single", q: "G-CSFと二次発がんリスクに関する現在の理解として適切な記述は?",
+      choices: ["G-CSF単独投与による二次性AML・MDS発症リスクの明確な増加は、大規模試験を通じて一貫して確立されているとまでは言えない", "G-CSF投与により二次性AMLの発症リスクが確実に、かつ大幅に増加することが証明されている", "G-CSFはむしろ発がんリスクを低下させることが証明されている", "この点についての研究は一切行われていない"], correct: 0,
+      explain: "G-CSF単独投与による二次性AML・骨髄異形成症候群の発症リスクの明確な増加は、大規模臨床試験を通じて一貫して確立されているとまでは言えないとされており、dose-dense化学療法自体の骨髄毒性との切り分けを含め継続的な評価が必要とされています。" },
+    { category: "副作用・注意点", type: "single", q: "ペグフィルグラスチムの添付文書にフィルグラスチム・レノグラスチムと異なり記載されている重大な副作用として挙げられるものは?",
+      choices: ["Sweet症候群、皮膚血管炎", "骨痛", "ショック・アナフィラキシー", "毛細血管漏出症候群"], correct: 0,
+      explain: "ペグフィルグラスチムの添付文書には、Sweet症候群や皮膚血管炎が重大な副作用として記載されています。骨痛・ショック・アナフィラキシー・毛細血管漏出症候群は3剤に概ね共通する記載です。" },
+    { category: "副作用・注意点", type: "single", q: "フィルグラスチム・ペグフィルグラスチム・レノグラスチムの添付文書における「相互作用」の項の記載状況は?",
+      choices: ["いずれの製剤も、明記された「相互作用」の項目はない", "いずれの製剤もワルファリンとの併用禁忌が明記されている", "いずれの製剤もCYP3A4阻害薬との相互作用が詳細に記載されている", "いずれの製剤も他のG-CSF製剤との併用が禁忌とされている"], correct: 0,
+      explain: "フィルグラスチム・ペグフィルグラスチム・レノグラスチムのいずれの添付文書にも、明記された「相互作用」の項目はありません。" },
+    { category: "副作用・注意点", type: "single", q: "G-CSF投与中の「芽球の増加」という重大な副作用が特に注意喚起されている患者背景は?",
+      choices: ["骨髄異形成症候群や白血病等、芽球を有する疾患の患者", "健康な骨髄機能を持つ固形がん患者", "高齢者全般", "肥満のある患者"], correct: 0,
+      explain: "「芽球の増加」は、骨髄異形成症候群や白血病等、芽球を有する疾患の患者で特に注意喚起されている重大な副作用であり、禁忌病態(骨髄性白血病)とも関連する注意事項です。" },
+    { category: "副作用・注意点", type: "multi", q: "フィルグラスチム・ペグフィルグラスチム・レノグラスチムの3剤に概ね共通して添付文書上「重大な副作用」として記載されているものをすべて選べ(2つ選択)",
+      choices: ["ショック・アナフィラキシー", "間質性肺疾患(間質性肺炎)", "高血糖・糖尿病性ケトアシドーシス", "手足症候群"], correct: [0, 1],
+      explain: "ショック・アナフィラキシーおよび間質性肺疾患(間質性肺炎)は3剤に概ね共通して記載される重大な副作用です。高血糖・糖尿病性ケトアシドーシスはオランザピン等、手足症候群はVEGFR阻害薬クラス等に特徴的な副作用で、G-CSF製剤の記載ではありません。" },
+
+    // ══════════ MASCC risk index・外来管理判断(9問) ══════════
+    { category: "MASCC risk index・外来管理判断", type: "single", q: "MASCCリスクインデックスの主な目的として正しいものは?",
+      choices: ["既にFNを発症した患者の中で、重篤な合併症の低リスク群を同定し外来治療の適応を判断する", "化学療法開始前にレジメンのFN発症リスクを分類する", "好中球数そのものを直接予測する", "G-CSFの用量を決定する"], correct: 0,
+      explain: "MASCCリスクインデックスは、化学療法開始前のレジメン単位のリスク分類とは異なり、既にFNを発症した患者を対象に外来治療(経口抗菌薬)の適応を判断するためのスコアです。" },
+    { category: "MASCC risk index・外来管理判断", type: "single", q: "MASCCリスクインデックスの満点と、低リスクと判定されるカットオフ値は?",
+      choices: ["満点26点、21点以上が低リスク", "満点100点、80点以上が低リスク", "満点10点、5点以上が低リスク", "満点26点、10点以上が低リスク"], correct: 0,
+      explain: "MASCCリスクインデックスは7項目の合計で満点26点となり、21点以上を低リスク、21点未満を高リスクと判定します(原著: Klastersky et al, J Clin Oncol 2000)。" },
+    { category: "MASCC risk index・外来管理判断", type: "multi", q: "MASCCリスクインデックスの項目のうち、該当時に最も配点の大きい5点が付与される項目をすべて選べ(2つ選択)",
+      choices: ["症状の重症度がなし/軽度であること", "低血圧を認めないこと", "年齢が60歳未満であること", "外来患者であること"], correct: [0, 1],
+      explain: "症状の重症度(なし/軽度)と低血圧を認めないことは、それぞれ+5点と最も配点の大きい項目です。年齢60歳未満は+2点、外来患者であることは+3点です。" },
+    { category: "MASCC risk index・外来管理判断", type: "single", q: "MASCCリスクインデックスにおいて年齢はどのように評価されるか?",
+      choices: ["60歳未満で+2点(60歳以上は加点なし)", "65歳未満で+10点", "年齢は評価項目に含まれない", "80歳未満で+2点"], correct: 0,
+      explain: "MASCCリスクインデックスでは、年齢60歳未満の場合に+2点が付与されます(60歳以上は加点なし)。" },
+    { category: "MASCC risk index・外来管理判断", type: "single", q: "MASCCリスクインデックスにおいて、発熱時の状態が外来患者であることはどのように評価されるか?",
+      choices: ["+3点(入院患者の場合は加点なし)", "-5点(減点される)", "評価項目に含まれない", "+10点で最大配点となる"], correct: 0,
+      explain: "発熱時に外来患者であることは+3点が付与されます(入院患者であった場合は加点なし)。" },
+    { category: "MASCC risk index・外来管理判断", type: "single", q: "MASCCリスクインデックスにおいて、がん種の評価で最も加点されるのはどのような場合か?",
+      choices: ["固形がん、又は真菌感染既往のない血液悪性腫瘍(+4点)", "血液悪性腫瘍で真菌感染既往がある場合(+4点)", "がん種に関わらず一律0点", "固形がんのみ加点され血液悪性腫瘍は常に0点"], correct: 0,
+      explain: "固形がん、又は真菌感染既往のない血液悪性腫瘍の場合に+4点が付与されます。真菌感染既往のある血液悪性腫瘍の場合は加点されません(0点)。" },
+    { category: "MASCC risk index・外来管理判断", type: "single", q: "MASCCスコアで低リスク(21点以上)と判定された場合に検討されうる対応は?",
+      choices: ["経口抗菌薬による外来治療(ただし個々の患者の支持体制等も含めた総合判断による)", "無条件に抗菌薬治療を中止する", "必ず集中治療室(ICU)へ入室させる", "G-CSFの投与を中止する"], correct: 0,
+      explain: "MASCCスコアで低リスクと判定された場合、経口抗菌薬による外来治療の適応が検討されますが、実際の外来/入院の判断は支持体制・通院可能性等も含めた総合的な評価によります。" },
+    { category: "MASCC risk index・外来管理判断", type: "single", q: "MASCCスコアで高リスク(21点未満)と判定された場合の基本的な対応は?",
+      choices: ["入院の上、経静脈抗菌薬による治療が基本となる", "外来での経過観察のみでよい", "抗菌薬治療は不要である", "G-CSFのみで対応し抗菌薬は使用しない"], correct: 0,
+      explain: "MASCCスコアで高リスクと判定された場合は、入院のうえ経静脈抗菌薬による治療が基本的な対応となります。" },
+    { category: "MASCC risk index・外来管理判断", type: "single", q: "MASCCリスクインデックスの原著論文はどの雑誌に発表されたか?",
+      choices: ["Journal of Clinical Oncology(2000年、Klastersky et al.)", "New England Journal of Medicine(1995年)", "Lancet Oncology(2010年)", "Nature Medicine(2005年)"], correct: 0,
+      explain: "MASCCリスクインデックスの原著は、Klastersky J, et al. の論文としてJournal of Clinical Oncology誌(2000年、18巻16号、3038-3051ページ)に発表されています。" },
+
+    // ══════════ コスト制度・その他(6問) ══════════
+    { category: "コスト制度・その他", type: "single", q: "フィルグラスチム(グラン注射液75)の薬価の目安は?",
+      choices: ["約6,300~6,500円/瓶", "約63円/瓶", "約630,000円/瓶", "薬価収載されていない"], correct: 0,
+      explain: "グラン注射液75(フィルグラスチム75μg製剤)の薬価は約6,300~6,500円/瓶とされています(情報源により差異あり)。" },
+    { category: "コスト制度・その他", type: "single", q: "ペグフィルグラスチム(ジーラスタ皮下注3.6mg)の薬価の目安は?",
+      choices: ["約77,753円/筒", "約7,775円/筒", "約777,530円/筒", "無償で提供される"], correct: 0,
+      explain: "ジーラスタ皮下注3.6mgの薬価は約77,753円/筒とされています(オンボディインジェクター〔ボディーポッド〕製剤は約90,969円/キット)。" },
+    { category: "コスト制度・その他", type: "single", q: "レノグラスチム(ノイトロジン注50μg)の薬価の目安は?",
+      choices: ["約2,286円/瓶", "約22,860円/瓶", "約228円/瓶", "約228,600円/瓶"], correct: 0,
+      explain: "ノイトロジン注50μgの薬価は約2,286円/瓶とされています。" },
+    { category: "コスト制度・その他", type: "single", q: "フィルグラスチムのバイオシミラー(フィルグラスチムBS)使用のメリットとして一般的に挙げられるのは?",
+      choices: ["先発品より薬剤費を抑えられる可能性がある", "先発品より効能・効果の範囲が広い", "連日投与が不要になる", "禁忌がすべて解除される"], correct: 0,
+      explain: "バイオシミラー(フィルグラスチムBS、ペグフィルグラスチムBS)は先発品との有効性・安全性の同等性が確認された上で、先発品より薬剤費を抑えられる傾向があります。効能・効果、用法及び用量は原則として先発品と同一です。" },
+    { category: "コスト制度・その他", type: "single", q: "連日投与(フィルグラスチム等)と単回投与(ペグフィルグラスチム)のコスト比較で考慮すべき点として適切なものは?",
+      choices: ["薬剤単価だけでなく、投与日数分の通院・注射手技にかかる医療資源・患者負担も含めて総合的に評価する必要がある", "単回投与は薬剤単価が常に安いため、コスト面で一方的に優れる", "連日投与は通院回数が常に少ない", "コストの観点からは両者に違いはない"], correct: 0,
+      explain: "単回投与(ペグフィルグラスチム)は1回あたりの薬価は高額ですが通院・注射回数が少なく済み、連日投与(フィルグラスチム等)は1回あたりの薬価は安価ですが投与日数分が積算されます。薬剤費だけでなく通院負担等も含めた総合評価が必要です。" },
+    { category: "コスト制度・その他", type: "single", q: "高額療養費制度とG-CSF製剤のコストの関係として適切な説明は?",
+      choices: ["G-CSF製剤単独よりも、併用される抗悪性腫瘍剤全体の医療費が制度適用の主因となることが多い", "G-CSF製剤のみで必ず高額療養費制度の対象になる", "高額療養費制度はG-CSF製剤には一切適用されない", "G-CSF製剤は保険適用外である"], correct: 0,
+      explain: "高額療養費制度は暦月ごとの医療費自己負担合計額に対して適用されるものであり、G-CSF製剤単独よりも、併用される分子標的薬・免疫チェックポイント阻害薬等を含む抗悪性腫瘍剤全体の薬剤費が制度適用の主因となることが一般的です。" }
+  ];
+
+  var QUIZ_SESSION_SIZE = 10;
+  var quizOrder = [];     // indices into QUIZ for THIS session (random subset)
+  var quizIndex = 0;
+  var quizAnswers = [];   // per-question(by original index): selected choice index (single) or array of indices (multi)
+  var quizFeedback = {};  // { [questionIndex]: 'good' | 'bad' }
+
+  function quizPickSession() {
+    var all = QUIZ.map(function (_, i) { return i; });
+    quizShuffle(all);
+    quizOrder = all.slice(0, QUIZ_SESSION_SIZE);
+  }
+  function quizShuffle(arr) {
+    for (var i = arr.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = arr[i]; arr[i] = arr[j]; arr[j] = t;
+    }
+    return arr;
+  }
+
+  function quizLoadFeedback() {
+    try {
+      var raw = localStorage.getItem('fnQuizFeedback_v2');
+      quizFeedback = raw ? JSON.parse(raw) : {};
+    } catch (e) { quizFeedback = {}; }
+  }
+  function quizSaveFeedback() {
+    try { localStorage.setItem('fnQuizFeedback_v2', JSON.stringify(quizFeedback)); } catch (e) {}
+  }
+  function quizBuildRatingRow(qi) {
+    var row = document.createElement('div');
+    row.className = 'rate-row';
+    var label = document.createElement('span');
+    label.className = 'rate-label';
+    label.textContent = 'この問題の評価:';
+    var goodBtn = document.createElement('button');
+    goodBtn.type = 'button'; goodBtn.className = 'rate-btn'; goodBtn.textContent = '👍 良問';
+    var badBtn = document.createElement('button');
+    badBtn.type = 'button'; badBtn.className = 'rate-btn'; badBtn.textContent = '👎 悪問';
+    function refresh() {
+      goodBtn.classList.toggle('active-good', quizFeedback[qi] === 'good');
+      badBtn.classList.toggle('active-bad', quizFeedback[qi] === 'bad');
+    }
+    goodBtn.onclick = function () {
+      quizFeedback[qi] = (quizFeedback[qi] === 'good') ? null : 'good';
+      if (!quizFeedback[qi]) delete quizFeedback[qi];
+      quizSaveFeedback(); refresh();
+    };
+    badBtn.onclick = function () {
+      quizFeedback[qi] = (quizFeedback[qi] === 'bad') ? null : 'bad';
+      if (!quizFeedback[qi]) delete quizFeedback[qi];
+      quizSaveFeedback(); refresh();
+    };
+    refresh();
+    row.appendChild(label); row.appendChild(goodBtn); row.appendChild(badBtn);
+    return row;
+  }
+  function quizFallbackCopy(text, done) {
+    var ta = document.createElement('textarea');
+    ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); } catch (e) {}
+    document.body.removeChild(ta);
+    done();
+  }
+  function quizChoiceLabel(item) {
+    return item.choices.join(' / ');
+  }
+  function quizCorrectLabel(item) {
+    if (item.type === 'multi') return item.correct.map(function (i) { return item.choices[i]; }).join(' ＋ ');
+    return item.choices[item.correct];
+  }
+  function quizExportFeedback() {
+    var ratedIdx = Object.keys(quizFeedback);
+    if (ratedIdx.length === 0) {
+      alert('まだ評価された問題がありません。各問題に回答した後に表示される「👍 良問」「👎 悪問」ボタンで評価してから、もう一度お試しください。');
+      return;
+    }
+    var goodList = [], badList = [];
+    ratedIdx.forEach(function (idxStr) {
+      var idx = parseInt(idxStr, 10);
+      var item = QUIZ[idx];
+      if (!item) return;
+      var entry = '・[' + item.category + (item.type === 'multi' ? '/複数選択' : '') + '] ' + item.q + '\n  選択肢: ' + quizChoiceLabel(item) + '\n  正解: ' + quizCorrectLabel(item);
+      if (quizFeedback[idx] === 'good') goodList.push(entry);
+      else if (quizFeedback[idx] === 'bad') badList.push(entry);
+    });
+    var text = '【FN(発熱性好中球減少症)・G-CSFクイズ(quiz-fn.html、全50問プール)フィードバック】\n\n' +
+      '良問と評価された問題(' + goodList.length + '件):\n' + (goodList.length ? goodList.join('\n\n') : '(なし)') + '\n\n' +
+      '悪問と評価された問題(' + badList.length + '件) — 改善・差し替えを検討してください:\n' + (badList.length ? badList.join('\n\n') : '(なし)') + '\n\n' +
+      '参照ファイル: artifacts/html/oncology-reports/quiz-fn.html\n\n' +
+      '上記フィードバックを踏まえて、「悪問」と評価された問題をレポート本文(artifacts/html/oncology-reports/fn.html、添付文書情報セクション含む)の内容に基づいて改善・差し替えてください。「良問」と評価された問題は現状を維持してください。';
+    var notify = function () { alert('フィードバックをコピーしました。MulmoClaudeのチャットに貼り付けて送信してください。問題の改善に使います。'); };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(notify).catch(function () { quizFallbackCopy(text, notify); });
+    } else { quizFallbackCopy(text, notify); }
+  }
+  function quizResetFeedback() {
+    if (!confirm('すべての評価をリセットします。よろしいですか?')) return;
+    quizFeedback = {};
+    quizSaveFeedback();
+    alert('評価をリセットしました。');
+  }
+
+  function quizRenderQuestion() {
+    document.getElementById('quiz-result-area').style.display = 'none';
+    document.getElementById('quiz-question-area').style.display = 'block';
+    var qi = quizOrder[quizIndex];
+    var item = QUIZ[qi];
+    document.getElementById('quiz-progress-text').textContent = '問 ' + (quizIndex + 1) + ' / ' + quizOrder.length + '(全' + QUIZ.length + '問中からランダム出題)';
+    document.getElementById('quiz-cat-badge').textContent = item.category;
+    document.getElementById('quiz-type-badge').style.display = (item.type === 'multi') ? 'inline-flex' : 'none';
+    document.getElementById('quiz-progress-fill').style.width = Math.round((quizIndex / quizOrder.length) * 100) + '%';
+    document.getElementById('quiz-question-text').textContent = item.q;
+    document.getElementById('quiz-diagram-area').innerHTML = item.diagram || '';
+    document.getElementById('quiz-explain-area').style.display = 'none';
+    document.getElementById('quiz-explain-area').innerHTML = '';
+    document.getElementById('quiz-next-btn').style.display = 'none';
+    document.getElementById('quiz-submit-row').style.display = 'none';
+
+    var wrap = document.getElementById('quiz-choices');
+    wrap.innerHTML = '';
+
+    if (item.type === 'multi') {
+      var selected = {};
+      item.choices.forEach(function (choiceText, idx) {
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'quiz-choice';
+        btn.innerHTML = '<span class="quiz-choice-check">☐</span> ' + choiceText.replace(/</g, '&lt;');
+        btn.onclick = function () {
+          selected[idx] = !selected[idx];
+          btn.classList.toggle('selected', !!selected[idx]);
+          btn.querySelector('.quiz-choice-check').textContent = selected[idx] ? '☑' : '☐';
+        };
+        wrap.appendChild(btn);
+      });
+      document.getElementById('quiz-submit-row').style.display = 'block';
+      document.getElementById('quiz-submit-btn').onclick = function () {
+        var chosen = Object.keys(selected).filter(function (k) { return selected[k]; }).map(Number);
+        quizAnswerMulti(chosen);
+      };
+    } else {
+      item.choices.forEach(function (choiceText, idx) {
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'quiz-choice';
+        btn.textContent = choiceText;
+        btn.onclick = function () { quizAnswerSingle(idx); };
+        wrap.appendChild(btn);
+      });
+    }
+  }
+
+  function quizFinishQuestion(qi, isCorrect, correctText) {
+    var item = QUIZ[qi];
+    var explainArea = document.getElementById('quiz-explain-area');
+    explainArea.className = 'quiz-explain';
+    explainArea.style.display = 'block';
+    explainArea.innerHTML = '<div style="font-weight:700; margin-bottom:4px; color:' + (isCorrect ? 'var(--good)' : 'var(--critical)') + ';">' +
+      (isCorrect ? '✅ 正解' : '❌ 不正解(正解: ' + correctText + ')') + '</div>' +
+      '<div>' + (item.explain || '') + '</div>';
+    explainArea.appendChild(quizBuildRatingRow(qi));
+    document.getElementById('quiz-submit-row').style.display = 'none';
+    document.getElementById('quiz-next-btn').style.display = 'inline-block';
+    document.getElementById('quiz-next-btn').textContent = (quizIndex === quizOrder.length - 1) ? '結果を見る →' : '次の問題 →';
+  }
+
+  function quizAnswerSingle(selectedIdx) {
+    var qi = quizOrder[quizIndex];
+    var item = QUIZ[qi];
+    quizAnswers[qi] = selectedIdx;
+    var buttons = document.getElementById('quiz-choices').querySelectorAll('.quiz-choice');
+    buttons.forEach(function (btn, idx) {
+      btn.disabled = true;
+      if (idx === item.correct) btn.classList.add('correct');
+      else if (idx === selectedIdx) btn.classList.add('wrong');
+    });
+    quizFinishQuestion(qi, selectedIdx === item.correct, item.choices[item.correct]);
+  }
+
+  function quizSubmitMulti() {
+    var qi = quizOrder[quizIndex];
+    var item = QUIZ[qi];
+    var buttons = document.getElementById('quiz-choices').querySelectorAll('.quiz-choice');
+    var chosen = [];
+    buttons.forEach(function (btn, idx) {
+      if (btn.classList.contains('selected')) chosen.push(idx);
+    });
+    quizAnswerMulti(chosen, buttons, item, qi);
+  }
+
+  function quizAnswerMulti(chosen, buttons, item, qi) {
+    qi = (qi === undefined) ? quizOrder[quizIndex] : qi;
+    item = item || QUIZ[qi];
+    buttons = buttons || document.getElementById('quiz-choices').querySelectorAll('.quiz-choice');
+    quizAnswers[qi] = chosen;
+    var correctSet = item.correct.slice().sort();
+    var chosenSet = chosen.slice().sort();
+    var isCorrect = correctSet.length === chosenSet.length && correctSet.every(function (v, i) { return v === chosenSet[i]; });
+    buttons.forEach(function (btn, idx) {
+      btn.disabled = true;
+      var isRight = item.correct.indexOf(idx) !== -1;
+      var wasChosen = chosen.indexOf(idx) !== -1;
+      if (isRight) btn.classList.add('correct');
+      else if (wasChosen) btn.classList.add('wrong');
+    });
+    quizFinishQuestion(qi, isCorrect, quizCorrectLabel(item));
+  }
+
+  function quizNext() {
+    if (quizIndex < quizOrder.length - 1) {
+      quizIndex++;
+      quizRenderQuestion();
+    } else {
+      quizShowResult();
+    }
+  }
+
+  function quizShowResult() {
+    document.getElementById('quiz-progress-fill').style.width = '100%';
+    document.getElementById('quiz-progress-text').textContent = '完了 ' + quizOrder.length + ' / ' + quizOrder.length;
+    document.getElementById('quiz-cat-badge').textContent = '';
+    document.getElementById('quiz-type-badge').style.display = 'none';
+    document.getElementById('quiz-question-area').style.display = 'none';
+
+    var correctCount = 0;
+    var byCategory = {};
+    quizOrder.forEach(function (qi) {
+      var item = QUIZ[qi];
+      if (!byCategory[item.category]) byCategory[item.category] = { correct: 0, total: 0 };
+      byCategory[item.category].total++;
+      var ans = quizAnswers[qi];
+      var isCorrect;
+      if (item.type === 'multi') {
+        var correctSet = item.correct.slice().sort();
+        var chosenSet = (ans || []).slice().sort();
+        isCorrect = correctSet.length === chosenSet.length && correctSet.every(function (v, i) { return v === chosenSet[i]; });
+      } else {
+        isCorrect = ans === item.correct;
+      }
+      if (isCorrect) { correctCount++; byCategory[item.category].correct++; }
+    });
+    var pct = Math.round((correctCount / quizOrder.length) * 100);
+
+    var catHtml = '';
+    Object.keys(byCategory).forEach(function (cat) {
+      var c = byCategory[cat];
+      var p = Math.round((c.correct / c.total) * 100);
+      catHtml += '<div class="cat-result-row"><span class="text-xs" style="width:170px; flex-shrink:0;">' + cat + '</span>' +
+        '<div class="cat-result-bar"><div class="cat-result-fill" style="width:' + p + '%"></div></div>' +
+        '<span class="text-xs muted" style="width:56px; text-align:right;">' + c.correct + '/' + c.total + '</span></div>';
+    });
+
+    var reviewHtml = '';
+    quizOrder.forEach(function (qi) {
+      var item = QUIZ[qi];
+      var ans = quizAnswers[qi];
+      var isCorrect;
+      var yourAnswerText;
+      if (item.type === 'multi') {
+        var correctSet = item.correct.slice().sort();
+        var chosenSet = (ans || []).slice().sort();
+        isCorrect = correctSet.length === chosenSet.length && correctSet.every(function (v, i) { return v === chosenSet[i]; });
+        yourAnswerText = (ans && ans.length) ? ans.map(function (i) { return item.choices[i]; }).join(' ＋ ') : '(未回答)';
+      } else {
+        isCorrect = ans === item.correct;
+        yourAnswerText = (ans != null) ? item.choices[ans] : '(未回答)';
+      }
+      if (!isCorrect) {
+        reviewHtml += '<div class="review-item">' +
+          '<div class="text-sm font-semibold mb-1">' + item.q + '</div>' +
+          '<div class="text-xs muted mb-2">あなたの回答: ' + yourAnswerText + ' / 正解: ' + quizCorrectLabel(item) + '</div>' +
+          '<div class="text-xs" style="line-height:1.6;">' + (item.explain || '') + '</div>' +
+          '</div>';
+      }
+    });
+    if (!reviewHtml) reviewHtml = '<p class="text-sm secondary">全問正解です。見直しの必要な項目はありません 🎉</p>';
+
+    var goodCount = 0, badCount = 0;
+    Object.keys(quizFeedback).forEach(function (k) {
+      if (quizFeedback[k] === 'good') goodCount++;
+      else if (quizFeedback[k] === 'bad') badCount++;
+    });
+
+    var resultArea = document.getElementById('quiz-result-area');
+    resultArea.style.display = 'block';
+    resultArea.innerHTML =
+      '<div class="text-center mb-6">' +
+        '<div class="score-ring-num" style="color:var(--series-new);">' + correctCount + ' / ' + quizOrder.length + '</div>' +
+        '<div class="text-sm muted mt-1">正答率 ' + pct + '%(全' + QUIZ.length + '問プールから今回ランダム抽出された' + quizOrder.length + '問)</div>' +
+      '</div>' +
+      '<div class="mb-6"><div class="text-sm font-semibold mb-3">カテゴリ別正答率(今回出題分)</div>' + catHtml + '</div>' +
+      '<div class="mb-2 text-sm font-semibold">見直し(不正解・未回答の問題)</div>' +
+      '<div class="mb-6">' + reviewHtml + '</div>' +
+      '<div class="mb-6 pt-4 border-t" style="border-color:var(--gridline);">' +
+        '<div class="text-sm font-semibold mb-2">問題の評価状況(全50問プール通算)</div>' +
+        '<div class="text-xs muted mb-3">👍 良問 ' + goodCount + '件 ・ 👎 悪問 ' + badCount + '件</div>' +
+        '<div class="flex flex-wrap gap-3">' +
+          '<button type="button" class="quiz-btn-outline" onclick="quizExportFeedback()">📋 フィードバックをエクスポート(チャットに貼り付け用)</button>' +
+          '<button type="button" class="quiz-btn-outline" onclick="quizResetFeedback()" style="border-color:var(--critical); color:var(--critical);">🗑 評価をリセット</button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="flex flex-wrap gap-3 justify-center">' +
+        '<button type="button" class="quiz-btn" onclick="quizRestart()">🔀 新しい10問でもう一度</button>' +
+        '<a href="fn.html" class="quiz-btn-outline" style="text-decoration:none; display:inline-block;">レポート本文に戻る</a>' +
+      '</div>';
+  }
+
+  function quizRestart() {
+    quizPickSession();
+    quizIndex = 0;
+    quizAnswers = [];
+    quizRenderQuestion();
+  }
+
+  quizLoadFeedback();
+  quizPickSession();
+  quizRenderQuestion();
+</script>
+
+<footer class="text-center text-xs pb-4" style="color: var(--text-muted);">
+  本クイズは学習・自己点検を目的とした資料です。臨床判断には利用せず、最新の添付文書・ガイドライン原文を優先してください。
+</footer>
+
+</body>
+</html>

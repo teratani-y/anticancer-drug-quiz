@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>腫瘍崩壊症候群(TLS)理解度クイズ 全50問(ランダム10問出題)</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+:root, .viz-root {
+  color-scheme: light;
+  --surface-1: #fcfcfb; --page-plane: #f9f9f7;
+  --text-primary: #0b0b0b; --text-secondary: #52514e; --text-muted: #898781;
+  --gridline: #e1e0d9; --baseline: #c3c2b7;
+  --series-new: #2a78d6; --series-control: #b9b7ae;
+  --good: #0ca30c; --warning: #b9790a; --critical: #d03b3b;
+  --border: rgba(11,11,11,0.10);
+}
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) {
+    color-scheme: dark;
+    --surface-1: #1a1a19; --page-plane: #0d0d0d;
+    --text-primary: #ffffff; --text-secondary: #c3c2b7; --text-muted: #898781;
+    --gridline: #2c2c2a; --baseline: #383835;
+    --series-new: #3987e5; --series-control: #55534c;
+    --good: #0ca30c; --warning: #eab116; --critical: #e66767;
+    --border: rgba(255,255,255,0.10);
+  }
+}
+body { background: var(--page-plane); color: var(--text-primary); font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+.card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+.secondary { color: var(--text-secondary); }
+.muted { color: var(--text-muted); }
+.cat-badge { display:inline-flex; align-items:center; padding:3px 10px; border-radius:9999px; font-size:0.72rem; font-weight:700; background: color-mix(in srgb, var(--series-new) 14%, transparent); color: var(--series-new); }
+.type-badge { display:inline-flex; align-items:center; padding:3px 10px; border-radius:9999px; font-size:0.68rem; font-weight:700; background: color-mix(in srgb, var(--warning) 16%, transparent); color: var(--warning); margin-left:6px; }
+.progress-track { background: var(--gridline); border-radius: 9999px; height: 8px; overflow: hidden; }
+.progress-fill { background: var(--series-new); height: 100%; border-radius: 9999px; transition: width .25s; }
+.quiz-choice { display:block; width:100%; text-align:left; background: var(--page-plane); border: 1.5px solid var(--gridline); border-radius: 10px; padding: 12px 16px; font-size: 0.92rem; cursor: pointer; transition: border-color .12s, background .12s; margin-bottom: 10px; }
+.quiz-choice:last-child { margin-bottom: 0; }
+.quiz-choice:hover:not(:disabled) { border-color: var(--series-new); }
+.quiz-choice:disabled { cursor: default; }
+.quiz-choice.correct { border-color: var(--good); background: color-mix(in srgb, var(--good) 12%, transparent); font-weight: 700; }
+.quiz-choice.wrong { border-color: var(--critical); background: color-mix(in srgb, var(--critical) 10%, transparent); }
+.quiz-choice.selected { border-color: var(--series-new); background: color-mix(in srgb, var(--series-new) 10%, transparent); }
+.quiz-choice-check { display:inline-block; width:16px; }
+.quiz-explain { background: var(--page-plane); border: 1px solid var(--gridline); border-radius: 10px; padding: 14px 16px; margin-top: 14px; font-size: 0.85rem; line-height: 1.7; }
+.quiz-btn { background: var(--series-new); color: #fff; border: none; border-radius: 8px; padding: 10px 22px; font-size: 0.88rem; font-weight: 700; cursor: pointer; }
+.quiz-btn:hover { opacity: 0.9; }
+.quiz-btn:disabled { opacity: 0.4; cursor: default; }
+.quiz-btn-outline { background: transparent; color: var(--series-new); border: 1.5px solid var(--series-new); border-radius: 8px; padding: 9px 20px; font-size: 0.88rem; font-weight: 700; cursor: pointer; }
+.quiz-btn-outline:hover { background: color-mix(in srgb, var(--series-new) 10%, transparent); }
+.score-ring-num { font-size: 2.6rem; font-weight: 800; }
+.cat-result-row { display:flex; align-items:center; gap:10px; margin-bottom: 8px; }
+.cat-result-bar { flex:1; background: var(--gridline); border-radius: 9999px; height: 10px; overflow:hidden; }
+.cat-result-fill { background: var(--series-new); height:100%; border-radius: 9999px; }
+.review-item { border: 1px solid var(--gridline); border-radius: 10px; padding: 12px 14px; margin-bottom: 10px; }
+.review-item:last-child { margin-bottom: 0; }
+.rate-row { display:flex; align-items:center; gap:8px; margin-top:14px; flex-wrap:wrap; }
+.rate-label { font-size:0.75rem; color: var(--text-muted); }
+.rate-btn { background: var(--page-plane); border: 1.5px solid var(--gridline); border-radius: 8px; padding: 6px 12px; font-size: 0.78rem; font-weight:600; cursor:pointer; color: var(--text-secondary); }
+.rate-btn:hover { border-color: var(--series-new); }
+.rate-btn.active-good { border-color: var(--good); background: color-mix(in srgb, var(--good) 14%, transparent); color: var(--good); }
+.rate-btn.active-bad { border-color: var(--critical); background: color-mix(in srgb, var(--critical) 12%, transparent); color: var(--critical); }
+</style>
+</head>
+<body class="viz-root">
+<div class="max-w-3xl mx-auto px-4 py-8 space-y-5">
+
+  <header class="card">
+    <div class="flex items-center justify-between gap-2 flex-wrap">
+      <div>
+        <h1 class="text-xl font-bold">🧠 腫瘍崩壊症候群(TLS)理解度クイズ</h1>
+        <p class="text-sm mt-1 secondary">全50問のプールからランダムに10問出題・4択/複数選択混在・医療従事者向け(リスク層別化・予防戦略の選択、用法用量・モニタリング、検査値異常・合併症への対応、薬剤選択の根拠、コスト制度)</p>
+      </div>
+      <a href="tls.html" class="text-xs" style="color:var(--series-new); text-decoration:none; font-weight:600;">← レポート本文に戻る</a>
+    </div>
+    <p class="text-xs mt-3 muted">出題内容はすべて <a href="tls.html" style="color:var(--series-new);">腫瘍崩壊症候群(TLS)支持療法レポート</a>(本文および「6. 主要薬剤の添付文書情報」)に記載の情報に基づきます。臨床判断には利用せず、学習・自己点検の目的でご利用ください。ページを再読み込みする、または結果画面の「新しい10問でもう一度」を押すたびに、新しい10問がランダムに選ばれます。</p>
+  </header>
+
+  <!-- Quiz card -->
+  <section class="card" id="quiz-card">
+    <div class="flex items-center justify-between mb-2">
+      <span id="quiz-progress-text" class="text-xs font-semibold muted"></span>
+      <span><span id="quiz-cat-badge" class="cat-badge"></span><span id="quiz-type-badge" class="type-badge" style="display:none;">複数選択</span></span>
+    </div>
+    <div class="progress-track mb-5"><div class="progress-fill" id="quiz-progress-fill" style="width:0%"></div></div>
+
+    <div id="quiz-question-area">
+      <div id="quiz-question-text" class="text-base font-semibold mb-4" style="line-height:1.6;"></div>
+      <div id="quiz-choices"></div>
+      <div id="quiz-submit-row" style="display:none;" class="mt-3">
+        <button type="button" class="quiz-btn" id="quiz-submit-btn" onclick="quizSubmitMulti()">この内容で回答する</button>
+      </div>
+      <div id="quiz-explain-area" style="display:none;"></div>
+      <div class="mt-5 flex justify-end">
+        <button type="button" id="quiz-next-btn" class="quiz-btn" style="display:none;" onclick="quizNext()">次の問題 →</button>
+      </div>
+    </div>
+
+    <div id="quiz-result-area" style="display:none;"></div>
+  </section>
+
+</div>
+
+<script>
+  var QUIZ = [
+    // ══════════ リスク層別化と予防戦略の選択(約14問) ══════════
+    { category: "リスク層別化と予防戦略の選択", type: "single", q: "白血球数125,000/µLの急性骨髄性白血病(AML)患者のTLS初期リスク分類は?",
+      choices: ["高リスク", "低リスク", "中間リスク", "リスク分類の対象外"], correct: 0,
+      explain: "AMLでは白血球数100,000/µL以上であればLDH値にかかわらず高リスクに分類される。" },
+    { category: "リスク層別化と予防戦略の選択", type: "single", q: "白血球数8,000/µL・LDHが施設基準値の1.5倍の急性リンパ性白血病(ALL)患者の初期リスク分類は?",
+      choices: ["中間リスク", "低リスク", "高リスク", "評価不能"], correct: 0,
+      explain: "ALLでは低リスクの区分が設定されておらず、WBC<10,000/µLかつLDH<基準値2倍であれば中間リスクに分類される。" },
+    { category: "リスク層別化と予防戦略の選択", type: "single", q: "バーキット白血病のTLSリスク分類はどのように決まるか?",
+      choices: ["白血球数・LDH値によらず一律高リスク", "白血球数のみで判定", "LDH値のみで判定", "低リスクが基本"], correct: 0,
+      explain: "バーキット白血病は高いTLS発症率を示すことから、検査値によらず一律に高リスクに分類される。" },
+    { category: "リスク層別化と予防戦略の選択", type: "single", q: "径12cmの巨大腫瘤・肝転移を有する固形腫瘍患者のTLSリスク分類は?",
+      choices: ["中間リスク", "低リスク", "高リスク", "TLSリスクの評価対象外"], correct: 0,
+      explain: "腫瘍量が多い(径10cm以上)、肝転移のいずれかに該当すれば中間リスクに分類される(Gemiciのリスク因子)。" },
+    { category: "リスク層別化と予防戦略の選択", type: "single", q: "低リスクTLSにおける高尿酸血症への標準的な対応は?",
+      choices: ["原則として予防投与は不要", "全例にラスブリカーゼを投与", "全例にフェブキソスタットを投与", "尿のアルカリ化を行う"], correct: 0,
+      explain: "低リスクでは通常補液のみで管理し、予防的な尿酸降下薬投与は原則不要。ただし尿酸値上昇傾向・巨大腫瘍・進行病期・増殖の強い腫瘍ではフェブキソスタットまたはアロプリノールの投与が推奨される。" },
+    { category: "リスク層別化と予防戦略の選択", type: "single", q: "中間リスクTLSにおける高尿酸血症予防の標準的な選択は?",
+      choices: ["フェブキソスタットまたはアロプリノールを化学療法1〜2日前から投与", "全例にラスブリカーゼを第一選択とする", "予防投与は一切不要", "尿のアルカリ化を第一選択とする"], correct: 0,
+      explain: "中間リスクでは大量補液に加え、フェブキソスタット(60mg/日)またはアロプリノール(300mg/m²/日)を化学療法1〜2日前から開始し、開始5日目まで投与するのが標準的である。" },
+    { category: "リスク層別化と予防戦略の選択", type: "single", q: "高リスクTLSにおける高尿酸血症治療の第一選択は?",
+      choices: ["ラスブリカーゼ", "アロプリノール単独", "フェブキソスタット単独", "重炭酸ナトリウムによる尿のアルカリ化"], correct: 0,
+      explain: "高リスクでは尿酸を速やかに分解するラスブリカーゼ(0.2mg/kg/日、最大7日間)が第一選択とされる。" },
+    { category: "リスク層別化と予防戦略の選択", type: "single", q: "中間リスクでフェブキソスタット/アロプリノールによる予防投与を行っているにもかかわらず尿酸値が持続的に上昇する場合の対応は?",
+      choices: ["ラスブリカーゼ投与を考慮する", "尿酸降下薬をただちに中止する", "尿のアルカリ化に切り替える", "補液量を減らす"], correct: 0,
+      explain: "コンセンサスはないが、予防投与にもかかわらず尿酸値が持続的に上昇する場合や、診断時にすでに高尿酸血症を認める場合はラスブリカーゼ投与を考慮するとされている。" },
+    { category: "リスク層別化と予防戦略の選択", type: "single", q: "高リスクTLSで推奨される療養環境・モニタリング頻度は?",
+      choices: ["ICUもしくはそれに準じた環境で4〜6時間毎のモニタリング", "外来管理で1週間に1回の採血", "入院不要で自宅管理", "1日1回のモニタリングで十分"], correct: 0,
+      explain: "高リスクではICUもしくはそれに準じた環境が望ましく、最終抗癌剤投与24時間後まで4〜6時間毎の頻回モニタリング(心電図含む)が推奨される。" },
+    { category: "リスク層別化と予防戦略の選択", type: "single", q: "TLSリスク評価の3ステップの正しい順序は?",
+      choices: ["Laboratory TLSの有無 → 疾患によるリスク分類 → 腎機能・腎浸潤によるリスク調整", "腎機能評価 → Laboratory TLSの有無 → 疾患分類", "疾患によるリスク分類 → 腎機能評価 → Laboratory TLSの有無", "順序は決まっていない"], correct: 0,
+      explain: "JSMOガイダンスでは、①Laboratory TLSの有無の判定、②疾患による低・中間・高リスク分類、③腎機能・腎浸潤による最終調整、の3ステップでリスク評価を行う。" },
+    { category: "リスク層別化と予防戦略の選択", type: "single", q: "高リスクTLSで著明な白血球増加(hyperleukocytosis)を認める場合に考慮される追加処置は?",
+      choices: ["白血球アフェレーシスまたは交換輸血", "尿のアルカリ化の強化", "補液量を最小限にする", "アロプリノールの減量"], correct: 0,
+      explain: "著明な白血球増加を伴う高リスク例では、白血球アフェレーシス(leukocytapheresis)や交換輸血(exchange transfusion)が考慮される。" },
+    { category: "リスク層別化と予防戦略の選択", type: "single", q: "多発性骨髄腫や固形腫瘍のTLSリスク分類において、白血病・リンパ腫と異なる点は?",
+      choices: ["基本的に腎機能によらず、疾患によるリスク分類がそのまま最終リスクとなる", "常に高リスクに分類される", "TLSは発症しないため評価不要", "白血球数のみでリスクを判定する"], correct: 0,
+      explain: "白血病・リンパ腫では腎機能・腎浸潤による最終的なリスク調整を行うのに対し、固形腫瘍・多発性骨髄腫は基本的に疾患によるリスク分類がそのまま最終リスクとなる(骨髄腫は臨床的パラメータに基づく独自のリスク分類が用いられる)。" },
+    { category: "リスク層別化と予防戦略の選択", type: "multi", q: "固形腫瘍をTLS中間リスクに分類する根拠となるリスク因子として正しいものをすべて選べ(3つ選択)",
+      choices: ["腫瘍量が多い(径10cm以上の巨大腫瘍)", "肝転移", "神経芽腫・胚細胞腫瘍・小細胞肺がん等の化学療法高感受性腫瘍", "術後補助化学療法を受けていること"], correct: [0, 1, 2],
+      explain: "Gemiciのリスク因子として、腫瘍量が多いこと、肝転移、LDH高値・尿酸値上昇、化学療法高感受性腫瘍(神経芽腫等)、治療前からの腎機能障害、腎毒性薬剤治療、感染・脱水の併存が挙げられており、これらのうち1つ以上で中間リスクとなる。術後補助化学療法を受けていること自体はリスク因子として挙げられていない。" },
+    { category: "リスク層別化と予防戦略の選択", type: "multi", q: "TLSの予防処置として、リスクが上がるにつれて強化される要素をすべて選べ(2つ選択)",
+      choices: ["モニタリングの頻度", "補液量", "尿のアルカリ化の推奨度", "低カルシウム血症への積極補正"], correct: [0, 1],
+      explain: "低リスクでは1日1回・通常補液、中間リスクでは8〜12時間毎・大量補液、高リスクでは4〜6時間毎(心電図含む)・大量補液へと段階的に強化される。尿のアルカリ化はいずれのリスクでも推奨されず、無症候性の低カルシウム血症は積極的な補正の対象としない。" },
+
+    // ══════════ 用法用量・モニタリング(約9問) ══════════
+    { category: "用法用量・モニタリング", type: "single", q: "ラスブリカーゼの添付文書上の承認用法及び用量は?",
+      choices: ["0.2mg/kgを1日1回30分以上かけて点滴静注、最大7日間", "0.2mg/kgを週1回皮下注射", "1回6mg固定用量を単回静注のみ", "1日1回経口投与"], correct: 0,
+      explain: "がん化学療法に伴う高尿酸血症に対し、0.2mg/kg(体重)を1日1回30分以上かけて点滴静注し、投与期間は最大7日間とされている。" },
+    { category: "用法用量・モニタリング", type: "single", q: "ラスブリカーゼは化学療法開始からいつ投与を開始するとされているか?",
+      choices: ["化学療法開始4〜24時間前", "化学療法開始と同時のみ", "化学療法開始後24時間が経過してから", "化学療法終了後"], correct: 0,
+      explain: "用法及び用量に関連する注意として、化学療法開始4〜24時間前に投与を開始することとされている。" },
+    { category: "用法用量・モニタリング", type: "single", q: "中間リスクでのフェブキソスタットの投与量は?",
+      choices: ["1日1回60mg", "1日1回10mgから漸増", "1日2回20mg", "体重換算で投与"], correct: 0,
+      explain: "がん化学療法に伴う高尿酸血症に対しては、痛風・高尿酸血症のような漸増を行わず60mgの固定用量を1日1回投与する。" },
+    { category: "用法用量・モニタリング", type: "single", q: "中間リスクでのアロプリノールの投与量の目安は?",
+      choices: ["300mg/m²/日(10mg/kg/日)を1日3回に分けて内服", "1日1回60mg", "1日1回100mgのみ", "体重によらず一律50mg"], correct: 0,
+      explain: "中間リスクでは300mg/m²/日(10mg/kg/日)を分3で内服し、化学療法の1〜2日前から開始し開始5日目まで投与する。" },
+    { category: "用法用量・モニタリング", type: "single", q: "高リスクTLSにおける補液量の目安は?",
+      choices: ["2,500〜3,000mL/m²/日(体重10kg以下は200mL/kg/日)", "1,000mL/m²/日", "経口補水のみで静脈内補液は不要", "体重によらず一律1日500mL"], correct: 0,
+      explain: "中間リスク・高リスクとも大量補液として2,500〜3,000mL/m²/日(体重10kg以下では200mL/kg/日)が目安とされる。" },
+    { category: "用法用量・モニタリング", type: "single", q: "ラスブリカーゼ投与患者の尿酸測定用血液検体の取り扱いで注意すべき点は?",
+      choices: ["採取後直ちに冷却し4時間以内に測定する", "室温で24時間以内に測定すればよい", "採血直後に加温してから測定する", "特別な取り扱いは不要"], correct: 0,
+      explain: "ラスブリカーゼ使用時、尿酸測定用検体を室温に放置すると試験管内でも尿酸分解が進行し見かけ上の尿酸値が低くなるため、採血後は速やかに冷却し4時間以内に測定する必要がある。" },
+    { category: "用法用量・モニタリング", type: "single", q: "高カリウム血症が高度(≥7.0mmol/L)または症候性の場合、GI療法として投与されるのは?",
+      choices: ["レギュラーインスリン+ブドウ糖の静注", "ループ利尿薬単独", "重炭酸ナトリウム単独", "抗ヒスタミン薬"], correct: 0,
+      explain: "GI療法(レギュラーインスリン0.1U/kg+25%ブドウ糖2mL/kgの静注)はカリウムを細胞内に取り込ませて血清カリウム値を低下させる目的で行われる。" },
+    { category: "用法用量・モニタリング", type: "single", q: "症候性低カルシウム血症(テタニー・痙攣等)への対応として適切なのは?",
+      choices: ["症状緩和に必要な最小限量のグルコン酸カルシウムを心電図モニタリングしながら緩徐に静注する", "大量のカルシウムを急速静注する", "経口カルシウム剤を高用量で開始する", "対応不要、経過観察のみでよい"], correct: 0,
+      explain: "無症候性であれば血清リン酸のコントロールを優先し特別な補正は不要だが、症候性の場合は最小限量のグルコン酸カルシウム(50〜100mg/kg)を心電図モニタリングしながら緩徐に静注する。過剰なカルシウム投与はリン酸カルシウム結晶化を助長するため避ける。" },
+    { category: "用法用量・モニタリング", type: "single", q: "腎機能代行療法(透析)の「予防的」導入基準として挙げられているのは?",
+      choices: ["重篤で進行性の高リン血症(6mg/dL超)または重篤な症候性低カルシウム血症", "軽度の高カリウム血症のみ", "尿量が正常範囲内であること", "LDHが軽度上昇していること"], correct: 0,
+      explain: "予防的な腎機能代行療法導入基準として、重篤で進行性の高リン血症(>1.95mmol/L、6mg/dL)や重篤な症候性低カルシウム血症が挙げられている。" },
+
+    // ══════════ 検査値異常・合併症への対応(約12問) ══════════
+    { category: "検査値異常・合併症への対応", type: "single", q: "TLS panel consensus(2010年)によるLaboratory TLSの診断に必要な検査値異常の項目数は?",
+      choices: ["高尿酸血症・高カリウム血症・高リン血症のうち2つ以上", "4項目すべて", "1項目のみで診断確定", "低カルシウム血症を含む3項目すべて"], correct: 0,
+      explain: "2010年のTLS panel consensusでは、高尿酸血症・高カリウム血症・高リン血症のうち2つ以上が化学療法開始3日前〜7日後に生じた場合にLaboratory TLSと診断する(低カルシウム血症は2004年のCairo-Bishop分類にあったが2010年基準では除外)。" },
+    { category: "検査値異常・合併症への対応", type: "single", q: "Clinical TLSと診断するために、Laboratory TLSに加えて必要な所見は?",
+      choices: ["腎機能低下(Cr≧基準値上限の1.5倍)・不整脈または突然死・痙攣のいずれか1つ以上", "体重減少", "発熱のみ", "血圧上昇のみ"], correct: 0,
+      explain: "Clinical TLSは、Laboratory TLSに加え、血清クレアチニン上昇(基準値上限の1.5倍以上)、不整脈・突然死、痙攣のいずれか1つ以上を伴う場合と定義される。" },
+    { category: "検査値異常・合併症への対応", type: "single", q: "TLSにおいて化学療法開始から最も早期(6時間以内)に出現しうる、致死的となりうる電解質異常は?",
+      choices: ["高カリウム血症", "低カルシウム血症", "高リン血症", "高尿酸血症"], correct: 0,
+      explain: "高カリウム血症はTLSの最初の病態としてしばしば観察され、化学療法開始から6時間以内に起こることがあり、心室性頻拍・心室細動・心停止等の致死的不整脈を誘発しうる。" },
+    { category: "検査値異常・合併症への対応", type: "single", q: "ラスブリカーゼの普及以降、TLSによる腎機能障害の要因として特に注目されるようになった電解質異常は?",
+      choices: ["高リン血症", "低ナトリウム血症", "高マグネシウム血症", "代謝性アルカローシス"], correct: 0,
+      explain: "ラスブリカーゼにより高尿酸血症が十分にコントロール可能となった現在、尿細管でのリン酸カルシウム沈着を介して急性腎障害を引き起こす高リン血症が、TLSによる腎機能障害の最も大きな要因として注目されている。" },
+    { category: "検査値異常・合併症への対応", type: "single", q: "血清カルシウムとリンの積がどの値を超えると結晶化・腎障害・不整脈のリスクが高まるとされるか?",
+      choices: ["60 mg²/dL²", "10 mg²/dL²", "600 mg²/dL²", "積の大小は無関係"], correct: 0,
+      explain: "血清リンと血清カルシウムの積が60mg²/dL²になるとリン酸カルシウムが結晶化し、腎障害や不整脈の原因となる。" },
+    { category: "検査値異常・合併症への対応", type: "single", q: "無症候性の低カルシウム血症に対する標準的な対応は?",
+      choices: ["特別な是正は行わず、血清リン酸のコントロールを優先する", "全例にグルコン酸カルシウムを大量静注する", "経口カルシウム剤を最大量投与する", "直ちに腎機能代行療法を導入する"], correct: 0,
+      explain: "血清リン酸値をコントロールすることが低カルシウム血症の予防になるため、無症候性であれば特別な是正は不要とされる。過剰なカルシウム補正はリン酸カルシウムの結晶化を助長するリスクがある。" },
+    { category: "検査値異常・合併症への対応", type: "single", q: "高尿酸血症が急性腎障害を引き起こす機序として正しいものは?",
+      choices: ["尿pH低下時に腎集合管で尿酸結晶が析出し尿細管閉塞を起こす", "尿酸が直接心筋を障害する", "尿酸が骨髄抑制を引き起こす", "尿酸が肝細胞を直接破壊する"], correct: 0,
+      explain: "高尿酸血症で尿のpHが下がると腎の集合管で尿酸結晶が析出しやすくなり、尿細管に沈着すると尿細管閉塞から急性腎不全に至る。可溶性尿酸レベル上昇による腎血管収縮等の機序も関与する。" },
+    { category: "検査値異常・合併症への対応", type: "single", q: "TLS予防のための尿のアルカリ化について、現在のガイダンスの推奨は?",
+      choices: ["推奨されない", "全例で必須", "高リスクのみ推奨", "低リスクのみ推奨"], correct: 0,
+      explain: "尿のアルカリ化はTLS予防における有用性を示すエビデンスがなく、Na過負荷や、高リン血症合併時のリン酸カルシウム結晶析出促進による腎障害のリスクが懸念されるため、現在は推奨されない(CQ1)。" },
+    { category: "検査値異常・合併症への対応", type: "single", q: "腫瘍細胞の急速な崩壊で大量のサイトカインが放出された場合に生じうる病態は?",
+      choices: ["全身性炎症反応症候群(SIRS)から多臓器不全に至ることがある", "必ず良性の発熱のみで自然軽快する", "サイトカイン放出は臨床的に無害である", "血圧上昇のみを起こす"], correct: 0,
+      explain: "TNF-α、IL-6、IL-8、IL-10等のサイトカインが大量に放出されるとSIRSの状態となり、多臓器不全に至ることもある。" },
+    { category: "検査値異常・合併症への対応", type: "single", q: "高リン血症の臨床症状として挙げられているものは?",
+      choices: ["悪心・嘔吐、下痢、嗜眠、痙攣", "多毛、色素沈着", "視力障害のみ", "関節痛のみ"], correct: 0,
+      explain: "高リン血症の臨床症状として悪心・嘔吐、下痢、嗜眠、痙攣が挙げられている。" },
+    { category: "検査値異常・合併症への対応", type: "multi", q: "高カリウム血症の管理で、高度(≥7.0mmol/L)または症候性の場合に追加で考慮される処置をすべて選べ(3つ選択)",
+      choices: ["グルコン酸カルシウムの緩徐静注(致死的不整脈対策)", "GI療法(インスリン+ブドウ糖)", "腎機能代行療法", "尿のアルカリ化"], correct: [0, 1, 2],
+      explain: "高度・症候性の高カリウム血症では、致死的不整脈に対するグルコン酸カルシウム、GI療法、重炭酸ナトリウム、腎機能代行療法が考慮される。尿のアルカリ化はいずれのリスク・病態でも推奨されない。" },
+    { category: "検査値異常・合併症への対応", type: "multi", q: "TLSにおける急性腎障害の機序として正しいものをすべて選べ(2つ選択)",
+      choices: ["尿酸結晶・キサンチン結晶の尿細管への沈着", "リン酸カルシウムの尿細管への析出", "抗がん剤による直接的な尿路上皮癌の誘発", "腎臓における抗体産生の亢進"], correct: [0, 1],
+      explain: "尿酸(および前駆体キサンチン)の結晶沈着、およびリン酸カルシウムの尿細管への析出が、TLSにおける急性腎障害の主要な機序である。" },
+
+    // ══════════ 薬剤選択の根拠(ラスブリカーゼ vs アロプリノール等)(約9問) ══════════
+    { category: "薬剤選択の根拠", type: "single", q: "アロプリノールが既に生成された尿酸を速やかに低下させる作用を持たない理由から生じる、投与タイミング上の制約は?",
+      choices: ["尿酸生成阻害薬であるため化学療法開始24〜48時間前からの投与が必要", "投与タイミングに制約はない", "化学療法後にのみ投与できる", "単回投与のみで効果が持続する"], correct: 0,
+      explain: "アロプリノールもフェブキソスタットも尿酸生成阻害薬であり、既に生成されている尿酸を低下させる作用がないため、化学療法開始24〜48時間前(添付文書上の予防投与では1〜2日前)からの投与開始が必要となる。" },
+    { category: "薬剤選択の根拠", type: "single", q: "ラスブリカーゼが尿酸生成阻害薬(アロプリノール・フェブキソスタット)と異なる作用機序を持つ理由は?",
+      choices: ["尿酸分解酵素として既存の尿酸をアラントインへ速やかに分解するため", "尿酸の腎排泄を促進するため", "尿の pH を低下させるため", "尿酸の腸管吸収を阻害するため"], correct: 0,
+      explain: "ラスブリカーゼは遺伝子組換え型尿酸オキシダーゼであり、尿酸をアラントインに代謝する。この代謝は速やかで、既に生成されている尿酸の血中濃度を急速に低下させられる点が生成阻害薬と異なる。" },
+    { category: "薬剤選択の根拠", type: "single", q: "Cortes試験(成人、J Clin Oncol 2010)における3〜7日目の血漿尿酸コントロール反応率は、ラスブリカーゼ単独とアロプリノール単独でどうだったか?",
+      choices: ["ラスブリカーゼ87% vs アロプリノール66%(ラスブリカーゼが有意に優れる)", "両群とも同等(約70%)", "アロプリノールの方が有意に優れていた", "ラスブリカーゼ50% vs アロプリノール80%"], correct: 0,
+      explain: "Cortes試験ではラスブリカーゼ単独群87%、アロプリノール単独群66%と、ラスブリカーゼ群が統計学的に有意に優れていた(P=.001)。" },
+    { category: "薬剤選択の根拠", type: "single", q: "Goldman試験(小児)において、ラスブリカーゼとアロプリノールの尿酸値AUC(0-96時間)の差はどの程度だったか?",
+      choices: ["ラスブリカーゼ群はアロプリノール群に比べ尿酸曝露量が約2.6倍少なかった", "両群でほぼ同じだった", "アロプリノール群の方が尿酸曝露量が少なかった", "ラスブリカーゼ群の方が尿酸曝露量が多かった"], correct: 0,
+      explain: "Goldman試験(Blood 2001)では尿酸値AUC(0-96時間)がラスブリカーゼ群128±70、アロプリノール群329±129mg/dL・hで、ラスブリカーゼ群は約2.6倍(95%CI 2.0-3.4)少ない曝露量だった。" },
+    { category: "薬剤選択の根拠", type: "single", q: "FLORENCE試験(造血器腫瘍、中間〜高TLSリスク)において、フェブキソスタットとアロプリノールの尿酸値AUCの比較結果は?",
+      choices: ["フェブキソスタット群がアロプリノール群より有意に低値だった(P<0.0001)", "アロプリノール群の方が有意に低値だった", "両群で完全に同一だった", "比較は行われていない"], correct: 0,
+      explain: "FLORENCE試験では血清尿酸値AUC(1-8日)がフェブキソスタット群514.0±225.71、アロプリノール群708.0±234.42mg・h/dLで、フェブキソスタット群が有意に低値だった(P<0.0001)。" },
+    { category: "薬剤選択の根拠", type: "single", q: "日本人を対象としたTamura試験の結果、フェブキソスタットのアロプリノールに対する位置づけは?",
+      choices: ["非劣性が示され、がん化学療法に伴う高尿酸血症への国内保険承認の根拠となった", "劣性が示され承認されなかった", "アロプリノールより明確に優越性が示された", "安全性のみ評価され有効性は評価されなかった"], correct: 0,
+      explain: "Tamura試験では血清尿酸値AUCの群間差の95%信頼区間から非劣性が示され、安全性にも差はなかった。この結果が本邦でのフェブキソスタットのがん化学療法に伴う高尿酸血症への保険承認の根拠となった。" },
+    { category: "薬剤選択の根拠", type: "single", q: "がん化学療法に伴う高尿酸血症(TLS)に対する保険適応の有無について正しいのは?",
+      choices: ["フェブキソスタットとラスブリカーゼには適応があるが、アロプリノールにはない", "3剤とも適応がある", "3剤とも適応がない", "アロプリノールのみに適応がある"], correct: 0,
+      explain: "フェブキソスタットは60mg固定用量でがん化学療法に伴う高尿酸血症への保険承認があり、ラスブリカーゼも同適応を持つ。一方アロプリノールは痛風・高尿酸血症の適応のみで、TLSに対する保険適応は持たない。" },
+    { category: "薬剤選択の根拠", type: "single", q: "ラスブリカーゼの再投与(再使用)についての添付文書上の記載は?",
+      choices: ["再使用時の有効性及び安全性は確立していない", "何度でも自由に再投与できる", "再投与時は増量が必須", "再投与時のみ皮下注射に変更する"], correct: 0,
+      explain: "酵素製剤であるため抗体産生の報告があり、添付文書上、本剤の再使用時の有効性及び安全性は確立していないとされている。" },
+    { category: "薬剤選択の根拠", type: "multi", q: "ラスブリカーゼとメルカプトプリン・アザチオプリンとの関係、およびフェブキソスタットとの関係について正しいものをすべて選べ(2つ選択)",
+      choices: ["フェブキソスタットはメルカプトプリン・アザチオプリンと併用禁忌である", "アロプリノールはメルカプトプリン・アザチオプリン併用時に1/3〜1/4量への減量が必要", "ラスブリカーゼはメルカプトプリンと併用禁忌である", "メルカプトプリンはいずれの尿酸降下薬とも相互作用がない"], correct: [0, 1],
+      explain: "フェブキソスタットはメルカプトプリン・アザチオプリンと併用禁忌(骨髄抑制増強のおそれ)。アロプリノールはこれらの薬剤の代謝を阻害するため通常量の1/3〜1/4への減量が必要。ラスブリカーゼの添付文書には併用禁忌・併用注意の明記はない。" },
+
+    // ══════════ コスト制度・その他(約6問) ══════════
+    { category: "コスト制度・その他", type: "single", q: "ラスリテック点滴静注用1.5mg(1瓶、溶解液付)の薬価の目安は?",
+      choices: ["約6,775円", "約100円", "約100,000円", "約500円"], correct: 0,
+      explain: "ラスリテック点滴静注用1.5mgは1瓶(溶解液付)約6,775円である。7.5mgについては情報源により価格に差異がある(要確認)。" },
+    { category: "コスト制度・その他", type: "single", q: "ラスブリカーゼが高額になりやすい理由として適切なのは?",
+      choices: ["体重換算(0.2mg/kg/日)で複数日投与するため、体重や投与日数により総額が増加しうる遺伝子組換え酵素製剤であるため", "経口薬で長期間の服用が必要なため", "毎日自己注射が必要なため", "薬価自体がアロプリノールより低いため"], correct: 0,
+      explain: "ラスブリカーゼは体重換算・複数日投与となる高額な遺伝子組換え酵素製剤であり、体重が大きい患者や投与期間が長い場合は総額が高額になりうる。" },
+    { category: "コスト制度・その他", type: "single", q: "アロプリノール・フェブキソスタットの経口薬としての薬価の一般的な特徴は?",
+      choices: ["いずれも1錠あたり数十円程度と低額である", "いずれも1錠数万円の高額薬剤である", "アロプリノールのみ極めて高額である", "フェブキソスタットのみ極めて高額である"], correct: 0,
+      explain: "アロプリノール(約12.7〜23.1円/錠)、フェブキソスタット(約14.2〜48.8円/錠)はいずれも経口薬で薬価自体は低額である。" },
+    { category: "コスト制度・その他", type: "single", q: "高額療養費制度における「限度額適用認定証」の役割は?",
+      choices: ["窓口での支払いを自己負担限度額までに抑えられる", "薬剤費そのものが割引される", "保険適用外の治療が保険適用になる", "外来受診回数を無制限にする"], correct: 0,
+      explain: "認定証がない場合、いったん全額を立て替えた上で後日払い戻しを受ける必要があるが、認定証があれば窓口負担自体を自己負担限度額までに抑えられる。" },
+    { category: "コスト制度・その他", type: "single", q: "TLS予防・治療の薬剤費全体について、本レポートで述べられている考え方は?",
+      choices: ["原疾患(白血病・リンパ腫等)に対する化学療法の総額と比較すれば大きな比重を占めないことが多いが、ラスブリカーゼは高額になりうる", "TLS治療は常に原疾患の治療費を上回る", "TLS治療薬はすべて保険適用外である", "TLS治療費は一律で計算できる"], correct: 0,
+      explain: "TLS予防・治療そのものの薬剤費は原疾患の化学療法総額と比較すれば大きな比重を占めないことが多いが、ラスブリカーゼは体重換算・複数日投与により1件あたり数万円規模になりうる高額な酵素製剤である点に留意する。" },
+    { category: "コスト制度・その他", type: "single", q: "G6PD欠損症の頻度について、日本臨床腫瘍学会のガイダンスが指摘している地域的な傾向は?",
+      choices: ["熱帯・亜熱帯地域(アフリカ、地中海沿岸、東南アジア)出身者で頻度が高い", "日本国内で特に頻度が高い", "地域による頻度の差はない", "北欧地域で最も頻度が高い"], correct: 0,
+      explain: "G6PD欠損症は日本国内では頻度が低いが、熱帯・亜熱帯地域(アフリカ、地中海沿岸、東南アジア)出身者では頻度が高いため、ラスブリカーゼ投与前の十分な病歴聴取が必要とされる。" }
+  ];
+
+  var QUIZ_SESSION_SIZE = 10;
+  var quizOrder = [];     // indices into QUIZ for THIS session (random subset)
+  var quizIndex = 0;
+  var quizAnswers = [];   // per-question(by original index): selected choice index (single) or array of indices (multi)
+  var quizFeedback = {};  // { [questionIndex]: 'good' | 'bad' }
+
+  function quizPickSession() {
+    var all = QUIZ.map(function (_, i) { return i; });
+    quizShuffle(all);
+    quizOrder = all.slice(0, QUIZ_SESSION_SIZE);
+  }
+  function quizShuffle(arr) {
+    for (var i = arr.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = arr[i]; arr[i] = arr[j]; arr[j] = t;
+    }
+    return arr;
+  }
+
+  function quizLoadFeedback() {
+    try {
+      var raw = localStorage.getItem('tlsQuizFeedback_v2');
+      quizFeedback = raw ? JSON.parse(raw) : {};
+    } catch (e) { quizFeedback = {}; }
+  }
+  function quizSaveFeedback() {
+    try { localStorage.setItem('tlsQuizFeedback_v2', JSON.stringify(quizFeedback)); } catch (e) {}
+  }
+  function quizBuildRatingRow(qi) {
+    var row = document.createElement('div');
+    row.className = 'rate-row';
+    var label = document.createElement('span');
+    label.className = 'rate-label';
+    label.textContent = 'この問題の評価:';
+    var goodBtn = document.createElement('button');
+    goodBtn.type = 'button'; goodBtn.className = 'rate-btn'; goodBtn.textContent = '👍 良問';
+    var badBtn = document.createElement('button');
+    badBtn.type = 'button'; badBtn.className = 'rate-btn'; badBtn.textContent = '👎 悪問';
+    function refresh() {
+      goodBtn.classList.toggle('active-good', quizFeedback[qi] === 'good');
+      badBtn.classList.toggle('active-bad', quizFeedback[qi] === 'bad');
+    }
+    goodBtn.onclick = function () {
+      quizFeedback[qi] = (quizFeedback[qi] === 'good') ? null : 'good';
+      if (!quizFeedback[qi]) delete quizFeedback[qi];
+      quizSaveFeedback(); refresh();
+    };
+    badBtn.onclick = function () {
+      quizFeedback[qi] = (quizFeedback[qi] === 'bad') ? null : 'bad';
+      if (!quizFeedback[qi]) delete quizFeedback[qi];
+      quizSaveFeedback(); refresh();
+    };
+    refresh();
+    row.appendChild(label); row.appendChild(goodBtn); row.appendChild(badBtn);
+    return row;
+  }
+  function quizFallbackCopy(text, done) {
+    var ta = document.createElement('textarea');
+    ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); } catch (e) {}
+    document.body.removeChild(ta);
+    done();
+  }
+  function quizChoiceLabel(item) {
+    return item.choices.join(' / ');
+  }
+  function quizCorrectLabel(item) {
+    if (item.type === 'multi') return item.correct.map(function (i) { return item.choices[i]; }).join(' ＋ ');
+    return item.choices[item.correct];
+  }
+  function quizExportFeedback() {
+    var ratedIdx = Object.keys(quizFeedback);
+    if (ratedIdx.length === 0) {
+      alert('まだ評価された問題がありません。各問題に回答した後に表示される「👍 良問」「👎 悪問」ボタンで評価してから、もう一度お試しください。');
+      return;
+    }
+    var goodList = [], badList = [];
+    ratedIdx.forEach(function (idxStr) {
+      var idx = parseInt(idxStr, 10);
+      var item = QUIZ[idx];
+      if (!item) return;
+      var entry = '・[' + item.category + (item.type === 'multi' ? '/複数選択' : '') + '] ' + item.q + '\n  選択肢: ' + quizChoiceLabel(item) + '\n  正解: ' + quizCorrectLabel(item);
+      if (quizFeedback[idx] === 'good') goodList.push(entry);
+      else if (quizFeedback[idx] === 'bad') badList.push(entry);
+    });
+    var text = '【TLSクイズ(quiz-tls.html、全50問プール)フィードバック】\n\n' +
+      '良問と評価された問題(' + goodList.length + '件):\n' + (goodList.length ? goodList.join('\n\n') : '(なし)') + '\n\n' +
+      '悪問と評価された問題(' + badList.length + '件) — 改善・差し替えを検討してください:\n' + (badList.length ? badList.join('\n\n') : '(なし)') + '\n\n' +
+      '参照ファイル: artifacts/html/oncology-reports/quiz-tls.html\n\n' +
+      '上記フィードバックを踏まえて、「悪問」と評価された問題をレポート本文(artifacts/html/oncology-reports/tls.html、添付文書情報セクション含む)の内容に基づいて改善・差し替えてください。「良問」と評価された問題は現状を維持してください。';
+    var notify = function () { alert('フィードバックをコピーしました。MulmoClaudeのチャットに貼り付けて送信してください。問題の改善に使います。'); };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(notify).catch(function () { quizFallbackCopy(text, notify); });
+    } else { quizFallbackCopy(text, notify); }
+  }
+  function quizResetFeedback() {
+    if (!confirm('すべての評価をリセットします。よろしいですか?')) return;
+    quizFeedback = {};
+    quizSaveFeedback();
+    alert('評価をリセットしました。');
+  }
+
+  function quizRenderQuestion() {
+    document.getElementById('quiz-result-area').style.display = 'none';
+    document.getElementById('quiz-question-area').style.display = 'block';
+    var qi = quizOrder[quizIndex];
+    var item = QUIZ[qi];
+    document.getElementById('quiz-progress-text').textContent = '問 ' + (quizIndex + 1) + ' / ' + quizOrder.length + '(全' + QUIZ.length + '問中からランダム出題)';
+    document.getElementById('quiz-cat-badge').textContent = item.category;
+    document.getElementById('quiz-type-badge').style.display = (item.type === 'multi') ? 'inline-flex' : 'none';
+    document.getElementById('quiz-progress-fill').style.width = Math.round((quizIndex / quizOrder.length) * 100) + '%';
+    document.getElementById('quiz-question-text').textContent = item.q;
+    document.getElementById('quiz-explain-area').style.display = 'none';
+    document.getElementById('quiz-explain-area').innerHTML = '';
+    document.getElementById('quiz-next-btn').style.display = 'none';
+    document.getElementById('quiz-submit-row').style.display = 'none';
+
+    var wrap = document.getElementById('quiz-choices');
+    wrap.innerHTML = '';
+
+    if (item.type === 'multi') {
+      var selected = {};
+      item.choices.forEach(function (choiceText, idx) {
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'quiz-choice';
+        btn.innerHTML = '<span class="quiz-choice-check">☐</span> ' + choiceText.replace(/</g, '&lt;');
+        btn.onclick = function () {
+          selected[idx] = !selected[idx];
+          btn.classList.toggle('selected', !!selected[idx]);
+          btn.querySelector('.quiz-choice-check').textContent = selected[idx] ? '☑' : '☐';
+        };
+        wrap.appendChild(btn);
+      });
+      document.getElementById('quiz-submit-row').style.display = 'block';
+      document.getElementById('quiz-submit-btn').onclick = function () {
+        var chosen = Object.keys(selected).filter(function (k) { return selected[k]; }).map(Number);
+        quizAnswerMulti(chosen);
+      };
+    } else {
+      item.choices.forEach(function (choiceText, idx) {
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'quiz-choice';
+        btn.textContent = choiceText;
+        btn.onclick = function () { quizAnswerSingle(idx); };
+        wrap.appendChild(btn);
+      });
+    }
+  }
+
+  function quizFinishQuestion(qi, isCorrect, correctText) {
+    var item = QUIZ[qi];
+    var explainArea = document.getElementById('quiz-explain-area');
+    explainArea.className = 'quiz-explain';
+    explainArea.style.display = 'block';
+    explainArea.innerHTML = '<div style="font-weight:700; margin-bottom:4px; color:' + (isCorrect ? 'var(--good)' : 'var(--critical)') + ';">' +
+      (isCorrect ? '✅ 正解' : '❌ 不正解(正解: ' + correctText + ')') + '</div>' +
+      '<div>' + (item.explain || '') + '</div>';
+    explainArea.appendChild(quizBuildRatingRow(qi));
+    document.getElementById('quiz-submit-row').style.display = 'none';
+    document.getElementById('quiz-next-btn').style.display = 'inline-block';
+    document.getElementById('quiz-next-btn').textContent = (quizIndex === quizOrder.length - 1) ? '結果を見る →' : '次の問題 →';
+  }
+
+  function quizAnswerSingle(selectedIdx) {
+    var qi = quizOrder[quizIndex];
+    var item = QUIZ[qi];
+    quizAnswers[qi] = selectedIdx;
+    var buttons = document.getElementById('quiz-choices').querySelectorAll('.quiz-choice');
+    buttons.forEach(function (btn, idx) {
+      btn.disabled = true;
+      if (idx === item.correct) btn.classList.add('correct');
+      else if (idx === selectedIdx) btn.classList.add('wrong');
+    });
+    quizFinishQuestion(qi, selectedIdx === item.correct, item.choices[item.correct]);
+  }
+
+  function quizSubmitMulti() {
+    var qi = quizOrder[quizIndex];
+    var item = QUIZ[qi];
+    var buttons = document.getElementById('quiz-choices').querySelectorAll('.quiz-choice');
+    var chosen = [];
+    buttons.forEach(function (btn, idx) {
+      if (btn.classList.contains('selected')) chosen.push(idx);
+    });
+    quizAnswerMulti(chosen, buttons, item, qi);
+  }
+
+  function quizAnswerMulti(chosen, buttons, item, qi) {
+    qi = (qi === undefined) ? quizOrder[quizIndex] : qi;
+    item = item || QUIZ[qi];
+    buttons = buttons || document.getElementById('quiz-choices').querySelectorAll('.quiz-choice');
+    quizAnswers[qi] = chosen;
+    var correctSet = item.correct.slice().sort();
+    var chosenSet = chosen.slice().sort();
+    var isCorrect = correctSet.length === chosenSet.length && correctSet.every(function (v, i) { return v === chosenSet[i]; });
+    buttons.forEach(function (btn, idx) {
+      btn.disabled = true;
+      var isRight = item.correct.indexOf(idx) !== -1;
+      var wasChosen = chosen.indexOf(idx) !== -1;
+      if (isRight) btn.classList.add('correct');
+      else if (wasChosen) btn.classList.add('wrong');
+    });
+    quizFinishQuestion(qi, isCorrect, quizCorrectLabel(item));
+  }
+
+  function quizNext() {
+    if (quizIndex < quizOrder.length - 1) {
+      quizIndex++;
+      quizRenderQuestion();
+    } else {
+      quizShowResult();
+    }
+  }
+
+  function quizShowResult() {
+    document.getElementById('quiz-progress-fill').style.width = '100%';
+    document.getElementById('quiz-progress-text').textContent = '完了 ' + quizOrder.length + ' / ' + quizOrder.length;
+    document.getElementById('quiz-cat-badge').textContent = '';
+    document.getElementById('quiz-type-badge').style.display = 'none';
+    document.getElementById('quiz-question-area').style.display = 'none';
+
+    var correctCount = 0;
+    var byCategory = {};
+    quizOrder.forEach(function (qi) {
+      var item = QUIZ[qi];
+      if (!byCategory[item.category]) byCategory[item.category] = { correct: 0, total: 0 };
+      byCategory[item.category].total++;
+      var ans = quizAnswers[qi];
+      var isCorrect;
+      if (item.type === 'multi') {
+        var correctSet = item.correct.slice().sort();
+        var chosenSet = (ans || []).slice().sort();
+        isCorrect = correctSet.length === chosenSet.length && correctSet.every(function (v, i) { return v === chosenSet[i]; });
+      } else {
+        isCorrect = ans === item.correct;
+      }
+      if (isCorrect) { correctCount++; byCategory[item.category].correct++; }
+    });
+    var pct = Math.round((correctCount / quizOrder.length) * 100);
+
+    var catHtml = '';
+    Object.keys(byCategory).forEach(function (cat) {
+      var c = byCategory[cat];
+      var p = Math.round((c.correct / c.total) * 100);
+      catHtml += '<div class="cat-result-row"><span class="text-xs" style="width:150px; flex-shrink:0;">' + cat + '</span>' +
+        '<div class="cat-result-bar"><div class="cat-result-fill" style="width:' + p + '%"></div></div>' +
+        '<span class="text-xs muted" style="width:56px; text-align:right;">' + c.correct + '/' + c.total + '</span></div>';
+    });
+
+    var reviewHtml = '';
+    quizOrder.forEach(function (qi) {
+      var item = QUIZ[qi];
+      var ans = quizAnswers[qi];
+      var isCorrect;
+      var yourAnswerText;
+      if (item.type === 'multi') {
+        var correctSet = item.correct.slice().sort();
+        var chosenSet = (ans || []).slice().sort();
+        isCorrect = correctSet.length === chosenSet.length && correctSet.every(function (v, i) { return v === chosenSet[i]; });
+        yourAnswerText = (ans && ans.length) ? ans.map(function (i) { return item.choices[i]; }).join(' ＋ ') : '(未回答)';
+      } else {
+        isCorrect = ans === item.correct;
+        yourAnswerText = (ans != null) ? item.choices[ans] : '(未回答)';
+      }
+      if (!isCorrect) {
+        reviewHtml += '<div class="review-item">' +
+          '<div class="text-sm font-semibold mb-1">' + item.q + '</div>' +
+          '<div class="text-xs muted mb-2">あなたの回答: ' + yourAnswerText + ' / 正解: ' + quizCorrectLabel(item) + '</div>' +
+          '<div class="text-xs" style="line-height:1.6;">' + (item.explain || '') + '</div>' +
+          '</div>';
+      }
+    });
+    if (!reviewHtml) reviewHtml = '<p class="text-sm secondary">全問正解です。見直しの必要な項目はありません 🎉</p>';
+
+    var goodCount = 0, badCount = 0;
+    Object.keys(quizFeedback).forEach(function (k) {
+      if (quizFeedback[k] === 'good') goodCount++;
+      else if (quizFeedback[k] === 'bad') badCount++;
+    });
+
+    var resultArea = document.getElementById('quiz-result-area');
+    resultArea.style.display = 'block';
+    resultArea.innerHTML =
+      '<div class="text-center mb-6">' +
+        '<div class="score-ring-num" style="color:var(--series-new);">' + correctCount + ' / ' + quizOrder.length + '</div>' +
+        '<div class="text-sm muted mt-1">正答率 ' + pct + '%(全' + QUIZ.length + '問プールから今回ランダム抽出された' + quizOrder.length + '問)</div>' +
+      '</div>' +
+      '<div class="mb-6"><div class="text-sm font-semibold mb-3">カテゴリ別正答率(今回出題分)</div>' + catHtml + '</div>' +
+      '<div class="mb-2 text-sm font-semibold">見直し(不正解・未回答の問題)</div>' +
+      '<div class="mb-6">' + reviewHtml + '</div>' +
+      '<div class="mb-6 pt-4 border-t" style="border-color:var(--gridline);">' +
+        '<div class="text-sm font-semibold mb-2">問題の評価状況(全50問プール通算)</div>' +
+        '<div class="text-xs muted mb-3">👍 良問 ' + goodCount + '件 ・ 👎 悪問 ' + badCount + '件</div>' +
+        '<div class="flex flex-wrap gap-3">' +
+          '<button type="button" class="quiz-btn-outline" onclick="quizExportFeedback()">📋 フィードバックをエクスポート(チャットに貼り付け用)</button>' +
+          '<button type="button" class="quiz-btn-outline" onclick="quizResetFeedback()" style="border-color:var(--critical); color:var(--critical);">🗑 評価をリセット</button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="flex flex-wrap gap-3 justify-center">' +
+        '<button type="button" class="quiz-btn" onclick="quizRestart()">🔀 新しい10問でもう一度</button>' +
+        '<a href="tls.html" class="quiz-btn-outline" style="text-decoration:none; display:inline-block;">レポート本文に戻る</a>' +
+      '</div>';
+  }
+
+  function quizRestart() {
+    quizPickSession();
+    quizIndex = 0;
+    quizAnswers = [];
+    quizRenderQuestion();
+  }
+
+  quizLoadFeedback();
+  quizPickSession();
+  quizRenderQuestion();
+</script>
+
+<footer class="text-center text-xs pb-4" style="color: var(--text-muted);">
+  本クイズは学習・自己点検を目的とした資料です。臨床判断には利用せず、最新の添付文書・ガイドライン原文を優先してください。
+</footer>
+
+</body>
+</html>

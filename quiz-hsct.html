@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>造血幹細胞移植(HSCT)理解度クイズ 全50問(ランダム10問出題)</title>
+<title>造血幹細胞移植(HSCT)理解度クイズ 全52問(ランダム10問出題)</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
 :root, .viz-root {
@@ -60,6 +60,21 @@ body { background: var(--page-plane); color: var(--text-primary); font-family: s
 .rate-btn:hover { border-color: var(--series-new); }
 .rate-btn.active-good { border-color: var(--good); background: color-mix(in srgb, var(--good) 14%, transparent); color: var(--good); }
 .rate-btn.active-bad { border-color: var(--critical); background: color-mix(in srgb, var(--critical) 12%, transparent); color: var(--critical); }
+
+/* Compact dosing-schedule diagram embedded in a quiz question (drug x day grid) */
+.quiz-diagram-area:empty { display: none; }
+.quiz-diagram-area { margin-bottom: 14px; }
+.dg-timeline { border: 1px solid var(--gridline); border-radius: 10px; padding: 10px 12px 12px; background: var(--page-plane); }
+.dg-tl-title { font-size: 0.72rem; font-weight: 700; color: var(--text-primary); margin-bottom: 6px; }
+table.dg-tl-table { width: 100%; border-collapse: separate; border-spacing: 3px; font-size: 0.68rem; }
+table.dg-tl-table th { color: var(--text-muted); font-weight: 700; font-size: 0.58rem; text-transform: uppercase; letter-spacing: .03em; padding: 2px 3px 4px; text-align: center; }
+table.dg-tl-table th:first-child { text-align: left; }
+table.dg-tl-table td:first-child { text-align: left; font-weight: 600; color: var(--text-secondary); white-space: nowrap; padding-right: 8px; font-size: 0.66rem; }
+table.dg-tl-table td { text-align: center; padding: 6px 4px; border-radius: 6px; vertical-align: middle; line-height: 1.25; }
+td.dg-tl-on { background: color-mix(in srgb, var(--series-new) 14%, transparent); border: 1px solid var(--series-new); color: var(--text-primary); font-weight: 700; }
+td.dg-tl-on-alt { background: color-mix(in srgb, var(--warning) 16%, transparent); border: 1px dashed var(--warning); color: var(--text-primary); font-weight: 700; }
+td.dg-tl-off { background: var(--surface-1); border: 1px dashed var(--gridline); color: var(--text-muted); font-weight: 400; }
+td.dg-tl-txp { background: color-mix(in srgb, var(--good) 18%, transparent); border: 1px solid var(--good); color: var(--text-primary); font-weight: 700; }
 </style>
 </head>
 <body class="viz-root">
@@ -69,7 +84,7 @@ body { background: var(--page-plane); color: var(--text-primary); font-family: s
     <div class="flex items-center justify-between gap-2 flex-wrap">
       <div>
         <h1 class="text-xl font-bold">🧠 造血幹細胞移植(HSCT)理解度クイズ</h1>
-        <p class="text-sm mt-1 secondary">全50問のプールからランダムに10問出題・4択/複数選択混在・医療従事者向け(移植適応・レジメン選択・用法用量・投与スケジュール・用量規制因子/モニタリング・特徴的な合併症・バイオマーカー/適合性判定・コスト制度)</p>
+        <p class="text-sm mt-1 secondary">全52問のプールからランダムに10問出題・4択/複数選択混在・医療従事者向け(移植適応・レジメン選択・用法用量・投与スケジュール・用量規制因子/モニタリング・特徴的な合併症・バイオマーカー/適合性判定・コスト制度)</p>
       </div>
       <a href="hsct.html" class="text-xs" style="color:var(--series-new); text-decoration:none; font-weight:600;">← レポート本文に戻る</a>
     </div>
@@ -86,6 +101,7 @@ body { background: var(--page-plane); color: var(--text-primary); font-family: s
 
     <div id="quiz-question-area">
       <div id="quiz-question-text" class="text-base font-semibold mb-4" style="line-height:1.6;"></div>
+      <div id="quiz-diagram-area" class="quiz-diagram-area"></div>
       <div id="quiz-choices"></div>
       <div id="quiz-submit-row" style="display:none;" class="mt-3">
         <button type="button" class="quiz-btn" id="quiz-submit-btn" onclick="quizSubmitMulti()">この内容で回答する</button>
@@ -175,6 +191,32 @@ body { background: var(--page-plane); color: var(--text-primary); font-family: s
     { category: "用法用量・投与スケジュール", type: "multi", q: "抗ヒト胸腺細胞ウサギ免疫グロブリン(サイモグロブリン)の適応と用法用量の組み合わせとして正しいものをすべて選べ(2つ選択)",
       choices: ["造血幹細胞移植の前処置: 1日1回体重1kgあたり2.5mgを移植5日前より4日間", "造血幹細胞移植後の急性GVHD: 1日1回体重1kgあたり2.5〜3.75mgを5日間", "GVHD予防のみに用いられ、GVHD発症後の治療には用いられない", "投与量は年齢によらず常に一律50mg固定である"], correct: [0, 1],
       explain: "サイモグロブリンは前処置への追加(1日1回体重1kgあたり2.5mgを移植5日前より4日間)と、急性GVHD発症後の治療(1日1回体重1kgあたり2.5〜3.75mgを5日間)の両方に用いられ、体重換算で投与量を計算します。" },
+    { category: "用法用量・投与スケジュール", type: "single", q: "骨髄破壊的前処置(MAC)の代表的レジメンであるBu/Cyでは、ブスルファン(Day-7〜-4の4日間投与)終了後、シクロホスファミドはどのタイミングで投与される代表的な組み方か?",
+      choices: ["Day-3・Day-2の2日間投与し、Day-1を休薬日として移植(Day0)に臨む", "ブスルファンと完全に同日に同時投与する", "移植後(Day+1以降)にシクロホスファミドを投与する", "ブスルファンより先にシクロホスファミドを投与し、その後ブスルファンを投与する"], correct: 0,
+      explain: "添付文書ではブスルファンは4日間、シクロホスファミドは1日60mg/kgを2日間投与すると規定されており、臨床では一般にブスルファン(Day-7〜-4)に続けてシクロホスファミド(Day-3・-2)を投与し、Day-1を休薬日とした上で幹細胞輸注(Day0)を行う組み方が代表的です。Day配置は施設プロトコルにより異なるため要確認です。",
+      diagram: '<div class="dg-timeline" style="margin-top:2px; padding:10px 12px 12px;">' +
+        '<div class="dg-tl-title" style="font-size:0.72rem;">Bu/Cy前処置の代表的スケジュール(Day-7〜Day0)</div>' +
+        '<div class="table-scroll"><table class="dg-tl-table">' +
+        '<thead><tr><th>薬剤</th><th>Day-7</th><th>Day-6</th><th>Day-5</th><th>Day-4</th><th>Day-3</th><th>Day-2</th><th>Day-1</th><th>Day0</th></tr></thead>' +
+        '<tbody>' +
+        '<tr><td>ブスルファン</td><td class="dg-tl-on">投与</td><td class="dg-tl-on">投与</td><td class="dg-tl-on">投与</td><td class="dg-tl-on">投与</td><td class="dg-tl-off">—</td><td class="dg-tl-off">—</td><td class="dg-tl-off">—</td><td class="dg-tl-off">—</td></tr>' +
+        '<tr><td>シクロホスファミド</td><td class="dg-tl-off">—</td><td class="dg-tl-off">—</td><td class="dg-tl-off">—</td><td class="dg-tl-off">—</td><td class="dg-tl-on">投与</td><td class="dg-tl-on">投与</td><td class="dg-tl-off">休薬</td><td class="dg-tl-off">—</td></tr>' +
+        '<tr><td>幹細胞輸注</td><td class="dg-tl-off">—</td><td class="dg-tl-off">—</td><td class="dg-tl-off">—</td><td class="dg-tl-off">—</td><td class="dg-tl-off">—</td><td class="dg-tl-off">—</td><td class="dg-tl-off">—</td><td class="dg-tl-txp">移植日</td></tr>' +
+        '</tbody></table></div>' +
+        '</div>' },
+    { category: "用法用量・投与スケジュール", type: "single", q: "強度減弱前処置(RIC)のFlu/Mel(フルダラビン+メルファラン)レジメンにおいて、メルファラン添付文書上、幹細胞輸注はメルファラン最終投与終了後どのくらい間隔を空けて行うと規定されているか?",
+      choices: ["24時間以上", "間隔を空ける必要はない", "1週間以上", "30分以上"], correct: 0,
+      explain: "メルファランの添付文書には「幹細胞の輸注は最終投与終了後24時間以上あけて行う」と明記されています。フルダラビン(30mg/m²×6日間)とメルファラン(60mg/m²×3日間)を組み合わせるRIC例では、この規定を踏まえてメルファラン最終投与日の翌日を移植日(Day0)とする組み方が代表的です。",
+      diagram: '<div class="dg-timeline" style="margin-top:2px; padding:10px 12px 12px;">' +
+        '<div class="dg-tl-title" style="font-size:0.72rem;">Flu/Mel前処置の代表的スケジュール(Day-6〜Day0)</div>' +
+        '<div class="table-scroll"><table class="dg-tl-table">' +
+        '<thead><tr><th>薬剤</th><th>Day-6</th><th>Day-5</th><th>Day-4</th><th>Day-3</th><th>Day-2</th><th>Day-1</th><th>Day0</th></tr></thead>' +
+        '<tbody>' +
+        '<tr><td>フルダラビン</td><td class="dg-tl-on">投与</td><td class="dg-tl-on">投与</td><td class="dg-tl-on">投与</td><td class="dg-tl-on">投与</td><td class="dg-tl-on">投与</td><td class="dg-tl-on">投与</td><td class="dg-tl-off">—</td></tr>' +
+        '<tr><td>メルファラン</td><td class="dg-tl-off">—</td><td class="dg-tl-off">—</td><td class="dg-tl-off">—</td><td class="dg-tl-on">投与</td><td class="dg-tl-on">投与</td><td class="dg-tl-on">投与</td><td class="dg-tl-off">—</td></tr>' +
+        '<tr><td>幹細胞輸注</td><td class="dg-tl-off">—</td><td class="dg-tl-off">—</td><td class="dg-tl-off">—</td><td class="dg-tl-off">—</td><td class="dg-tl-off">—</td><td class="dg-tl-off">—</td><td class="dg-tl-txp">移植日<br>(≥24h後)</td></tr>' +
+        '</tbody></table></div>' +
+        '</div>' },
 
     // ══════════ 用量規制因子・モニタリング ══════════
     { category: "用量規制因子・モニタリング", type: "single", q: "タクロリムスで血中トラフ濃度が高値で持続する場合に高まるリスクは?",
@@ -352,7 +394,7 @@ body { background: var(--page-plane); color: var(--text-primary); font-family: s
       if (quizFeedback[idx] === 'good') goodList.push(entry);
       else if (quizFeedback[idx] === 'bad') badList.push(entry);
     });
-    var text = '【造血幹細胞移植(HSCT)クイズ(quiz-hsct.html、全50問プール)フィードバック】\n\n' +
+    var text = '【造血幹細胞移植(HSCT)クイズ(quiz-hsct.html、全52問プール)フィードバック】\n\n' +
       '良問と評価された問題(' + goodList.length + '件):\n' + (goodList.length ? goodList.join('\n\n') : '(なし)') + '\n\n' +
       '悪問と評価された問題(' + badList.length + '件) — 改善・差し替えを検討してください:\n' + (badList.length ? badList.join('\n\n') : '(なし)') + '\n\n' +
       '参照ファイル: artifacts/html/oncology-reports/quiz-hsct.html\n\n' +
@@ -379,6 +421,7 @@ body { background: var(--page-plane); color: var(--text-primary); font-family: s
     document.getElementById('quiz-type-badge').style.display = (item.type === 'multi') ? 'inline-flex' : 'none';
     document.getElementById('quiz-progress-fill').style.width = Math.round((quizIndex / quizOrder.length) * 100) + '%';
     document.getElementById('quiz-question-text').textContent = item.q;
+    document.getElementById('quiz-diagram-area').innerHTML = item.diagram || '';
     document.getElementById('quiz-explain-area').style.display = 'none';
     document.getElementById('quiz-explain-area').innerHTML = '';
     document.getElementById('quiz-next-btn').style.display = 'none';
@@ -560,7 +603,7 @@ body { background: var(--page-plane); color: var(--text-primary); font-family: s
       '<div class="mb-2 text-sm font-semibold">見直し(不正解・未回答の問題)</div>' +
       '<div class="mb-6">' + reviewHtml + '</div>' +
       '<div class="mb-6 pt-4 border-t" style="border-color:var(--gridline);">' +
-        '<div class="text-sm font-semibold mb-2">問題の評価状況(全50問プール通算)</div>' +
+        '<div class="text-sm font-semibold mb-2">問題の評価状況(全52問プール通算)</div>' +
         '<div class="text-xs muted mb-3">👍 良問 ' + goodCount + '件 ・ 👎 悪問 ' + badCount + '件</div>' +
         '<div class="flex flex-wrap gap-3">' +
           '<button type="button" class="quiz-btn-outline" onclick="quizExportFeedback()">📋 フィードバックをエクスポート(チャットに貼り付け用)</button>' +

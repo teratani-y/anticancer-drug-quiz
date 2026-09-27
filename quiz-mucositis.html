@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>口内炎・粘膜炎(Oral Mucositis)理解度クイズ 全50問(ランダム10問出題)</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+:root, .viz-root {
+  color-scheme: light;
+  --surface-1: #fcfcfb; --page-plane: #f9f9f7;
+  --text-primary: #0b0b0b; --text-secondary: #52514e; --text-muted: #898781;
+  --gridline: #e1e0d9; --baseline: #c3c2b7;
+  --series-new: #2a78d6; --series-control: #b9b7ae;
+  --good: #0ca30c; --warning: #b9790a; --critical: #d03b3b;
+  --border: rgba(11,11,11,0.10);
+}
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) {
+    color-scheme: dark;
+    --surface-1: #1a1a19; --page-plane: #0d0d0d;
+    --text-primary: #ffffff; --text-secondary: #c3c2b7; --text-muted: #898781;
+    --gridline: #2c2c2a; --baseline: #383835;
+    --series-new: #3987e5; --series-control: #55534c;
+    --good: #0ca30c; --warning: #eab116; --critical: #e66767;
+    --border: rgba(255,255,255,0.10);
+  }
+}
+body { background: var(--page-plane); color: var(--text-primary); font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+.card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+.secondary { color: var(--text-secondary); }
+.muted { color: var(--text-muted); }
+.cat-badge { display:inline-flex; align-items:center; padding:3px 10px; border-radius:9999px; font-size:0.72rem; font-weight:700; background: color-mix(in srgb, var(--series-new) 14%, transparent); color: var(--series-new); }
+.type-badge { display:inline-flex; align-items:center; padding:3px 10px; border-radius:9999px; font-size:0.68rem; font-weight:700; background: color-mix(in srgb, var(--warning) 16%, transparent); color: var(--warning); margin-left:6px; }
+.progress-track { background: var(--gridline); border-radius: 9999px; height: 8px; overflow: hidden; }
+.progress-fill { background: var(--series-new); height: 100%; border-radius: 9999px; transition: width .25s; }
+.quiz-choice { display:block; width:100%; text-align:left; background: var(--page-plane); border: 1.5px solid var(--gridline); border-radius: 10px; padding: 12px 16px; font-size: 0.92rem; cursor: pointer; transition: border-color .12s, background .12s; margin-bottom: 10px; }
+.quiz-choice:last-child { margin-bottom: 0; }
+.quiz-choice:hover:not(:disabled) { border-color: var(--series-new); }
+.quiz-choice:disabled { cursor: default; }
+.quiz-choice.correct { border-color: var(--good); background: color-mix(in srgb, var(--good) 12%, transparent); font-weight: 700; }
+.quiz-choice.wrong { border-color: var(--critical); background: color-mix(in srgb, var(--critical) 10%, transparent); }
+.quiz-choice.selected { border-color: var(--series-new); background: color-mix(in srgb, var(--series-new) 10%, transparent); }
+.quiz-choice-check { display:inline-block; width:16px; }
+.quiz-explain { background: var(--page-plane); border: 1px solid var(--gridline); border-radius: 10px; padding: 14px 16px; margin-top: 14px; font-size: 0.85rem; line-height: 1.7; }
+.quiz-btn { background: var(--series-new); color: #fff; border: none; border-radius: 8px; padding: 10px 22px; font-size: 0.88rem; font-weight: 700; cursor: pointer; }
+.quiz-btn:hover { opacity: 0.9; }
+.quiz-btn:disabled { opacity: 0.4; cursor: default; }
+.quiz-btn-outline { background: transparent; color: var(--series-new); border: 1.5px solid var(--series-new); border-radius: 8px; padding: 9px 20px; font-size: 0.88rem; font-weight: 700; cursor: pointer; }
+.quiz-btn-outline:hover { background: color-mix(in srgb, var(--series-new) 10%, transparent); }
+.score-ring-num { font-size: 2.6rem; font-weight: 800; }
+.cat-result-row { display:flex; align-items:center; gap:10px; margin-bottom: 8px; }
+.cat-result-bar { flex:1; background: var(--gridline); border-radius: 9999px; height: 10px; overflow:hidden; }
+.cat-result-fill { background: var(--series-new); height:100%; border-radius: 9999px; }
+.review-item { border: 1px solid var(--gridline); border-radius: 10px; padding: 12px 14px; margin-bottom: 10px; }
+.review-item:last-child { margin-bottom: 0; }
+.rate-row { display:flex; align-items:center; gap:8px; margin-top:14px; flex-wrap:wrap; }
+.rate-label { font-size:0.75rem; color: var(--text-muted); }
+.rate-btn { background: var(--page-plane); border: 1.5px solid var(--gridline); border-radius: 8px; padding: 6px 12px; font-size: 0.78rem; font-weight:600; cursor:pointer; color: var(--text-secondary); }
+.rate-btn:hover { border-color: var(--series-new); }
+.rate-btn.active-good { border-color: var(--good); background: color-mix(in srgb, var(--good) 14%, transparent); color: var(--good); }
+.rate-btn.active-bad { border-color: var(--critical); background: color-mix(in srgb, var(--critical) 12%, transparent); color: var(--critical); }
+
+/* Compact dosing schedule timeline diagram, used inside quiz-diagram-area (see mucositis.html .dg-timeline for the full version) */
+.quiz-diagram-area:empty { display: none; }
+.quiz-diagram-area .dg-timeline { border: 1px solid var(--gridline); border-radius: 8px; padding: 10px 12px 12px; background: var(--page-plane); margin-bottom: 14px; }
+.quiz-diagram-area .dg-tl-title { font-size: 0.76rem; font-weight: 700; color: var(--text-primary); margin-bottom: 8px; }
+.quiz-diagram-area table.dg-tl-table { width: 100%; border-collapse: separate; border-spacing: 3px; font-size: 0.66rem; }
+.quiz-diagram-area table.dg-tl-table th { color: var(--text-muted); font-weight: 700; font-size: 0.58rem; text-transform: uppercase; letter-spacing: .03em; padding: 2px 3px 5px; text-align: center; }
+.quiz-diagram-area table.dg-tl-table th:first-child { text-align: left; }
+.quiz-diagram-area table.dg-tl-table td:first-child { text-align: left; font-weight: 600; color: var(--text-secondary); white-space: nowrap; padding-right: 6px; font-size: 0.64rem; }
+.quiz-diagram-area table.dg-tl-table td { text-align: center; padding: 6px 4px; border-radius: 6px; vertical-align: middle; line-height: 1.25; }
+.quiz-diagram-area td.dg-tl-on { background: color-mix(in srgb, var(--series-new) 14%, transparent); border: 1px solid var(--series-new); color: var(--text-primary); font-weight: 700; }
+.quiz-diagram-area td.dg-tl-on-alt { background: color-mix(in srgb, var(--warning) 16%, transparent); border: 1px dashed var(--warning); color: var(--text-primary); font-weight: 700; }
+.quiz-diagram-area td.dg-tl-off { background: var(--surface-1); border: 1px dashed var(--gridline); color: var(--text-muted); font-weight: 400; }
+.quiz-diagram-area .dg-tl-note { font-size: 0.62rem; color: var(--text-muted); margin-top: 6px; line-height: 1.5; }
+</style>
+</head>
+<body class="viz-root">
+<div class="max-w-3xl mx-auto px-4 py-8 space-y-5">
+
+  <header class="card">
+    <div class="flex items-center justify-between gap-2 flex-wrap">
+      <div>
+        <h1 class="text-xl font-bold">🧠 口内炎・粘膜炎(Oral Mucositis)理解度クイズ</h1>
+        <p class="text-sm mt-1 secondary">全50問のプールからランダムに10問出題・4択/複数選択混在・医療従事者向け(リスク層別化と予防戦略の選択・用法用量/投与タイミング〔クライオセラピー等〕・重症度分類/合併症対応・薬剤選択の根拠・コスト制度)</p>
+      </div>
+      <a href="mucositis.html" class="text-xs" style="color:var(--series-new); text-decoration:none; font-weight:600;">← レポート本文に戻る</a>
+    </div>
+    <p class="text-xs mt-3 muted">出題内容はすべて <a href="mucositis.html" style="color:var(--series-new);">口内炎・粘膜炎(Oral Mucositis)レポート</a>(本文および「7. 主要製剤の添付文書情報」)に記載の情報に基づきます。パリフェルミンは日本国内未承認のため、その未承認である事実そのものを問う設問のみを含み、添付文書の用法用量等に基づく設問には使用していません。臨床判断には利用せず、学習・自己点検の目的でご利用ください。ページを再読み込みする、または結果画面の「シャッフルしてもう一度」を押すたびに、新しい10問がランダムに選ばれます。</p>
+  </header>
+
+  <!-- Quiz card -->
+  <section class="card" id="quiz-card">
+    <div class="flex items-center justify-between mb-2">
+      <span id="quiz-progress-text" class="text-xs font-semibold muted"></span>
+      <span><span id="quiz-cat-badge" class="cat-badge"></span><span id="quiz-type-badge" class="type-badge" style="display:none;">複数選択</span></span>
+    </div>
+    <div class="progress-track mb-5"><div class="progress-fill" id="quiz-progress-fill" style="width:0%"></div></div>
+
+    <div id="quiz-question-area">
+      <div id="quiz-question-text" class="text-base font-semibold mb-4" style="line-height:1.6;"></div>
+      <div id="quiz-diagram-area" class="quiz-diagram-area"></div>
+      <div id="quiz-choices"></div>
+      <div id="quiz-submit-row" style="display:none;" class="mt-3">
+        <button type="button" class="quiz-btn" id="quiz-submit-btn" onclick="quizSubmitMulti()">この内容で回答する</button>
+      </div>
+      <div id="quiz-explain-area" style="display:none;"></div>
+      <div class="mt-5 flex justify-end">
+        <button type="button" id="quiz-next-btn" class="quiz-btn" style="display:none;" onclick="quizNext()">次の問題 →</button>
+      </div>
+    </div>
+
+    <div id="quiz-result-area" style="display:none;"></div>
+  </section>
+
+</div>
+
+<script>
+  var QUIZ = [
+    // ══════════ リスク層別化と予防戦略の選択(14問) ══════════
+    { category: "リスク層別化と予防戦略の選択", type: "single", q: "MASCC/ISOOガイドライン(2019/2020年版)は何という学術誌に、いつ公開されたか?",
+      choices: ["Cancer誌に2020年7月28日にオンライン公開された", "JAMA Oncology誌に2019年に公開された", "NEJM誌に2020年に公開された", "Lancet Oncology誌に2021年に公開された"], correct: 0,
+      explain: "Elad S, et al. MASCC/ISOO clinical practice guidelines for the management of mucositis secondary to cancer therapy. Cancer. 2020;126(19):4423-4431として2020年7月28日にオンライン公開されました。" },
+    { category: "リスク層別化と予防戦略の選択", type: "single", q: "MASCC/ISOOガイドライン(2019/2020年版)の策定を担ったMucositis Study Groupによる文献レビューの規模は?",
+      choices: ["33ヶ国・約250名の専門家が1197件の文献をレビューした", "1ヶ国・10名の専門家が100件の文献をレビューした", "5ヶ国・50名の専門家が500件の文献をレビューした", "33ヶ国・250名の専門家が50件の文献をレビューした"], correct: 0,
+      explain: "Multinational Association of Supportive Care in Cancer(MASCC)/International Society of Oral Oncology(ISOO)のMucositis Study Groupは、33ヶ国・約250名の専門家により口腔・消化管粘膜炎に関する1197件の文献をシステマティックレビューしました。" },
+    { category: "リスク層別化と予防戦略の選択", type: "single", q: "MASCC/ISOOガイドライン(2019/2020年版)で策定されたガイドラインステートメントの内訳は?",
+      choices: ["新規13件、改訂確認11件、据置13件", "新規50件、改訂確認0件、据置0件", "新規1件、改訂確認1件、据置1件", "新規100件、改訂確認50件、据置20件"], correct: 0,
+      explain: "新規に13件のガイドラインが策定され、11件が新たなエビデンスのレビューを経て改訂・確認され、13件が新規エビデンスがないため従来のまま据え置かれました。" },
+    { category: "リスク層別化と予防戦略の選択", type: "single", q: "ボーラス5-FU化学療法における口腔クライオセラピーの、MASCC/ISOOガイドライン上の位置づけは?",
+      choices: ["推奨(Recommendation, LoE II)", "禁忌", "ガイドライン策定不能(No guideline possible)", "示唆(Suggestion)にとどまる"], correct: 0,
+      explain: "MASCC/ISOOガイドラインは、ボーラス5-FU化学療法を受ける患者への30分間の口腔クライオセラピーをRecommendation(推奨、LoE II)としています。" },
+    { category: "リスク層別化と予防戦略の選択", type: "single", q: "大量メルファランを含む自家造血幹細胞移植前処置における口腔クライオセラピーの位置づけは?",
+      choices: ["推奨(Recommendation, LoE II)", "ガイドライン策定不能", "禁忌", "効果なしと結論づけられている"], correct: 0,
+      explain: "MASCC/ISOOガイドライン(Correa MEP, et al. Support Care Cancer 2020;28:2449-2456)は、大量メルファランを含む前処置を受ける自家造血幹細胞移植患者への口腔クライオセラピーをRecommendation(LoE II)としています。" },
+    { category: "リスク層別化と予防戦略の選択", type: "single", q: "5-FU持続静注(短時間持続点滴を含む)患者における口腔クライオセラピーの位置づけと、その理由は?",
+      choices: ["ガイドライン策定不能(No guideline possible)。エビデンス不足のためであり無効と証明されたわけではない", "禁忌。長時間の口腔内冷却は危険であるため", "強い推奨(Recommendation, LoE I)", "5-FUボーラスと全く同じ推奨内容が適用される"], correct: 0,
+      explain: "5-FU持続静注や短時間持続点滴・半減期の短い薬剤全般については、クライオセラピーのガイドライン策定は「不能(No guideline possible, LoE III)」とされています。これはエビデンスが不足しているためであり、効果がないと証明されたわけではない点に注意が必要です。" },
+    { category: "リスク層別化と予防戦略の選択", type: "single", q: "頭頸部への放射線治療を受ける患者における口腔クライオセラピーの位置づけは?",
+      choices: ["ガイドライン策定不能(No guideline possible, LoE III)", "強い推奨(Recommendation, LoE I)", "禁忌", "パリフェルミンと同等のエビデンスレベルの推奨"], correct: 0,
+      explain: "頭頸部への放射線治療を受ける患者における口腔クライオセラピーは、ガイドライン策定不能(No guideline possible, LoE III)とされています。" },
+    { category: "リスク層別化と予防戦略の選択", type: "single", q: "頭頸部固形腫瘍に放射線治療を行う患者の口腔粘膜炎予防において、クロルヘキシジン含嗽の位置づけは?",
+      choices: ["使用しないことが推奨されている", "第一選択薬として強く推奨されている", "口腔クライオセラピーと併用が必須とされている", "国内未承認のため使用できない"], correct: 0,
+      explain: "2004年のMASCC/ISOO専門委員会によるガイドライン等では、頭頸部固形腫瘍への放射線治療を受ける患者の口腔粘膜炎予防にクロルヘキシジンを使用しないことが推奨されています(最新版での位置づけは要確認)。" },
+    { category: "リスク層別化と予防戦略の選択", type: "single", q: "大量化学療法±全身放射線照射(TBI)を伴う造血幹細胞移植前処置患者において、MASCC/ISOOガイドラインが予防目的で言及する光線療法は?",
+      choices: ["低反応レベルレーザー治療(LLLT)", "高強度集束超音波療法", "光線力学的療法(PDT)", "紫外線療法"], correct: 0,
+      explain: "MASCC/ISOOガイドラインは、大量化学療法±TBIを伴う前処置を受けるHSCT患者への低反応レベルレーザー治療(LLLT)の予防的使用について言及しています。専用機器・実施体制を要し国内での普及状況は施設差が大きい点に留意が必要です。" },
+    { category: "リスク層別化と予防戦略の選択", type: "single", q: "日本国内での口腔粘膜炎マネジメントにおいて優先して参照すべきとされる国内ガイダンスは?",
+      choices: ["JASCC・JAOSCC編「がん治療に伴う粘膜障害マネジメントの手引き 2020年版」", "NCCN Guidelines日本語版", "ASCO Guidelines日本語版", "WHO Oral Health Guidelines"], correct: 0,
+      explain: "日本がんサポーティブケア学会(JASCC)・日本がん口腔支持療法学会(JAOSCC)編「がん治療に伴う粘膜障害マネジメントの手引き 2020年版」(金原出版、2020年2月)が国内での優先参照ガイダンスです。" },
+    { category: "リスク層別化と予防戦略の選択", type: "single", q: "「がん治療に伴う粘膜障害マネジメントの手引き 2020年版」を編集した2学会は?",
+      choices: ["日本がんサポーティブケア学会と日本がん口腔支持療法学会", "日本癌治療学会と日本歯科医学会", "日本臨床腫瘍学会と日本口腔外科学会", "日本血液学会と日本造血・免疫細胞療法学会"], correct: 0,
+      explain: "日本がんサポーティブケア学会(JASCC)と日本がん口腔支持療法学会(JAOSCC)が共同編集し、金原出版から2020年2月に刊行されました。" },
+    { category: "リスク層別化と予防戦略の選択", type: "single", q: "EOCC(The European Oral Care in Cancer Group)口腔ケアガイダンスの日本語訳を担当したのは?",
+      choices: ["日本がんサポーティブケア学会 粘膜炎部会", "日本癌治療学会 制吐委員会", "日本臨床腫瘍学会 支持療法委員会", "国立がん研究センター 支持療法開発センター"], correct: 0,
+      explain: "JASCC粘膜炎部会が2018年1月に監訳し公開しています。" },
+    { category: "リスク層別化と予防戦略の選択", type: "single", q: "NCCNが口腔粘膜炎に特化して発行したタスクフォース報告書の発行年は?",
+      choices: ["2008年", "2020年", "2015年", "1998年"], correct: 0,
+      explain: "NCCN Task Force Report: Prevention and Management of Mucositis in Cancer Careは2008年にJ Natl Compr Canc Netw誌(6巻Suppl 1、S1-21)に発表されました。CINVのAntiemesisガイドラインのように毎年改訂される独立ガイドラインの後継版は本レポート作成時点(2026年9月)で確認できず、要確認とされています。" },
+    { category: "リスク層別化と予防戦略の選択", type: "multi", q: "口腔粘膜炎の基本的なケアとして、JASCC/JAOSCC手引き及びEOCCガイダンスが挙げる柱として正しいものをすべて選べ(3つ選択)",
+      choices: ["衛生管理", "疼痛管理", "栄養管理", "抗菌薬の予防投与"], correct: [0, 1, 2],
+      explain: "JASCC/JAOSCC「がん治療に伴う粘膜障害マネジメントの手引き」及びEOCC口腔ケアガイダンスは、(1)衛生管理、(2)疼痛管理、(3)栄養管理の3つの介入が最低限望ましいとしています。抗菌薬の予防投与はこの3本柱には含まれません。" },
+
+    // ══════════ 用法用量・投与タイミング(クライオセラピー等)(9問) ══════════
+    { category: "用法用量・投与タイミング", type: "single", q: "ボーラス5-FU化学療法時の口腔クライオセラピーの標準的な開始タイミングと総時間は?(下図参照)",
+      choices: ["投与5分前から開始し、合計約30分間継続する", "投与終了後にのみ30分間実施する", "投与24時間前から開始する", "投与中は実施せず、投与後6時間経ってから開始する"], correct: 0,
+      explain: "代表的なプロトコル(Mahood DJ, et al. J Clin Oncol 1991;9:449-452)では、5-FUボーラス投与の5分前から氷片を口に含み始め、投与開始から合計30分間継続します。MASCC/ISOOガイドラインも「30分間の口腔クライオセラピー」を推奨(Recommendation, LoE II)しています。",
+      diagram: '<div class="dg-timeline"><div class="dg-tl-title">ボーラス5-FU化学療法時の口腔クライオセラピー</div><div class="table-scroll"><table class="dg-tl-table"><thead><tr><th>項目</th><th>投与5分前</th><th>投与開始</th><th>投与後30分(終了)</th></tr></thead><tbody>' +
+        '<tr><td>5-FUボーラス静注</td><td class="dg-tl-off">—</td><td class="dg-tl-on">静注(短時間)</td><td class="dg-tl-off">—</td></tr>' +
+        '<tr><td>口腔クライオセラピー</td><td class="dg-tl-on">開始</td><td class="dg-tl-on">継続</td><td class="dg-tl-on">終了(合計約30分間)</td></tr>' +
+        '</tbody></table></div><div class="dg-tl-note">氷片は5-FUボーラス投与の5分前から口に含み始め、投与開始から合計30分間継続するのが代表的なプロトコル。</div></div>' },
+    { category: "用法用量・投与タイミング", type: "single", q: "Mahood DJらによる口腔クライオセラピーの無作為化比較試験(J Clin Oncol 1991)の対象患者数と結果の統計的有意性は?",
+      choices: ["患者95名を対象とし、医師評価による口内炎の減少はp=0.0002で有意差があった", "患者10名を対象とし、有意差はみられなかった", "患者1000名を対象とした多施設共同試験である", "動物実験のみで、ヒトでの試験は実施されていない"], correct: 0,
+      explain: "初回5-FU+ロイコボリン療法を受ける患者95名を対象とした無作為化比較試験で、医師評価によりクライオセラピー群で口内炎が有意に減少しました(p=0.0002)。患者自己評価による症状スコアでも有意差がありました(p=0.0001)。" },
+    { category: "用法用量・投与タイミング", type: "single", q: "大量メルファラン療法(自家造血幹細胞移植前処置)時の口腔クライオセラピーについて、文献上比較的多く報告される開始・終了タイミングは?(下図参照)",
+      choices: ["投与10~30分前に開始し、投与終了後1~2時間で終了する施設プロトコルが比較的多い", "必ず投与終了後24時間から開始する", "投与30日前から開始する", "メルファラン投与中は実施してはならない"], correct: 0,
+      explain: "MASCC/ISOOガイドラインは大量メルファランを含む前処置患者へのクライオセラピーを推奨(Recommendation, LoE II)していますが、原文には一律の開始・終了時間の規定はありません。文献上は投与10~30分前に開始し投与終了後1~2時間で終了する施設プロトコルが比較的多く報告される一方、メルファランの半減期を考慮し最大6時間程度まで継続する試験も実施されています。",
+      diagram: '<div class="dg-timeline"><div class="dg-tl-title">大量メルファラン療法時の口腔クライオセラピー</div><div class="table-scroll"><table class="dg-tl-table"><thead><tr><th>項目</th><th>投与30分前</th><th>投与中</th><th>投与後1~2時間</th><th>投与後2時間超</th></tr></thead><tbody>' +
+        '<tr><td>メルファラン点滴静注</td><td class="dg-tl-off">—</td><td class="dg-tl-on">点滴静注</td><td class="dg-tl-off">—</td><td class="dg-tl-off">—</td></tr>' +
+        '<tr><td>口腔クライオセラピー</td><td class="dg-tl-on-alt">開始(施設差あり)</td><td class="dg-tl-on">継続</td><td class="dg-tl-on-alt">終了する施設が多い</td><td class="dg-tl-on-alt">最大6時間程度継続する施設も</td></tr>' +
+        '</tbody></table></div><div class="dg-tl-note">開始・終了タイミングは施設プロトコルにより幅がある(要施設確認)。</div></div>' },
+    { category: "用法用量・投与タイミング", type: "single", q: "大量メルファラン療法時のクライオセラピー時間について比較した無作為化比較試験(NCT01653106)は、何と何を比較したか?",
+      choices: ["クライオセラピー実施時間2時間 vs 6時間", "クライオセラピーあり vs なし", "氷片 vs アイスクリーム", "メルファラン低用量 vs 高用量"], correct: 0,
+      explain: "NCT01653106は多発性骨髄腫患者を対象に、大量メルファラン投与時のクライオセラピー実施時間を2時間とする群と6時間とする群を比較した無作為化比較試験です。" },
+    { category: "用法用量・投与タイミング", type: "single", q: "アズレンスルホン酸ナトリウム水和物含嗽液(アズノールうがい液4%等)の用法及び用量は?",
+      choices: ["1回4~6mgを約100mLの水又は微温湯に溶解し、1日数回含嗽する", "1回400mgを1日1回内服する", "1回4~6mgを静脈内投与する", "1日1回、就寝前にのみ使用する"], correct: 0,
+      explain: "アズレンスルホン酸ナトリウム水和物として1回4~6mg(1回押し切り分、又は5~7滴)を約100mLの水又は微温湯に溶解し、1日数回含嗽します。年齢、症状により適宜増減します。" },
+    { category: "用法用量・投与タイミング", type: "single", q: "リドカイン塩酸塩(キシロカインビスカス2%)の成人における用法及び用量は?",
+      choices: ["1回100~300mgを1日1~3回経口的に投与する", "1回1000mgを1日1回静脈内投与する", "1回10mgを1日6回経口投与する", "用法用量の規定はない"], correct: 0,
+      explain: "通常、成人には1回100~300mgを1日1~3回経口的に投与し、年齢、麻酔領域、部位、組織、体質により適宜増減します。" },
+    { category: "用法用量・投与タイミング", type: "single", q: "キシロカインビスカスを口腔内麻酔(口腔粘膜炎の疼痛緩和)目的で使用する際の添付文書上の注意は?",
+      choices: ["嚥下させることなく口腔内に拡げるだけにとどめさせること", "積極的に嚥下させ全身に行き渡らせること", "1回で全量を一気に嚥下させること", "冷蔵保存した状態でそのまま塗布すること"], correct: 0,
+      explain: "口腔内麻酔には、不必要部の麻酔を避ける目的で嚥下させることなく、口腔内に拡げるだけにとどめさせることとされています(内視鏡検査時等はその限りではない)。" },
+    { category: "用法用量・投与タイミング", type: "single", q: "ポラプレジンクOD錠75mg「サワイ」の(胃潰瘍に対する)用法及び用量は?",
+      choices: ["1回75mgを1日2回朝食後及び就寝前に経口投与する", "1回750mgを1日1回静脈内投与する", "1回75mgを1日1回舌下投与する", "用法用量の規定はない"], correct: 0,
+      explain: "通常、成人にはポラプレジンクとして1回75mgを1日2回朝食後及び就寝前に経口投与し、年齢、症状により適宜増減します。" },
+    { category: "用法用量・投与タイミング", type: "multi", q: "MASCC/ISOOガイドライン(2020年)において、口腔クライオセラピーがRecommendation(LoE II)とされている治療法をすべて選べ(2つ選択)",
+      choices: ["ボーラス5-FU化学療法", "大量メルファランを含む自家造血幹細胞移植前処置", "頭頸部への放射線治療単独", "5-FU持続静注"], correct: [0, 1],
+      explain: "ボーラス5-FU化学療法と、大量メルファランを含む自家造血幹細胞移植前処置の2つが、MASCC/ISOOガイドラインでRecommendation(LoE II)とされています。頭頸部への放射線治療単独と5-FU持続静注は、いずれもガイドライン策定不能(No guideline possible, LoE III)です。" },
+
+    // ══════════ 重症度分類・合併症対応(12問) ══════════
+    { category: "重症度分類・合併症対応", type: "single", q: "CTCAE v5.0における口腔粘膜炎(Mucositis oral)の定義文は?",
+      choices: ["口腔粘膜の潰瘍または炎症", "口腔内の細菌感染", "唾液分泌量の低下", "歯周組織の炎症"], correct: 0,
+      explain: "CTCAE v5.0 - JCOG(2022年9月1日対応版)における口腔粘膜炎(Mucositis oral)の定義は「口腔粘膜の潰瘍または炎症」です。" },
+    { category: "重症度分類・合併症対応", type: "single", q: "CTCAE v5.0口腔粘膜炎のGrade1の定義は?",
+      choices: ["症状がない、または軽度の症状；治療を要さない", "経口摂取に支障がない中等度の疼痛または潰瘍；食事の変更を要する", "高度の疼痛；経口摂取に支障がある", "生命を脅かす；緊急処置を要する"], correct: 0,
+      explain: "Grade1は「症状がない、または軽度の症状；治療を要さない」と定義されています。" },
+    { category: "重症度分類・合併症対応", type: "single", q: "CTCAE v5.0口腔粘膜炎のGrade2の定義は?",
+      choices: ["経口摂取に支障がない中等度の疼痛または潰瘍；食事の変更を要する", "症状がない、または軽度の症状；治療を要さない", "高度の疼痛；経口摂取に支障がある", "生命を脅かす；緊急処置を要する"], correct: 0,
+      explain: "Grade2は「経口摂取に支障がない中等度の疼痛または潰瘍；食事の変更を要する」と定義されています。" },
+    { category: "重症度分類・合併症対応", type: "single", q: "CTCAE v5.0口腔粘膜炎のGrade3の定義は?",
+      choices: ["高度の疼痛；経口摂取に支障がある", "症状がない、または軽度の症状；治療を要さない", "経口摂取に支障がない中等度の疼痛または潰瘍；食事の変更を要する", "生命を脅かす；緊急処置を要する"], correct: 0,
+      explain: "Grade3は「高度の疼痛；経口摂取に支障がある」と定義されています。" },
+    { category: "重症度分類・合併症対応", type: "single", q: "CTCAE v5.0口腔粘膜炎のGrade4の定義は?",
+      choices: ["生命を脅かす；緊急処置を要する", "高度の疼痛；経口摂取に支障がある", "死亡", "症状がない、または軽度の症状"], correct: 0,
+      explain: "Grade4は「生命を脅かす；緊急処置を要する」と定義されています(Grade5は死亡)。" },
+    { category: "重症度分類・合併症対応", type: "single", q: "Grade3以上の口腔粘膜炎で経口摂取が著しく困難な場合に検討される栄養管理上の対応は?",
+      choices: ["経管栄養や静脈内補液の検討", "一切の栄養管理を行わず経過観察のみとする", "経口摂取のみを強制する", "栄養管理は口腔粘膜炎の重症度と無関係である"], correct: 0,
+      explain: "高度の疼痛により十分な経口摂取が不可能な場合、経管栄養や静脈内補液の検討、原疾患治療の延期・減量の検討が行われます。" },
+    { category: "重症度分類・合併症対応", type: "single", q: "Grade3以上の口腔粘膜炎で特に懸念される合併症は?",
+      choices: ["粘膜バリアの破綻による二次感染(細菌・真菌・ウイルス)", "骨粗鬆症", "糖尿病性ケトアシドーシス", "不整脈"], correct: 0,
+      explain: "粘膜バリアの破綻により、口腔内常在菌・真菌(カンジダ等)・単純ヘルペスウイルス等による二次感染のリスクが上昇します。" },
+    { category: "重症度分類・合併症対応", type: "single", q: "好中球減少期に高度な口腔粘膜炎が重なった場合に特に注意すべき病態は?",
+      choices: ["発熱性好中球減少症・敗血症", "甲状腺機能低下症", "深部静脈血栓症", "高カルシウム血症"], correct: 0,
+      explain: "粘膜バリアの破綻と好中球減少が重なると、口腔粘膜が細菌の侵入門戸となり、発熱性好中球減少症・敗血症のリスクが上昇します。" },
+    { category: "重症度分類・合併症対応", type: "single", q: "CTCAE v5.0で口腔粘膜炎(Mucositis oral)とは別に個別のGrade定義が設けられている部位別粘膜炎の用語の例は?",
+      choices: ["咽頭粘膜炎(Pharyngeal mucositis)", "結膜炎", "骨盤内感染", "心膜炎"], correct: 0,
+      explain: "CTCAE v5.0には口腔粘膜炎のほか、咽頭粘膜炎・喉頭粘膜炎・気管粘膜炎・小腸粘膜炎・直腸粘膜炎・肛門粘膜炎等、部位別の粘膜炎の用語とGrade定義が個別に設けられています。" },
+    { category: "重症度分類・合併症対応", type: "single", q: "口腔粘膜炎の治療関連リスク因子として挙げられるものは?",
+      choices: ["頭頸部への放射線治療の線量・照射野の広さ", "患者の血液型", "患者の身長", "患者の利き手"], correct: 0,
+      explain: "治療関連因子として、レジメンの種類、頭頸部への放射線治療の線量・照射野、造血幹細胞移植前処置の強度等が挙げられます。" },
+    { category: "重症度分類・合併症対応", type: "multi", q: "口腔粘膜炎の患者側リスク因子として挙げられるものをすべて選べ(2つ選択)",
+      choices: ["口腔衛生状態不良", "低BMI/栄養不良", "高い教育歴", "特定の血液型"], correct: [0, 1],
+      explain: "口腔衛生状態不良、喫煙・飲酒歴、治療前からの歯周病・う蝕、低BMI/栄養不良、高齢または若年、腎機能障害等が患者側リスク因子として挙げられます。教育歴や血液型はリスク因子として位置づけられていません。" },
+    { category: "重症度分類・合併症対応", type: "multi", q: "CTCAE v5.0において口腔粘膜炎と同様の重症度構造を持つ部位別粘膜炎の用語をすべて選べ(2つ選択)",
+      choices: ["喉頭粘膜炎(Laryngeal mucositis)", "小腸粘膜炎(Small intestinal mucositis)", "白内障(Cataract)", "高血圧(Hypertension)"], correct: [0, 1],
+      explain: "喉頭粘膜炎(Laryngeal mucositis)と小腸粘膜炎(Small intestinal mucositis)は、いずれも口腔粘膜炎と同様の潰瘍・炎症を評価するGrade定義を持つCTCAE v5.0の用語です。白内障・高血圧は無関係な用語です。" },
+
+    // ══════════ 薬剤選択の根拠(9問) ══════════
+    { category: "薬剤選択の根拠", type: "single", q: "アズレンスルホン酸ナトリウム水和物含嗽液(アズノールうがい液4%等)の添付文書上の効能・効果は?",
+      choices: ["咽頭炎、扁桃炎、口内炎、急性歯肉炎、舌炎、口腔創傷", "胃潰瘍", "表面麻酔", "高血圧症"], correct: 0,
+      explain: "咽頭炎、扁桃炎、口内炎、急性歯肉炎、舌炎、口腔創傷が添付文書上の効能・効果です。" },
+    { category: "薬剤選択の根拠", type: "single", q: "アズノールうがい液の重大な副作用の記載状況は?",
+      choices: ["重大な副作用の明記はない(その他の副作用として口中のあれ・口腔咽頭の刺激感がある)", "ショックが重大な副作用として明記されている", "無顆粒球症が重大な副作用として明記されている", "QT延長が重大な副作用として明記されている"], correct: 0,
+      explain: "添付文書に重大な副作用の明記はなく、その他の副作用として口中のあれ、口腔・咽頭の刺激感が報告されています。" },
+    { category: "薬剤選択の根拠", type: "single", q: "キシロカインビスカス2%の添付文書上の禁忌は?",
+      choices: ["本剤の成分又はアミド型局所麻酔薬に対し過敏症の既往歴のある患者", "糖尿病患者", "腎機能障害患者", "妊婦"], correct: 0,
+      explain: "本剤の成分又はアミド型局所麻酔薬に対し過敏症の既往歴のある患者は投与禁忌です。" },
+    { category: "薬剤選択の根拠", type: "single", q: "キシロカインビスカスの過量投与時に生じうる重大な副作用は?",
+      choices: ["意識障害・振戦・痙攣等の中毒症状、ショック(心停止を来すことがある)", "高血糖・糖尿病性ケトアシドーシス", "無顆粒球症", "間質性肺疾患"], correct: 0,
+      explain: "意識障害、振戦、痙攣等の中毒症状や、心停止を来すことがあるショックが重大な副作用として記載されています。" },
+    { category: "薬剤選択の根拠", type: "single", q: "キシロカインビスカス過量投与により振戦や痙攣が著明な場合の対処薬は?",
+      choices: ["ジアゼパム又は超短時間作用型バルビツール酸製剤", "インスリン", "炭酸水素ナトリウム", "フェニトイン単独"], correct: 0,
+      explain: "振戦や痙攣が著明であれば、ジアゼパム又は超短時間作用型バルビツール酸製剤を投与することとされています。" },
+    { category: "薬剤選択の根拠", type: "single", q: "ポラプレジンク(OD錠75mg「サワイ」等)の添付文書上の効能・効果は?",
+      choices: ["胃潰瘍のみであり、口内炎・口腔粘膜炎は適応に含まれない", "口内炎・口腔粘膜炎全般", "化学療法誘発性下痢", "放射線性膀胱炎"], correct: 0,
+      explain: "添付文書上の適応は胃潰瘍のみです。化学療法・放射線療法に伴う口内炎・口腔粘膜炎への使用は適応外使用(国内で臨床研究の報告はある)である点に注意が必要です。" },
+    { category: "薬剤選択の根拠", type: "single", q: "ポラプレジンクの重大な副作用として添付文書に記載されているものは?",
+      choices: ["肝機能障害・黄疸、銅欠乏症", "QT延長", "間質性肺疾患", "無顆粒球症"], correct: 0,
+      explain: "肝機能障害、黄疸、銅欠乏症(特に栄養状態不良患者で汎血球減少や貧血の報告あり)が重大な副作用として記載されています。" },
+    { category: "薬剤選択の根拠", type: "single", q: "パリフェルミンの日本国内での承認・販売状況は?",
+      choices: ["日本国内では未承認・未発売である", "日本国内で承認済みで自由に処方できる", "国内では後発品のみ承認されている", "治験段階で一部の施設のみ入手可能である"], correct: 0,
+      explain: "パリフェルミン(Kepivance)は米国では2004年12月にFDA承認されていますが、2026年9月時点で日本国内では未承認・未発売であり、国内での処方はできません。" },
+    { category: "薬剤選択の根拠", type: "multi", q: "ポラプレジンクの添付文書上、併用注意とされ吸収低下(キレート形成)のおそれがある薬剤をすべて選べ(2つ選択)",
+      choices: ["ペニシラミン製剤", "レボチロキシンナトリウム", "ワルファリンカリウム", "フルボキサミン"], correct: [0, 1],
+      explain: "ペニシラミン製剤及びレボチロキシンナトリウムは、ポラプレジンクとのキレート形成により吸収が低下するおそれがあるため併用注意とされています。ワルファリンカリウムやフルボキサミンはポラプレジンクの添付文書上の相互作用には記載されていません。" },
+
+    // ══════════ コスト制度・その他(6問) ══════════
+    { category: "コスト制度・その他", type: "single", q: "アズノールうがい液4%の薬価目安は?",
+      choices: ["約21.1円/mL", "約2,110円/mL", "約0.2円/mL", "薬価収載されていない"], correct: 0,
+      explain: "アズノールうがい液4%の薬価は約21.1円/mLとされています(公開薬価データベースに基づく概数)。" },
+    { category: "コスト制度・その他", type: "single", q: "キシロカインビスカス2%の薬価目安は?",
+      choices: ["約5.3円/mL", "約530円/mL", "約53,000円/mL", "無償で提供される"], correct: 0,
+      explain: "キシロカインビスカス2%の薬価は約5.3円/mLとされています。" },
+    { category: "コスト制度・その他", type: "single", q: "ポラプレジンクOD錠75mg「サワイ」の薬価目安は?",
+      choices: ["約14.3円/錠", "約1,430円/錠", "約143,000円/錠", "薬価収載されていない"], correct: 0,
+      explain: "ポラプレジンクOD錠75mg「サワイ」の薬価は約14.3円/錠とされています。" },
+    { category: "コスト制度・その他", type: "single", q: "高額療養費制度において、窓口での支払いを事前に自己負担限度額までに抑えるために取得するとよいものは?",
+      choices: ["限度額適用認定証", "お薬手帳", "健康保険証のコピー", "医療費控除の申告書"], correct: 0,
+      explain: "「限度額適用認定証」を事前に取得すれば、窓口での支払いを自己負担限度額までに抑えることができます。" },
+    { category: "コスト制度・その他", type: "single", q: "口腔ケア関連製剤のコストと高額療養費制度の関係として適切な説明は?",
+      choices: ["口腔ケア製剤単独で高額療養費制度の対象となるケースは少なく、主に併用される抗悪性腫瘍剤等の薬剤費が制度適用の主因となることが多い", "口腔ケア製剤のみで必ず高額療養費制度の対象になる", "高額療養費制度は口腔ケア製剤には一切適用されない", "口腔ケア製剤は保険適用外である"], correct: 0,
+      explain: "高額療養費制度は暦月ごとの医療費自己負担合計額に対して適用されるものであり、口腔ケア製剤単独よりも、併用される抗悪性腫瘍剤・支持療法薬等の薬剤費が主因となることが一般的です。" },
+    { category: "コスト制度・その他", type: "single", q: "パリフェルミンの国内薬価は?",
+      choices: ["日本国内未承認のため国内薬価は存在しない", "約10万円/バイアル", "約1,000円/バイアル", "無償配布されている"], correct: 0,
+      explain: "パリフェルミンは日本国内未承認・未発売のため、国内の薬価収載はありません。" }
+  ];
+
+  var QUIZ_SESSION_SIZE = 10;
+  var quizOrder = [];     // indices into QUIZ for THIS session (random subset)
+  var quizIndex = 0;
+  var quizAnswers = [];   // per-question(by original index): selected choice index (single) or array of indices (multi)
+  var quizFeedback = {};  // { [questionIndex]: 'good' | 'bad' }
+
+  function quizPickSession() {
+    var all = QUIZ.map(function (_, i) { return i; });
+    quizShuffle(all);
+    quizOrder = all.slice(0, QUIZ_SESSION_SIZE);
+  }
+  function quizShuffle(arr) {
+    for (var i = arr.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = arr[i]; arr[i] = arr[j]; arr[j] = t;
+    }
+    return arr;
+  }
+
+  function quizLoadFeedback() {
+    try {
+      var raw = localStorage.getItem('mucositisQuizFeedback_v2');
+      quizFeedback = raw ? JSON.parse(raw) : {};
+    } catch (e) { quizFeedback = {}; }
+  }
+  function quizSaveFeedback() {
+    try { localStorage.setItem('mucositisQuizFeedback_v2', JSON.stringify(quizFeedback)); } catch (e) {}
+  }
+  function quizBuildRatingRow(qi) {
+    var row = document.createElement('div');
+    row.className = 'rate-row';
+    var label = document.createElement('span');
+    label.className = 'rate-label';
+    label.textContent = 'この問題の評価:';
+    var goodBtn = document.createElement('button');
+    goodBtn.type = 'button'; goodBtn.className = 'rate-btn'; goodBtn.textContent = '👍 良問';
+    var badBtn = document.createElement('button');
+    badBtn.type = 'button'; badBtn.className = 'rate-btn'; badBtn.textContent = '👎 悪問';
+    function refresh() {
+      goodBtn.classList.toggle('active-good', quizFeedback[qi] === 'good');
+      badBtn.classList.toggle('active-bad', quizFeedback[qi] === 'bad');
+    }
+    goodBtn.onclick = function () {
+      quizFeedback[qi] = (quizFeedback[qi] === 'good') ? null : 'good';
+      if (!quizFeedback[qi]) delete quizFeedback[qi];
+      quizSaveFeedback(); refresh();
+    };
+    badBtn.onclick = function () {
+      quizFeedback[qi] = (quizFeedback[qi] === 'bad') ? null : 'bad';
+      if (!quizFeedback[qi]) delete quizFeedback[qi];
+      quizSaveFeedback(); refresh();
+    };
+    refresh();
+    row.appendChild(label); row.appendChild(goodBtn); row.appendChild(badBtn);
+    return row;
+  }
+  function quizFallbackCopy(text, done) {
+    var ta = document.createElement('textarea');
+    ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); } catch (e) {}
+    document.body.removeChild(ta);
+    done();
+  }
+  function quizChoiceLabel(item) {
+    return item.choices.join(' / ');
+  }
+  function quizCorrectLabel(item) {
+    if (item.type === 'multi') return item.correct.map(function (i) { return item.choices[i]; }).join(' ＋ ');
+    return item.choices[item.correct];
+  }
+  function quizExportFeedback() {
+    var ratedIdx = Object.keys(quizFeedback);
+    if (ratedIdx.length === 0) {
+      alert('まだ評価された問題がありません。各問題に回答した後に表示される「👍 良問」「👎 悪問」ボタンで評価してから、もう一度お試しください。');
+      return;
+    }
+    var goodList = [], badList = [];
+    ratedIdx.forEach(function (idxStr) {
+      var idx = parseInt(idxStr, 10);
+      var item = QUIZ[idx];
+      if (!item) return;
+      var entry = '・[' + item.category + (item.type === 'multi' ? '/複数選択' : '') + '] ' + item.q + '\n  選択肢: ' + quizChoiceLabel(item) + '\n  正解: ' + quizCorrectLabel(item);
+      if (quizFeedback[idx] === 'good') goodList.push(entry);
+      else if (quizFeedback[idx] === 'bad') badList.push(entry);
+    });
+    var text = '【口内炎・粘膜炎(Oral Mucositis)クイズ(quiz-mucositis.html、全50問プール)フィードバック】\n\n' +
+      '良問と評価された問題(' + goodList.length + '件):\n' + (goodList.length ? goodList.join('\n\n') : '(なし)') + '\n\n' +
+      '悪問と評価された問題(' + badList.length + '件) — 改善・差し替えを検討してください:\n' + (badList.length ? badList.join('\n\n') : '(なし)') + '\n\n' +
+      '参照ファイル: artifacts/html/oncology-reports/quiz-mucositis.html\n\n' +
+      '上記フィードバックを踏まえて、「悪問」と評価された問題をレポート本文(artifacts/html/oncology-reports/mucositis.html、添付文書情報セクション含む)の内容に基づいて改善・差し替えてください。「良問」と評価された問題は現状を維持してください。';
+    var notify = function () { alert('フィードバックをコピーしました。MulmoClaudeのチャットに貼り付けて送信してください。問題の改善に使います。'); };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(notify).catch(function () { quizFallbackCopy(text, notify); });
+    } else { quizFallbackCopy(text, notify); }
+  }
+  function quizResetFeedback() {
+    if (!confirm('すべての評価をリセットします。よろしいですか?')) return;
+    quizFeedback = {};
+    quizSaveFeedback();
+    alert('評価をリセットしました。');
+  }
+
+  function quizRenderQuestion() {
+    document.getElementById('quiz-result-area').style.display = 'none';
+    document.getElementById('quiz-question-area').style.display = 'block';
+    var qi = quizOrder[quizIndex];
+    var item = QUIZ[qi];
+    document.getElementById('quiz-progress-text').textContent = '問 ' + (quizIndex + 1) + ' / ' + quizOrder.length + '(全' + QUIZ.length + '問中からランダム出題)';
+    document.getElementById('quiz-cat-badge').textContent = item.category;
+    document.getElementById('quiz-type-badge').style.display = (item.type === 'multi') ? 'inline-flex' : 'none';
+    document.getElementById('quiz-progress-fill').style.width = Math.round((quizIndex / quizOrder.length) * 100) + '%';
+    document.getElementById('quiz-question-text').textContent = item.q;
+    document.getElementById('quiz-diagram-area').innerHTML = item.diagram || '';
+    document.getElementById('quiz-explain-area').style.display = 'none';
+    document.getElementById('quiz-explain-area').innerHTML = '';
+    document.getElementById('quiz-next-btn').style.display = 'none';
+    document.getElementById('quiz-submit-row').style.display = 'none';
+
+    var wrap = document.getElementById('quiz-choices');
+    wrap.innerHTML = '';
+
+    if (item.type === 'multi') {
+      var selected = {};
+      item.choices.forEach(function (choiceText, idx) {
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'quiz-choice';
+        btn.innerHTML = '<span class="quiz-choice-check">☐</span> ' + choiceText.replace(/</g, '&lt;');
+        btn.onclick = function () {
+          selected[idx] = !selected[idx];
+          btn.classList.toggle('selected', !!selected[idx]);
+          btn.querySelector('.quiz-choice-check').textContent = selected[idx] ? '☑' : '☐';
+        };
+        wrap.appendChild(btn);
+      });
+      document.getElementById('quiz-submit-row').style.display = 'block';
+      document.getElementById('quiz-submit-btn').onclick = function () {
+        var chosen = Object.keys(selected).filter(function (k) { return selected[k]; }).map(Number);
+        quizAnswerMulti(chosen);
+      };
+    } else {
+      item.choices.forEach(function (choiceText, idx) {
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'quiz-choice';
+        btn.textContent = choiceText;
+        btn.onclick = function () { quizAnswerSingle(idx); };
+        wrap.appendChild(btn);
+      });
+    }
+  }
+
+  function quizFinishQuestion(qi, isCorrect, correctText) {
+    var item = QUIZ[qi];
+    var explainArea = document.getElementById('quiz-explain-area');
+    explainArea.className = 'quiz-explain';
+    explainArea.style.display = 'block';
+    explainArea.innerHTML = '<div style="font-weight:700; margin-bottom:4px; color:' + (isCorrect ? 'var(--good)' : 'var(--critical)') + ';">' +
+      (isCorrect ? '✅ 正解' : '❌ 不正解(正解: ' + correctText + ')') + '</div>' +
+      '<div>' + (item.explain || '') + '</div>';
+    explainArea.appendChild(quizBuildRatingRow(qi));
+    document.getElementById('quiz-submit-row').style.display = 'none';
+    document.getElementById('quiz-next-btn').style.display = 'inline-block';
+    document.getElementById('quiz-next-btn').textContent = (quizIndex === quizOrder.length - 1) ? '結果を見る →' : '次の問題 →';
+  }
+
+  function quizAnswerSingle(selectedIdx) {
+    var qi = quizOrder[quizIndex];
+    var item = QUIZ[qi];
+    quizAnswers[qi] = selectedIdx;
+    var buttons = document.getElementById('quiz-choices').querySelectorAll('.quiz-choice');
+    buttons.forEach(function (btn, idx) {
+      btn.disabled = true;
+      if (idx === item.correct) btn.classList.add('correct');
+      else if (idx === selectedIdx) btn.classList.add('wrong');
+    });
+    quizFinishQuestion(qi, selectedIdx === item.correct, item.choices[item.correct]);
+  }
+
+  function quizSubmitMulti() {
+    var qi = quizOrder[quizIndex];
+    var item = QUIZ[qi];
+    var buttons = document.getElementById('quiz-choices').querySelectorAll('.quiz-choice');
+    var chosen = [];
+    buttons.forEach(function (btn, idx) {
+      if (btn.classList.contains('selected')) chosen.push(idx);
+    });
+    quizAnswerMulti(chosen, buttons, item, qi);
+  }
+
+  function quizAnswerMulti(chosen, buttons, item, qi) {
+    qi = (qi === undefined) ? quizOrder[quizIndex] : qi;
+    item = item || QUIZ[qi];
+    buttons = buttons || document.getElementById('quiz-choices').querySelectorAll('.quiz-choice');
+    quizAnswers[qi] = chosen;
+    var correctSet = item.correct.slice().sort();
+    var chosenSet = chosen.slice().sort();
+    var isCorrect = correctSet.length === chosenSet.length && correctSet.every(function (v, i) { return v === chosenSet[i]; });
+    buttons.forEach(function (btn, idx) {
+      btn.disabled = true;
+      var isRight = item.correct.indexOf(idx) !== -1;
+      var wasChosen = chosen.indexOf(idx) !== -1;
+      if (isRight) btn.classList.add('correct');
+      else if (wasChosen) btn.classList.add('wrong');
+    });
+    quizFinishQuestion(qi, isCorrect, quizCorrectLabel(item));
+  }
+
+  function quizNext() {
+    if (quizIndex < quizOrder.length - 1) {
+      quizIndex++;
+      quizRenderQuestion();
+    } else {
+      quizShowResult();
+    }
+  }
+
+  function quizShowResult() {
+    document.getElementById('quiz-progress-fill').style.width = '100%';
+    document.getElementById('quiz-progress-text').textContent = '完了 ' + quizOrder.length + ' / ' + quizOrder.length;
+    document.getElementById('quiz-cat-badge').textContent = '';
+    document.getElementById('quiz-type-badge').style.display = 'none';
+    document.getElementById('quiz-question-area').style.display = 'none';
+
+    var correctCount = 0;
+    var byCategory = {};
+    quizOrder.forEach(function (qi) {
+      var item = QUIZ[qi];
+      if (!byCategory[item.category]) byCategory[item.category] = { correct: 0, total: 0 };
+      byCategory[item.category].total++;
+      var ans = quizAnswers[qi];
+      var isCorrect;
+      if (item.type === 'multi') {
+        var correctSet = item.correct.slice().sort();
+        var chosenSet = (ans || []).slice().sort();
+        isCorrect = correctSet.length === chosenSet.length && correctSet.every(function (v, i) { return v === chosenSet[i]; });
+      } else {
+        isCorrect = ans === item.correct;
+      }
+      if (isCorrect) { correctCount++; byCategory[item.category].correct++; }
+    });
+    var pct = Math.round((correctCount / quizOrder.length) * 100);
+
+    var catHtml = '';
+    Object.keys(byCategory).forEach(function (cat) {
+      var c = byCategory[cat];
+      var p = Math.round((c.correct / c.total) * 100);
+      catHtml += '<div class="cat-result-row"><span class="text-xs" style="width:150px; flex-shrink:0;">' + cat + '</span>' +
+        '<div class="cat-result-bar"><div class="cat-result-fill" style="width:' + p + '%"></div></div>' +
+        '<span class="text-xs muted" style="width:56px; text-align:right;">' + c.correct + '/' + c.total + '</span></div>';
+    });
+
+    var reviewHtml = '';
+    quizOrder.forEach(function (qi) {
+      var item = QUIZ[qi];
+      var ans = quizAnswers[qi];
+      var isCorrect;
+      var yourAnswerText;
+      if (item.type === 'multi') {
+        var correctSet = item.correct.slice().sort();
+        var chosenSet = (ans || []).slice().sort();
+        isCorrect = correctSet.length === chosenSet.length && correctSet.every(function (v, i) { return v === chosenSet[i]; });
+        yourAnswerText = (ans && ans.length) ? ans.map(function (i) { return item.choices[i]; }).join(' ＋ ') : '(未回答)';
+      } else {
+        isCorrect = ans === item.correct;
+        yourAnswerText = (ans != null) ? item.choices[ans] : '(未回答)';
+      }
+      if (!isCorrect) {
+        reviewHtml += '<div class="review-item">' +
+          '<div class="text-sm font-semibold mb-1">' + item.q + '</div>' +
+          '<div class="text-xs muted mb-2">あなたの回答: ' + yourAnswerText + ' / 正解: ' + quizCorrectLabel(item) + '</div>' +
+          '<div class="text-xs" style="line-height:1.6;">' + (item.explain || '') + '</div>' +
+          '</div>';
+      }
+    });
+    if (!reviewHtml) reviewHtml = '<p class="text-sm secondary">全問正解です。見直しの必要な項目はありません 🎉</p>';
+
+    var goodCount = 0, badCount = 0;
+    Object.keys(quizFeedback).forEach(function (k) {
+      if (quizFeedback[k] === 'good') goodCount++;
+      else if (quizFeedback[k] === 'bad') badCount++;
+    });
+
+    var resultArea = document.getElementById('quiz-result-area');
+    resultArea.style.display = 'block';
+    resultArea.innerHTML =
+      '<div class="text-center mb-6">' +
+        '<div class="score-ring-num" style="color:var(--series-new);">' + correctCount + ' / ' + quizOrder.length + '</div>' +
+        '<div class="text-sm muted mt-1">正答率 ' + pct + '%(全' + QUIZ.length + '問プールから今回ランダム抽出された' + quizOrder.length + '問)</div>' +
+      '</div>' +
+      '<div class="mb-6"><div class="text-sm font-semibold mb-3">カテゴリ別正答率(今回出題分)</div>' + catHtml + '</div>' +
+      '<div class="mb-2 text-sm font-semibold">見直し(不正解・未回答の問題)</div>' +
+      '<div class="mb-6">' + reviewHtml + '</div>' +
+      '<div class="mb-6 pt-4 border-t" style="border-color:var(--gridline);">' +
+        '<div class="text-sm font-semibold mb-2">問題の評価状況(全50問プール通算)</div>' +
+        '<div class="text-xs muted mb-3">👍 良問 ' + goodCount + '件 ・ 👎 悪問 ' + badCount + '件</div>' +
+        '<div class="flex flex-wrap gap-3">' +
+          '<button type="button" class="quiz-btn-outline" onclick="quizExportFeedback()">📋 フィードバックをエクスポート(チャットに貼り付け用)</button>' +
+          '<button type="button" class="quiz-btn-outline" onclick="quizResetFeedback()" style="border-color:var(--critical); color:var(--critical);">🗑 評価をリセット</button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="flex flex-wrap gap-3 justify-center">' +
+        '<button type="button" class="quiz-btn" onclick="quizRestart()">🔀 新しい10問でもう一度</button>' +
+        '<a href="mucositis.html" class="quiz-btn-outline" style="text-decoration:none; display:inline-block;">レポート本文に戻る</a>' +
+      '</div>';
+  }
+
+  function quizRestart() {
+    quizPickSession();
+    quizIndex = 0;
+    quizAnswers = [];
+    quizRenderQuestion();
+  }
+
+  quizLoadFeedback();
+  quizPickSession();
+  quizRenderQuestion();
+</script>
+
+<footer class="text-center text-xs pb-4" style="color: var(--text-muted);">
+  本クイズは学習・自己点検を目的とした資料です。臨床判断には利用せず、最新の添付文書・ガイドライン原文を優先してください。
+</footer>
+
+</body>
+</html>

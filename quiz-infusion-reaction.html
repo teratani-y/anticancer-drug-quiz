@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>インフュージョンリアクション/アナフィラキシー理解度クイズ 全50問(ランダム10問出題)</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+:root, .viz-root {
+  color-scheme: light;
+  --surface-1: #fcfcfb; --page-plane: #f9f9f7;
+  --text-primary: #0b0b0b; --text-secondary: #52514e; --text-muted: #898781;
+  --gridline: #e1e0d9; --baseline: #c3c2b7;
+  --series-new: #2a78d6; --series-control: #b9b7ae;
+  --good: #0ca30c; --warning: #b9790a; --critical: #d03b3b;
+  --border: rgba(11,11,11,0.10);
+}
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) {
+    color-scheme: dark;
+    --surface-1: #1a1a19; --page-plane: #0d0d0d;
+    --text-primary: #ffffff; --text-secondary: #c3c2b7; --text-muted: #898781;
+    --gridline: #2c2c2a; --baseline: #383835;
+    --series-new: #3987e5; --series-control: #55534c;
+    --good: #0ca30c; --warning: #eab116; --critical: #e66767;
+    --border: rgba(255,255,255,0.10);
+  }
+}
+body { background: var(--page-plane); color: var(--text-primary); font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+.card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+.secondary { color: var(--text-secondary); }
+.muted { color: var(--text-muted); }
+.cat-badge { display:inline-flex; align-items:center; padding:3px 10px; border-radius:9999px; font-size:0.72rem; font-weight:700; background: color-mix(in srgb, var(--series-new) 14%, transparent); color: var(--series-new); }
+.type-badge { display:inline-flex; align-items:center; padding:3px 10px; border-radius:9999px; font-size:0.68rem; font-weight:700; background: color-mix(in srgb, var(--warning) 16%, transparent); color: var(--warning); margin-left:6px; }
+.progress-track { background: var(--gridline); border-radius: 9999px; height: 8px; overflow: hidden; }
+.progress-fill { background: var(--series-new); height: 100%; border-radius: 9999px; transition: width .25s; }
+.quiz-choice { display:block; width:100%; text-align:left; background: var(--page-plane); border: 1.5px solid var(--gridline); border-radius: 10px; padding: 12px 16px; font-size: 0.92rem; cursor: pointer; transition: border-color .12s, background .12s; margin-bottom: 10px; }
+.quiz-choice:last-child { margin-bottom: 0; }
+.quiz-choice:hover:not(:disabled) { border-color: var(--series-new); }
+.quiz-choice:disabled { cursor: default; }
+.quiz-choice.correct { border-color: var(--good); background: color-mix(in srgb, var(--good) 12%, transparent); font-weight: 700; }
+.quiz-choice.wrong { border-color: var(--critical); background: color-mix(in srgb, var(--critical) 10%, transparent); }
+.quiz-choice.selected { border-color: var(--series-new); background: color-mix(in srgb, var(--series-new) 10%, transparent); }
+.quiz-choice-check { display:inline-block; width:16px; }
+.quiz-explain { background: var(--page-plane); border: 1px solid var(--gridline); border-radius: 10px; padding: 14px 16px; margin-top: 14px; font-size: 0.85rem; line-height: 1.7; }
+.quiz-btn { background: var(--series-new); color: #fff; border: none; border-radius: 8px; padding: 10px 22px; font-size: 0.88rem; font-weight: 700; cursor: pointer; }
+.quiz-btn:hover { opacity: 0.9; }
+.quiz-btn:disabled { opacity: 0.4; cursor: default; }
+.quiz-btn-outline { background: transparent; color: var(--series-new); border: 1.5px solid var(--series-new); border-radius: 8px; padding: 9px 20px; font-size: 0.88rem; font-weight: 700; cursor: pointer; }
+.quiz-btn-outline:hover { background: color-mix(in srgb, var(--series-new) 10%, transparent); }
+.score-ring-num { font-size: 2.6rem; font-weight: 800; }
+.cat-result-row { display:flex; align-items:center; gap:10px; margin-bottom: 8px; }
+.cat-result-bar { flex:1; background: var(--gridline); border-radius: 9999px; height: 10px; overflow:hidden; }
+.cat-result-fill { background: var(--series-new); height:100%; border-radius: 9999px; }
+.review-item { border: 1px solid var(--gridline); border-radius: 10px; padding: 12px 14px; margin-bottom: 10px; }
+.review-item:last-child { margin-bottom: 0; }
+.rate-row { display:flex; align-items:center; gap:8px; margin-top:14px; flex-wrap:wrap; }
+.rate-label { font-size:0.75rem; color: var(--text-muted); }
+.rate-btn { background: var(--page-plane); border: 1.5px solid var(--gridline); border-radius: 8px; padding: 6px 12px; font-size: 0.78rem; font-weight:600; cursor:pointer; color: var(--text-secondary); }
+.rate-btn:hover { border-color: var(--series-new); }
+.rate-btn.active-good { border-color: var(--good); background: color-mix(in srgb, var(--good) 14%, transparent); color: var(--good); }
+.rate-btn.active-bad { border-color: var(--critical); background: color-mix(in srgb, var(--critical) 12%, transparent); color: var(--critical); }
+
+/* Compact dosing schedule timeline diagram, used inside quiz-diagram-area (see infusion-reaction.html .dg-timeline for the full version) */
+.quiz-diagram-area:empty { display: none; }
+.quiz-diagram-area .dg-timeline { border: 1px solid var(--gridline); border-radius: 8px; padding: 10px 12px 12px; background: var(--page-plane); margin-bottom: 14px; }
+.quiz-diagram-area .dg-tl-title { font-size: 0.76rem; font-weight: 700; color: var(--text-primary); margin-bottom: 8px; }
+.quiz-diagram-area table.dg-tl-table { width: 100%; border-collapse: separate; border-spacing: 3px; font-size: 0.66rem; }
+.quiz-diagram-area table.dg-tl-table th { color: var(--text-muted); font-weight: 700; font-size: 0.58rem; text-transform: uppercase; letter-spacing: .03em; padding: 2px 3px 5px; text-align: center; }
+.quiz-diagram-area table.dg-tl-table th:first-child { text-align: left; }
+.quiz-diagram-area table.dg-tl-table td:first-child { text-align: left; font-weight: 600; color: var(--text-secondary); white-space: nowrap; padding-right: 6px; font-size: 0.64rem; }
+.quiz-diagram-area table.dg-tl-table td { text-align: center; padding: 6px 4px; border-radius: 6px; vertical-align: middle; line-height: 1.25; }
+.quiz-diagram-area td.dg-tl-on { background: color-mix(in srgb, var(--series-new) 14%, transparent); border: 1px solid var(--series-new); color: var(--text-primary); font-weight: 700; }
+.quiz-diagram-area td.dg-tl-on-alt { background: color-mix(in srgb, var(--warning) 16%, transparent); border: 1px dashed var(--warning); color: var(--text-primary); font-weight: 700; }
+.quiz-diagram-area td.dg-tl-off { background: var(--surface-1); border: 1px dashed var(--gridline); color: var(--text-muted); font-weight: 400; }
+.quiz-diagram-area .dg-tl-note { font-size: 0.62rem; color: var(--text-muted); margin-top: 6px; line-height: 1.5; }
+</style>
+</head>
+<body class="viz-root">
+<div class="max-w-3xl mx-auto px-4 py-8 space-y-5">
+
+  <header class="card">
+    <div class="flex items-center justify-between gap-2 flex-wrap">
+      <div>
+        <h1 class="text-xl font-bold">🧠 インフュージョンリアクション/アナフィラキシー理解度クイズ</h1>
+        <p class="text-sm mt-1 secondary">全50問のプールからランダムに10問出題・4択/複数選択混在・医療従事者向け(重症度分類と対応選択・前投薬の用法用量/タイミング・薬剤別リスクへの対応・薬剤選択の根拠・コスト制度)</p>
+      </div>
+      <a href="infusion-reaction.html" class="text-xs" style="color:var(--series-new); text-decoration:none; font-weight:600;">← レポート本文に戻る</a>
+    </div>
+    <p class="text-xs mt-3 muted">出題内容はすべて <a href="infusion-reaction.html" style="color:var(--series-new);">インフュージョンリアクション/アナフィラキシーレポート</a>(本文および「6. 主要薬剤の添付文書情報」)に記載の情報に基づきます。臨床判断には利用せず、学習・自己点検の目的でご利用ください。ページを再読み込みする、または結果画面の「シャッフルしてもう一度」を押すたびに、新しい10問がランダムに選ばれます。</p>
+  </header>
+
+  <!-- Quiz card -->
+  <section class="card" id="quiz-card">
+    <div class="flex items-center justify-between mb-2">
+      <span id="quiz-progress-text" class="text-xs font-semibold muted"></span>
+      <span><span id="quiz-cat-badge" class="cat-badge"></span><span id="quiz-type-badge" class="type-badge" style="display:none;">複数選択</span></span>
+    </div>
+    <div class="progress-track mb-5"><div class="progress-fill" id="quiz-progress-fill" style="width:0%"></div></div>
+
+    <div id="quiz-question-area">
+      <div id="quiz-question-text" class="text-base font-semibold mb-4" style="line-height:1.6;"></div>
+      <div id="quiz-diagram-area" class="quiz-diagram-area"></div>
+      <div id="quiz-choices"></div>
+      <div id="quiz-submit-row" style="display:none;" class="mt-3">
+        <button type="button" class="quiz-btn" id="quiz-submit-btn" onclick="quizSubmitMulti()">この内容で回答する</button>
+      </div>
+      <div id="quiz-explain-area" style="display:none;"></div>
+      <div class="mt-5 flex justify-end">
+        <button type="button" id="quiz-next-btn" class="quiz-btn" style="display:none;" onclick="quizNext()">次の問題 →</button>
+      </div>
+    </div>
+
+    <div id="quiz-result-area" style="display:none;"></div>
+  </section>
+
+</div>
+
+<script>
+  var QUIZ = [
+    // ══════════ 重症度分類と対応選択(14問) ══════════
+    { category: "重症度分類と対応選択", type: "single", q: "CTCAE v5.0における「注入に伴う反応(Infusion related reaction)」のGrade1の定義は?",
+      choices: ["軽度で一過性の反応。点滴の中断を要さない。または治療を要さない", "治療もしくは点滴の中断が必要。ただし症状に対する治療には速やかに反応する", "遷延する。または一度改善しても再発する", "生命を脅かす。または緊急処置を要する"], correct: 0,
+      explain: "Grade1は軽度で一過性の反応であり、点滴の中断や治療を要さない状態と定義されます。" },
+    { category: "重症度分類と対応選択", type: "single", q: "CTCAE v5.0における「注入に伴う反応」のGrade2の定義は?",
+      choices: ["治療もしくは点滴の中断が必要。ただし症状に対する治療には速やかに反応する。または24時間以内の予防的投薬を要する", "軽度で一過性の反応。治療を要さない", "生命を脅かす。緊急処置を要する", "死亡"], correct: 0,
+      explain: "Grade2は治療または点滴の中断が必要だが、抗ヒスタミン薬・NSAIDs・輸液等の対症療法に速やかに反応する場合、または24時間以内の予防的投薬を要する場合と定義されます。" },
+    { category: "重症度分類と対応選択", type: "single", q: "CTCAE v5.0における「注入に伴う反応」のGrade3の定義は?",
+      choices: ["遷延する(症状に対する治療及び/又は点滴の一時中断に迅速に反応しない)。または一度改善しても再発する。または続発症により入院を要する", "軽度で一過性の反応", "治療に速やかに反応する", "全身的治療を要さない"], correct: 0,
+      explain: "Grade3は遷延する反応、改善後の再発、または続発症により入院を要する状態と定義されます。" },
+    { category: "重症度分類と対応選択", type: "single", q: "CTCAE v5.0における「注入に伴う反応」のGrade4の定義は?",
+      choices: ["生命を脅かす。または緊急処置を要する", "軽度で一過性の反応", "24時間以内の予防的投薬を要する", "続発症により入院を要する"], correct: 0,
+      explain: "Grade4は生命を脅かす状態、または緊急処置を要する状態と定義されます。" },
+    { category: "重症度分類と対応選択", type: "single", q: "CTCAE v5.0の「アナフィラキシー」の項目にGrade1・Grade2の定義が存在しない理由として最も適切な説明は?",
+      choices: ["アナフィラキシーは定義上、気管支痙攣・血圧低下等の全身症状を伴うため、少なくともGrade3相当以上として扱われるため", "アナフィラキシーは軽度の症状のみを指す用語であるため", "CTCAE v5.0では全ての有害事象がGrade3から始まるため", "アナフィラキシーはGrade5(死亡)以外に分類されないため"], correct: 0,
+      explain: "アナフィラキシーはCTCAE v5.0でGrade3・4・5のみが定義されており、Grade1・2は存在しません。これは、アナフィラキシーという用語自体が気管支痙攣や血圧低下等の全身性の重篤な反応を前提としているためです。" },
+    { category: "重症度分類と対応選択", type: "single", q: "CTCAE v5.0における「アナフィラキシー」Grade3の定義に含まれる症状として正しいものは?",
+      choices: ["蕁麻疹の有無によらない気管支痙攣、非経口的治療を要する状態、アレルギーによる浮腫/血管性浮腫、または血圧低下", "軽度の掻痒感のみ", "内服治療のみで軽快する皮膚症状", "全身的治療を要さない局所症状"], correct: 0,
+      explain: "アナフィラキシーのGrade3は、蕁麻疹の有無によらない気管支痙攣、非経口的治療を要する状態、アレルギーによる浮腫/血管性浮腫、または血圧低下のいずれかと定義されます。" },
+    { category: "重症度分類と対応選択", type: "single", q: "Grade2のinfusion reaction/過敏反応が生じた場合の一般的な対応は?",
+      choices: ["点滴を中断し、抗ヒスタミン薬等で対症療法を行い、症状が速やかに軽快すれば減速して投与再開を検討する", "症状の有無にかかわらず、投与速度を上げて早く終わらせる", "直ちに投与を中止し、以降は永久に再投与しない", "特に対応を変えず、そのまま同じ速度で投与を継続する"], correct: 0,
+      explain: "Grade2では点滴を中断し対症療法を行い、症状が速やかに軽快すれば多くの薬剤で減速した速度での投与再開が検討されます(再開可否・速度は薬剤ごとの添付文書に従う)。" },
+    { category: "重症度分類と対応選択", type: "single", q: "Grade3以上のinfusion reaction/過敏反応が生じた場合の対応の原則は?",
+      choices: ["直ちに投与を中止し、緊急処置を行い、原則として再投与は行わない", "投与速度を半分に落として投与を継続する", "症状の有無にかかわらず必ず再投与を行う", "経過観察のみで特別な処置は不要である"], correct: 0,
+      explain: "Grade3以上(遷延・再発・入院を要する状態、またはアナフィラキシー相当)では、直ちに投与を中止し緊急処置(アドレナリン等)を行い、原則として再投与は行いません。" },
+    { category: "重症度分類と対応選択", type: "single", q: "アナフィラキシーが疑われる場合に、他の対症療法薬剤より優先して投与すべき薬剤は?",
+      choices: ["アドレナリン(筋肉内注射)", "抗ヒスタミン薬の内服", "副腎皮質ステロイドの点滴", "解熱鎮痛薬の内服"], correct: 0,
+      explain: "アドレナリンの筋肉内注射が最優先です。抗ヒスタミン薬・副腎皮質ステロイドは補助的な位置づけで、いずれも即効性がなくアドレナリン投与を遅らせてはなりません。" },
+    { category: "重症度分類と対応選択", type: "single", q: "アドレナリン筋肉内注射の投与部位として推奨されるのは?",
+      choices: ["大腿前外側", "上腕三角筋部の皮下", "殿部の深部", "頭皮"], correct: 0,
+      explain: "日本アレルギー学会「アナフィラキシーガイドライン2022」では、大腿前外側への筋肉内注射が推奨されています。" },
+    { category: "重症度分類と対応選択", type: "single", q: "アナフィラキシーにおける「二相性反応(biphasic reaction)」とは何を指すか?",
+      choices: ["初期症状が軽快した後、1~72時間以内(多くは8~10時間以内)に症状が再燃すること", "投与開始直後と投与終了直後の2回、必ず症状が出現すること", "皮膚症状と消化器症状が同時に出現すること", "2種類の薬剤に対して同時にアレルギーを起こすこと"], correct: 0,
+      explain: "二相性反応は、初期反応が軽快した後、1~72時間以内(多くは8~10時間以内)に症状が再燃する現象です。症状軽快後も一定時間の経過観察と、退院後の症状再燃について患者への説明が重要です。" },
+    { category: "重症度分類と対応選択", type: "single", q: "オキサリプラチンで重篤なinfusion reactionが発現した場合の添付文書上の対応は?",
+      choices: ["直ちに点滴を中止し、再投与は行わない", "投与速度を上げて早期に投与を終える", "次回投与量を倍量に増やす", "特に対応を変える必要はない"], correct: 0,
+      explain: "軽度から中等度のinfusion reactionでは点滴速度を減速し慎重な観察のもと投与を継続できますが、重篤なinfusion reactionが発現した場合は直ちに点滴を中止し、再投与は行いません。" },
+    { category: "重症度分類と対応選択", type: "multi", q: "Grade3以上のinfusion reaction/アナフィラキシーへの対応として適切なものをすべて選べ(2つ選択)",
+      choices: ["直ちに投与を中止する", "緊急処置(アドレナリン等)を行う", "投与速度を半分に落として継続する", "症状の有無にかかわらず必ず再投与する"], correct: [0, 1],
+      explain: "Grade3以上では直ちに投与を中止し、アドレナリン等の緊急処置を行うことが原則です。投与速度を落として継続することや、無条件の再投与は適切ではありません。" },
+    { category: "重症度分類と対応選択", type: "multi", q: "セツキシマブの添付文書における重症度別対応として正しいものをすべて選べ(2つ選択)",
+      choices: ["Grade3以上では直ちに投与を中止し、再投与しない", "Grade1-2では投与速度を減速し、その後の全ての投与においても減速した速度で投与する", "Grade1-2でも必ず投与を完全に中止する", "重症度に関わらず対応は常に同じでよい"], correct: [0, 1],
+      explain: "セツキシマブの添付文書では、重度(Grade3以上)のinfusion reaction発現時は直ちに投与を中止し再投与しないこと、軽度~中等度(Grade1-2)では投与速度を減速し、その後の全ての投与でも減速した速度で投与することとされています。" },
+
+    // ══════════ 前投薬の用法用量・タイミング(9問、うち2問は図表付き) ══════════
+    { category: "前投薬の用法用量・タイミング", type: "single", q: "リツキシマブ(B細胞性非ホジキンリンパ腫)の添付文書に規定される、初回投与時の投与開始~30分間の投与速度は?",
+      choices: ["12mL/時", "50mL/時", "100mL/時", "400mL/時"], correct: 0,
+      explain: "添付文書上、初回投与は0~30分は12mL/時で開始します。",
+      diagram: '<div class="dg-timeline"><div class="dg-tl-title">リツキシマブ初回投与時の投与速度(B細胞性非ホジキンリンパ腫)</div><table class="dg-tl-table"><thead><tr><th>時間</th><th>0~30分</th><th>31~60分</th><th>61~90分</th><th>91~120分</th></tr></thead><tbody>' +
+        '<tr><td>投与速度</td><td class="dg-tl-on">12mL/時</td><td class="dg-tl-on">25mL/時</td><td class="dg-tl-on">50mL/時</td><td class="dg-tl-on">100mL/時</td></tr>' +
+        '</tbody></table><div class="dg-tl-note">91分以降は30分毎に100mL/時ずつ増量し、最大400mL/時まで上げることができる(添付文書、初回投与時の代表例)。</div></div>' },
+    { category: "前投薬の用法用量・タイミング", type: "single", q: "リツキシマブ投与時、投与速度は何分ごとにどの程度ずつ上げることができるか(添付文書、最大速度まで)?",
+      choices: ["30分毎に上げ、最大400mL/時まで", "10分毎に上げ、最大100mL/時まで", "1時間毎に上げ、最大50mL/時まで", "速度を上げることはできない"], correct: 0,
+      explain: "患者の状態を十分観察しながら、30分毎に速度を上げることができ、最大400mL/時までとされています。" },
+    { category: "前投薬の用法用量・タイミング", type: "single", q: "リツキシマブ投与に際して、投与30分前に行うべき前投薬として添付文書に明記されているのは?",
+      choices: ["抗ヒスタミン剤、解熱鎮痛剤等の前投与", "抗菌薬の予防投与", "制吐薬の前投与のみ", "前投薬は不要である"], correct: 0,
+      explain: "添付文書には「本剤投与の30分前に抗ヒスタミン剤、解熱鎮痛剤等の前投与を行うこと」と明記されています。副腎皮質ホルモン剤を併用しない場合はその前投与も考慮することとされています。" },
+    { category: "前投薬の用法用量・タイミング", type: "single", q: "パクリタキセルA法における前投薬のうち、デキサメタゾンの投与タイミングとして添付文書に記載されているのは?",
+      choices: ["投与約12~14時間前及び6~7時間前に静注(又は投与30分前までの単回静注)", "投与直後にのみ静注", "投与終了後24時間後に経口投与", "投与1週間前に1回のみ投与"], correct: 0,
+      explain: "A法・F法では、デキサメタゾンを投与約12~14時間前及び6~7時間前に各20mg静注するか、投与30分前までに20mgを単回静注する方法が規定されています。",
+      diagram: '<div class="dg-timeline"><div class="dg-tl-title">パクリタキセルA法の前投薬タイムライン</div><table class="dg-tl-table"><thead><tr><th>薬剤</th><th>12~14時間前</th><th>6~7時間前</th><th>30分前</th><th>投与開始</th></tr></thead><tbody>' +
+        '<tr><td>デキサメタゾン</td><td class="dg-tl-on">20mg静注</td><td class="dg-tl-on">20mg静注</td><td class="dg-tl-off">—</td><td class="dg-tl-off">—</td></tr>' +
+        '<tr><td>ジフェンヒドラミン</td><td class="dg-tl-off">—</td><td class="dg-tl-off">—</td><td class="dg-tl-on">50mg経口</td><td class="dg-tl-off">—</td></tr>' +
+        '<tr><td>H2拮抗薬</td><td class="dg-tl-off">—</td><td class="dg-tl-off">—</td><td class="dg-tl-on">静注</td><td class="dg-tl-off">—</td></tr>' +
+        '<tr><td>パクリタキセル</td><td class="dg-tl-off">—</td><td class="dg-tl-off">—</td><td class="dg-tl-off">—</td><td class="dg-tl-on">210mg/m²(3時間)</td></tr>' +
+        '</tbody></table><div class="dg-tl-note">デキサメタゾンは投与30分前までの単回20mg静注に簡略化する方法も添付文書に規定されている。</div></div>' },
+    { category: "前投薬の用法用量・タイミング", type: "single", q: "パクリタキセル前投薬のジフェンヒドラミン塩酸塩の投与経路・用量・タイミングとして添付文書に記載されているのは?",
+      choices: ["50mgを投与30分前までに経口投与", "100mgを投与直後に静注", "10mgを投与終了後に筋肉内注射", "投与不要"], correct: 0,
+      explain: "ジフェンヒドラミン塩酸塩50mgを、投与30分前までに経口投与することが規定されています。" },
+    { category: "前投薬の用法用量・タイミング", type: "single", q: "パクリタキセル前投薬のH2拮抗薬として添付文書に例示されている薬剤・用量は?",
+      choices: ["ラニチジン50mg又はファモチジン20mgを投与30分前までに静注", "オメプラゾール20mgを経口投与", "シメチジン800mgを1日2回経口投与", "H2拮抗薬は前投薬に含まれない"], correct: 0,
+      explain: "ラニチジン塩酸塩注射液(ラニチジン50mg)又はファモチジン注射用(ファモチジン20mg)を投与30分前までに静脈内投与することが規定されています。" },
+    { category: "前投薬の用法用量・タイミング", type: "single", q: "セツキシマブ投与前に行う前投薬として添付文書に明記されているのは?",
+      choices: ["抗ヒスタミン剤の前投薬(副腎皮質ホルモン剤の追加投与も軽減に有効とされる)", "抗菌薬の前投薬", "利尿薬の前投薬", "前投薬は不要である"], correct: 0,
+      explain: "セツキシマブ投与時にあらわれることがあるinfusion reactionを軽減させるため、投与前に抗ヒスタミン剤の前投薬を行うこと、さらに副腎皮質ホルモン剤を投与するとinfusion reactionが軽減されることがあるとされています。" },
+    { category: "前投薬の用法用量・タイミング", type: "multi", q: "アナフィラキシーが疑われる場合の初期対応として適切なものをすべて選べ(2つ選択)",
+      choices: ["被疑薬の投与を直ちに中止する", "アドレナリンを大腿前外側に筋肉内注射する", "抗ヒスタミン薬の投与のみで経過を見てよい", "症状が消失するまで被疑薬の投与を継続する"], correct: [0, 1],
+      explain: "被疑薬の投与を直ちに中止し、アドレナリンを大腿前外側に筋肉内注射することが初期対応の基本です。抗ヒスタミン薬のみで経過を見ることや、被疑薬の投与継続は不適切です。" },
+    { category: "前投薬の用法用量・タイミング", type: "single", q: "リツキシマブ90分迅速投与プロトコル(Sehn LH, et al. Blood 2007)の投与速度パターンとして報告されているのは?",
+      choices: ["最初の30分で総投与量の20%、残り60分で残り80%を投与", "全量を最初の10分で急速投与", "3時間かけて均等な速度で投与", "24時間かけて持続投与"], correct: 0,
+      explain: "90分迅速投与プロトコルでは、最初の30分で総投与量の20%を、残り60分で残りの80%を投与するパターンが報告されています。対象は前回までの投与でGrade3以上のinfusion reactionがなかった患者に限られます。" },
+
+    // ══════════ 薬剤別リスクへの対応(12問) ══════════
+    { category: "薬剤別リスクへの対応", type: "single", q: "リツキシマブ投与時のinfusion reactionが最も高頻度に発現するのはいつか?",
+      choices: ["初回投与時", "2回目投与時", "最終投与時のみ", "発現頻度は投与回数によらず一定である"], correct: 0,
+      explain: "添付文書上、infusion reactionは投与患者の約90%に報告されており、初回投与時に最も高頻度・高強度に出現します。2回目以降は頻度・重症度が低下する傾向があります。" },
+    { category: "薬剤別リスクへの対応", type: "single", q: "パクリタキセルの過敏反応の主な原因として指摘されている添加物は?",
+      choices: ["ポリオキシエチレンヒマシ油(溶解補助剤)", "生理食塩液", "ブドウ糖", "エタノールのみ"], correct: 0,
+      explain: "パクリタキセルは水に難溶性であるためポリオキシエチレンヒマシ油を溶解補助剤として含有しており、これによる過敏反応が示唆されています。" },
+    { category: "薬剤別リスクへの対応", type: "single", q: "パクリタキセルの重篤な過敏症の既往歴がある患者への添付文書上の対応は?",
+      choices: ["禁忌(本剤又はポリオキシエチレンヒマシ油含有製剤に過敏症の既往歴のある患者には投与しない)", "前投薬を強化すれば投与可能", "半量に減量すれば投与可能", "特に制限はない"], correct: 0,
+      explain: "パクリタキセルの添付文書では、本剤又はポリオキシエチレンヒマシ油含有製剤に過敏症の既往歴のある患者は禁忌とされています。" },
+    { category: "薬剤別リスクへの対応", type: "single", q: "白金製剤(オキサリプラチン・カルボプラチン)の過敏反応の臨床的特徴は?",
+      choices: ["投与回数を重ねるにつれて発現頻度が高くなる傾向がある", "初回投与でのみ発現する", "経口投与時のみ発現する", "小児にのみ発現する"], correct: 0,
+      explain: "白金製剤の過敏反応はIgE関連機序が示唆されており、投与回数を重ねた再投与時に発現頻度が上昇する傾向があります。" },
+    { category: "薬剤別リスクへの対応", type: "single", q: "カルボプラチンの添付文書に記載されている過敏反応(ショック・アナフィラキシー)の発現傾向は?",
+      choices: ["投与回数の増加に伴い発現頻度が高くなる傾向がみられる", "投与回数によらず一定の頻度である", "初回投与時のみに限られる", "小児にのみ発現する"], correct: 0,
+      explain: "カルボプラチンの添付文書には、投与回数を重ねると、ショック、アナフィラキシーの発現頻度が高くなる傾向がみられると記載されています。" },
+    { category: "薬剤別リスクへの対応", type: "single", q: "セツキシマブでinfusion reactionが観察されやすい時間帯は?",
+      choices: ["初回投与中または投与終了後1時間以内", "投与開始48時間後以降", "次回投与の直前のみ", "時間帯による傾向はない"], correct: 0,
+      explain: "セツキシマブのinfusion reaction(気管支痙攣、蕁麻疹、低血圧、意識消失、ショック等)は、本剤の初回投与中又は投与終了後1時間以内に観察されているとされています。" },
+    { category: "薬剤別リスクへの対応", type: "single", q: "リツキシマブの重大な副作用として、infusion reactionのほかに投与開始後に注意すべき腫瘍関連の合併症は?",
+      choices: ["腫瘍崩壊症候群", "手足症候群", "口内炎", "末梢神経障害"], correct: 0,
+      explain: "リツキシマブの重大な副作用には、infusion reactionのほか、腎不全・高カリウム血症・低カルシウム血症等を来し死亡例も報告されている腫瘍崩壊症候群があります。" },
+    { category: "薬剤別リスクへの対応", type: "single", q: "リツキシマブ投与によりB型肝炎ウイルスキャリアの患者で注意すべき重大な副作用は?",
+      choices: ["B型肝炎ウイルスの再活性化による劇症肝炎・肝炎の増悪", "間質性肺炎", "手足症候群", "末梢神経障害"], correct: 0,
+      explain: "リツキシマブの添付文書には、B型肝炎ウイルス再活性化により劇症肝炎又は肝炎の増悪、肝不全による死亡例が報告されていることが明記されています。" },
+    { category: "薬剤別リスクへの対応", type: "single", q: "パクリタキセルの重篤な過敏症状(呼吸困難、胸痛、低血圧等)が発現した場合の添付文書上の対応は?",
+      choices: ["直ちに投与を中止し、適切な処置を行う", "投与速度を上げて早く終わらせる", "症状を無視して投与を継続する", "次回投与量を増量する"], correct: 0,
+      explain: "呼吸困難、胸痛、低血圧、頻脈、徐脈、潮紅、血管性浮腫、発汗等が認められた場合は投与を中止し、適切な処置を実施することとされています。" },
+    { category: "薬剤別リスクへの対応", type: "single", q: "パクリタキセルの重大な副作用として添付文書に記載されているショック・アナフィラキシーの頻度(代表値)は?",
+      choices: ["ショック0.2%、アナフィラキシー0.3%", "ショック20%、アナフィラキシー30%", "ショック・アナフィラキシーとも頻度不明のみ", "報告例はない"], correct: 0,
+      explain: "パクリタキセルの添付文書には、ショック(0.2%)、アナフィラキシー(0.3%)と具体的な頻度が記載されています。" },
+    { category: "薬剤別リスクへの対応", type: "single", q: "セツキシマブでGrade1-2のinfusion reactionが発現した場合の対応は?",
+      choices: ["投与速度を減速し、その後の全ての投与においても減速した速度で投与する", "直ちに投与を完全に中止し二度と再投与しない", "特に対応を変えず同じ速度で投与を続ける", "投与速度を上げて早期に終了させる"], correct: 0,
+      explain: "軽度~中等度(Grade1-2)のinfusion reactionが発現した場合には、投与速度を減速し、その後の全ての投与においても減速した投与速度で投与することとされています。" },
+    { category: "薬剤別リスクへの対応", type: "multi", q: "リツキシマブの添付文書における重大な副作用として正しいものをすべて選べ(2つ選択)",
+      choices: ["Infusion reaction", "腫瘍崩壊症候群", "高血糖", "手足症候群"], correct: [0, 1],
+      explain: "リツキシマブの重大な副作用にはinfusion reaction、腫瘍崩壊症候群、B型肝炎ウイルス再活性化等があります。高血糖はオランザピン等、手足症候群はVEGFR阻害薬等に特徴的な副作用で、リツキシマブの主要な記載ではありません。" },
+
+    // ══════════ 薬剤選択の根拠(9問) ══════════
+    { category: "薬剤選択の根拠", type: "single", q: "アナフィラキシーの第一選択薬としてアドレナリンが抗ヒスタミン薬・副腎皮質ステロイドより優先される理由は?",
+      choices: ["気道閉塞・血圧低下等の生命を脅かす症状に対し、最も速やかに交感神経刺激作用による効果が得られるため", "アドレナリンには副作用が全くないため", "抗ヒスタミン薬・副腎皮質ステロイドは入手が困難であるため", "価格が最も安いため"], correct: 0,
+      explain: "アドレナリンはα1・β1・β2受容体刺激作用により、血管収縮・心拍出量増加・気管支拡張という、アナフィラキシーの生命を脅かす病態に直接作用する効果を最も速やかに得られるため第一選択薬とされています。" },
+    { category: "薬剤選択の根拠", type: "single", q: "抗ヒスタミン薬(d-クロルフェニラミンマレイン酸塩、ジフェンヒドラミン)がinfusion reaction/アナフィラキシーの前投薬・治療に用いられる薬理学的根拠は?",
+      choices: ["ヒスタミンのH1受容体拮抗作用により、蕁麻疹・そう痒等のヒスタミン介在症状を抑制するため", "アドレナリン受容体を刺激し血圧を上昇させるため", "気管支平滑筋を直接弛緩させるため", "副腎皮質からのステロイド分泌を促進するため"], correct: 0,
+      explain: "抗ヒスタミン薬はH1受容体拮抗作用により、ヒスタミンが介在する蕁麻疹・そう痒等の皮膚症状を抑制することを目的として前投薬・対症療法に用いられます。" },
+    { category: "薬剤選択の根拠", type: "single", q: "副腎皮質ステロイド(ヒドロコルチゾン等)がアナフィラキシー治療で果たすとされる役割は?",
+      choices: ["遅発性・二相性反応の予防を目的として併用されることがあるが、即効性はなくアドレナリン投与の代替にはならない", "アナフィラキシーの第一選択薬として最優先で投与する", "アドレナリンより速やかに血圧を上昇させる", "気管支拡張作用がアドレナリンより強い"], correct: 0,
+      explain: "副腎皮質ステロイドは遅発性・二相性反応の予防等を目的に併用されることがありますが、効果発現に時間を要し即効性がないため、アドレナリン投与の代替とはなりません。" },
+    { category: "薬剤選択の根拠", type: "single", q: "アセトアミノフェンがリツキシマブ等の前投薬として用いられる目的は?",
+      choices: ["infusion reactionに伴う発熱・疼痛等の症状を軽減するため(解熱鎮痛)", "アナフィラキシーショックの第一選択薬として用いるため", "気管支拡張作用を期待するため", "血圧を上昇させるため"], correct: 0,
+      explain: "リツキシマブの添付文書には「抗ヒスタミン剤、解熱鎮痛剤等の前投与」が明記されており、アセトアミノフェンはinfusion reactionに伴う発熱・疼痛等の軽減を目的として用いられます。" },
+    { category: "薬剤選択の根拠", type: "single", q: "d-クロルフェニラミンマレイン酸塩の重大な禁忌として添付文書に明記されているものは?",
+      choices: ["閉塞隅角緑内障の患者、前立腺肥大等下部尿路に閉塞性疾患のある患者", "重篤な肝障害のある患者", "重篤な腎障害のある患者", "気管支喘息の患者"], correct: 0,
+      explain: "d-クロルフェニラミンマレイン酸塩は抗コリン作用を有するため、閉塞隅角緑内障の患者(眼圧上昇のおそれ)、前立腺肥大等下部尿路に閉塞性疾患のある患者(症状増悪のおそれ)、低出生体重児・新生児が禁忌とされています。" },
+    { category: "薬剤選択の根拠", type: "single", q: "アドレナリンの重大な副作用として添付文書に記載されているものは?",
+      choices: ["肺水腫、呼吸困難、心停止", "間質性肺炎、手足症候群", "腫瘍崩壊症候群", "末梢神経障害"], correct: 0,
+      explain: "アドレナリンの重大な副作用として、肺水腫(初期症状として血圧の異常上昇)、呼吸困難、心停止(初期症状として頻脈・不整脈)が添付文書に記載されています。" },
+    { category: "薬剤選択の根拠", type: "single", q: "アセトアミノフェン(アセリオ)の警告に明記されている重要な注意点は?",
+      choices: ["1日総量1500mgを超える高用量で長期投与する場合は定期的な肝機能検査等、慎重な投与が必要であること", "1回投与量にかかわらず腎機能検査は不要であること", "妊婦には禁忌であること", "小児には一切使用できないこと"], correct: 0,
+      explain: "アセリオ静注液の警告には、重篤な肝障害があらわれることがあるため、1日総量1500mgを超える高用量で長期投与する場合は定期的に肝機能等を確認するなど慎重に投与することが明記されています。" },
+    { category: "薬剤選択の根拠", type: "single", q: "ジフェンヒドラミン塩酸塩注射液の用法及び用量として添付文書に記載されているのは?",
+      choices: ["成人1回10~30mgを皮下又は筋肉内注射する", "成人1回500mgを静脈内投与する", "成人1回1mgを経口投与する", "小児にのみ使用が認められている"], correct: 0,
+      explain: "通常、成人にはジフェンヒドラミン塩酸塩として1回10~30mgを皮下又は筋肉内注射し、年齢、症状により適宜増減します。" },
+    { category: "薬剤選択の根拠", type: "multi", q: "ヒドロコルチゾンコハク酸エステルナトリウムの添付文書に記載されている禁忌をすべて選べ(2つ選択)",
+      choices: ["本剤の成分に対し過敏症の既往歴のある患者", "デスモプレシン酢酸塩水和物投与中の患者", "ワルファリン投与中の患者", "パロノセトロン投与中の患者"], correct: [0, 1],
+      explain: "デスモプレシン酢酸塩水和物投与中の患者(低ナトリウム血症のおそれ)、本剤の投与により免疫抑制が生じる量を投与中の患者への生ワクチン又は弱毒生ワクチン接種が禁忌とされています。ワルファリンやパロノセトロンとの併用は禁忌ではなく、併用注意等の対象です。" },
+
+    // ══════════ コスト制度・その他(6問) ══════════
+    { category: "コスト制度・その他", type: "single", q: "ボスミン注1mg(アドレナリン)の薬価目安は?",
+      choices: ["約188円/管", "約1,880円/管", "約18,800円/管", "約1.88円/管"], correct: 0,
+      explain: "ボスミン注1mg(0.1%1mL1管)の薬価は約188円とされています。" },
+    { category: "コスト制度・その他", type: "single", q: "ポララミン注5mg(d-クロルフェニラミンマレイン酸塩)の薬価目安は?",
+      choices: ["約69円/管", "約690円/管", "約6,900円/管", "無償で提供される"], correct: 0,
+      explain: "ポララミン注5mg(0.5%1mL1管)の薬価は約69円とされています。" },
+    { category: "コスト制度・その他", type: "single", q: "ソル・コーテフ静注用250mg(ヒドロコルチゾン)の薬価目安は?",
+      choices: ["約808円/瓶", "約80円/瓶", "約8,080円/瓶", "約80,800円/瓶"], correct: 0,
+      explain: "ソル・コーテフ静注用250mgの薬価は約808円/瓶とされています(情報源により841円との記載もあり要確認)。" },
+    { category: "コスト制度・その他", type: "single", q: "アセリオ静注液1000mgバッグ(アセトアミノフェン)の薬価目安は?",
+      choices: ["約292円/袋", "約29円/袋", "約2,920円/袋", "約29,200円/袋"], correct: 0,
+      explain: "アセリオ静注液1000mgバッグの薬価は約292円/袋とされています(情報源により298円・304円との記載もあり要確認)。" },
+    { category: "コスト制度・その他", type: "single", q: "前投薬(抗ヒスタミン薬・解熱鎮痛薬・副腎皮質ステロイド等)とリツキシマブ・パクリタキセル等の抗悪性腫瘍剤自体のコストを比較した場合の一般的な傾向は?",
+      choices: ["前投薬のコストは抗悪性腫瘍剤・抗体医薬品本体のコストに比べてごく僅かである", "前投薬のコストの方が抗悪性腫瘍剤本体より高額である", "両者のコストはほぼ同額である", "前投薬は保険適用外である"], correct: 0,
+      explain: "抗ヒスタミン薬・解熱鎮痛薬・副腎皮質ステロイド・アドレナリンはいずれも1回あたり数百円程度であるのに対し、リツキシマブやセツキシマブ等の抗体医薬品は1瓶あたり数万円に及ぶため、前投薬のコストは本体のコストに比べてごく僅かです。" },
+    { category: "コスト制度・その他", type: "single", q: "高額療養費制度とinfusion reaction対応の関係として適切な説明は?",
+      choices: ["infusion reaction対応自体で高額療養費制度の対象となるケースは少なく、主に併用される抗悪性腫瘍剤・抗体医薬品の薬剤費が制度適用の主因となることが多い", "infusion reaction対応のみで必ず高額療養費制度の対象になる", "高額療養費制度はinfusion reaction対応には一切適用されない", "infusion reaction対応の薬剤は全額自己負担である"], correct: 0,
+      explain: "高額療養費制度は暦月ごとの医療費自己負担合計額に対して適用されるものであり、infusion reaction対応の前投薬・緊急薬剤単独よりも、併用される抗悪性腫瘍剤・抗体医薬品の薬剤費が制度適用の主因となることが一般的です。" }
+  ];
+
+  var QUIZ_SESSION_SIZE = 10;
+  var quizOrder = [];     // indices into QUIZ for THIS session (random subset)
+  var quizIndex = 0;
+  var quizAnswers = [];   // per-question(by original index): selected choice index (single) or array of indices (multi)
+  var quizFeedback = {};  // { [questionIndex]: 'good' | 'bad' }
+
+  function quizPickSession() {
+    var all = QUIZ.map(function (_, i) { return i; });
+    quizShuffle(all);
+    quizOrder = all.slice(0, QUIZ_SESSION_SIZE);
+  }
+  function quizShuffle(arr) {
+    for (var i = arr.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = arr[i]; arr[i] = arr[j]; arr[j] = t;
+    }
+    return arr;
+  }
+
+  function quizLoadFeedback() {
+    try {
+      var raw = localStorage.getItem('infusionReactionQuizFeedback_v2');
+      quizFeedback = raw ? JSON.parse(raw) : {};
+    } catch (e) { quizFeedback = {}; }
+  }
+  function quizSaveFeedback() {
+    try { localStorage.setItem('infusionReactionQuizFeedback_v2', JSON.stringify(quizFeedback)); } catch (e) {}
+  }
+  function quizBuildRatingRow(qi) {
+    var row = document.createElement('div');
+    row.className = 'rate-row';
+    var label = document.createElement('span');
+    label.className = 'rate-label';
+    label.textContent = 'この問題の評価:';
+    var goodBtn = document.createElement('button');
+    goodBtn.type = 'button'; goodBtn.className = 'rate-btn'; goodBtn.textContent = '👍 良問';
+    var badBtn = document.createElement('button');
+    badBtn.type = 'button'; badBtn.className = 'rate-btn'; badBtn.textContent = '👎 悪問';
+    function refresh() {
+      goodBtn.classList.toggle('active-good', quizFeedback[qi] === 'good');
+      badBtn.classList.toggle('active-bad', quizFeedback[qi] === 'bad');
+    }
+    goodBtn.onclick = function () {
+      quizFeedback[qi] = (quizFeedback[qi] === 'good') ? null : 'good';
+      if (!quizFeedback[qi]) delete quizFeedback[qi];
+      quizSaveFeedback(); refresh();
+    };
+    badBtn.onclick = function () {
+      quizFeedback[qi] = (quizFeedback[qi] === 'bad') ? null : 'bad';
+      if (!quizFeedback[qi]) delete quizFeedback[qi];
+      quizSaveFeedback(); refresh();
+    };
+    refresh();
+    row.appendChild(label); row.appendChild(goodBtn); row.appendChild(badBtn);
+    return row;
+  }
+  function quizFallbackCopy(text, done) {
+    var ta = document.createElement('textarea');
+    ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); } catch (e) {}
+    document.body.removeChild(ta);
+    done();
+  }
+  function quizChoiceLabel(item) {
+    return item.choices.join(' / ');
+  }
+  function quizCorrectLabel(item) {
+    if (item.type === 'multi') return item.correct.map(function (i) { return item.choices[i]; }).join(' ＋ ');
+    return item.choices[item.correct];
+  }
+  function quizExportFeedback() {
+    var ratedIdx = Object.keys(quizFeedback);
+    if (ratedIdx.length === 0) {
+      alert('まだ評価された問題がありません。各問題に回答した後に表示される「👍 良問」「👎 悪問」ボタンで評価してから、もう一度お試しください。');
+      return;
+    }
+    var goodList = [], badList = [];
+    ratedIdx.forEach(function (idxStr) {
+      var idx = parseInt(idxStr, 10);
+      var item = QUIZ[idx];
+      if (!item) return;
+      var entry = '・[' + item.category + (item.type === 'multi' ? '/複数選択' : '') + '] ' + item.q + '\n  選択肢: ' + quizChoiceLabel(item) + '\n  正解: ' + quizCorrectLabel(item);
+      if (quizFeedback[idx] === 'good') goodList.push(entry);
+      else if (quizFeedback[idx] === 'bad') badList.push(entry);
+    });
+    var text = '【インフュージョンリアクション/アナフィラキシークイズ(quiz-infusion-reaction.html、全50問プール)フィードバック】\n\n' +
+      '良問と評価された問題(' + goodList.length + '件):\n' + (goodList.length ? goodList.join('\n\n') : '(なし)') + '\n\n' +
+      '悪問と評価された問題(' + badList.length + '件) — 改善・差し替えを検討してください:\n' + (badList.length ? badList.join('\n\n') : '(なし)') + '\n\n' +
+      '参照ファイル: artifacts/html/oncology-reports/quiz-infusion-reaction.html\n\n' +
+      '上記フィードバックを踏まえて、「悪問」と評価された問題をレポート本文(artifacts/html/oncology-reports/infusion-reaction.html、添付文書情報セクション含む)の内容に基づいて改善・差し替えてください。「良問」と評価された問題は現状を維持してください。';
+    var notify = function () { alert('フィードバックをコピーしました。MulmoClaudeのチャットに貼り付けて送信してください。問題の改善に使います。'); };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(notify).catch(function () { quizFallbackCopy(text, notify); });
+    } else { quizFallbackCopy(text, notify); }
+  }
+  function quizResetFeedback() {
+    if (!confirm('すべての評価をリセットします。よろしいですか?')) return;
+    quizFeedback = {};
+    quizSaveFeedback();
+    alert('評価をリセットしました。');
+  }
+
+  function quizRenderQuestion() {
+    document.getElementById('quiz-result-area').style.display = 'none';
+    document.getElementById('quiz-question-area').style.display = 'block';
+    var qi = quizOrder[quizIndex];
+    var item = QUIZ[qi];
+    document.getElementById('quiz-progress-text').textContent = '問 ' + (quizIndex + 1) + ' / ' + quizOrder.length + '(全' + QUIZ.length + '問中からランダム出題)';
+    document.getElementById('quiz-cat-badge').textContent = item.category;
+    document.getElementById('quiz-type-badge').style.display = (item.type === 'multi') ? 'inline-flex' : 'none';
+    document.getElementById('quiz-progress-fill').style.width = Math.round((quizIndex / quizOrder.length) * 100) + '%';
+    document.getElementById('quiz-question-text').textContent = item.q;
+    document.getElementById('quiz-diagram-area').innerHTML = item.diagram || '';
+    document.getElementById('quiz-explain-area').style.display = 'none';
+    document.getElementById('quiz-explain-area').innerHTML = '';
+    document.getElementById('quiz-next-btn').style.display = 'none';
+    document.getElementById('quiz-submit-row').style.display = 'none';
+
+    var wrap = document.getElementById('quiz-choices');
+    wrap.innerHTML = '';
+
+    if (item.type === 'multi') {
+      var selected = {};
+      item.choices.forEach(function (choiceText, idx) {
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'quiz-choice';
+        btn.innerHTML = '<span class="quiz-choice-check">☐</span> ' + choiceText.replace(/</g, '&lt;');
+        btn.onclick = function () {
+          selected[idx] = !selected[idx];
+          btn.classList.toggle('selected', !!selected[idx]);
+          btn.querySelector('.quiz-choice-check').textContent = selected[idx] ? '☑' : '☐';
+        };
+        wrap.appendChild(btn);
+      });
+      document.getElementById('quiz-submit-row').style.display = 'block';
+      document.getElementById('quiz-submit-btn').onclick = function () {
+        var chosen = Object.keys(selected).filter(function (k) { return selected[k]; }).map(Number);
+        quizAnswerMulti(chosen);
+      };
+    } else {
+      item.choices.forEach(function (choiceText, idx) {
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'quiz-choice';
+        btn.textContent = choiceText;
+        btn.onclick = function () { quizAnswerSingle(idx); };
+        wrap.appendChild(btn);
+      });
+    }
+  }
+
+  function quizFinishQuestion(qi, isCorrect, correctText) {
+    var item = QUIZ[qi];
+    var explainArea = document.getElementById('quiz-explain-area');
+    explainArea.className = 'quiz-explain';
+    explainArea.style.display = 'block';
+    explainArea.innerHTML = '<div style="font-weight:700; margin-bottom:4px; color:' + (isCorrect ? 'var(--good)' : 'var(--critical)') + ';">' +
+      (isCorrect ? '✅ 正解' : '❌ 不正解(正解: ' + correctText + ')') + '</div>' +
+      '<div>' + (item.explain || '') + '</div>';
+    explainArea.appendChild(quizBuildRatingRow(qi));
+    document.getElementById('quiz-submit-row').style.display = 'none';
+    document.getElementById('quiz-next-btn').style.display = 'inline-block';
+    document.getElementById('quiz-next-btn').textContent = (quizIndex === quizOrder.length - 1) ? '結果を見る →' : '次の問題 →';
+  }
+
+  function quizAnswerSingle(selectedIdx) {
+    var qi = quizOrder[quizIndex];
+    var item = QUIZ[qi];
+    quizAnswers[qi] = selectedIdx;
+    var buttons = document.getElementById('quiz-choices').querySelectorAll('.quiz-choice');
+    buttons.forEach(function (btn, idx) {
+      btn.disabled = true;
+      if (idx === item.correct) btn.classList.add('correct');
+      else if (idx === selectedIdx) btn.classList.add('wrong');
+    });
+    quizFinishQuestion(qi, selectedIdx === item.correct, item.choices[item.correct]);
+  }
+
+  function quizSubmitMulti() {
+    var qi = quizOrder[quizIndex];
+    var item = QUIZ[qi];
+    var buttons = document.getElementById('quiz-choices').querySelectorAll('.quiz-choice');
+    var chosen = [];
+    buttons.forEach(function (btn, idx) {
+      if (btn.classList.contains('selected')) chosen.push(idx);
+    });
+    quizAnswerMulti(chosen, buttons, item, qi);
+  }
+
+  function quizAnswerMulti(chosen, buttons, item, qi) {
+    qi = (qi === undefined) ? quizOrder[quizIndex] : qi;
+    item = item || QUIZ[qi];
+    buttons = buttons || document.getElementById('quiz-choices').querySelectorAll('.quiz-choice');
+    quizAnswers[qi] = chosen;
+    var correctSet = item.correct.slice().sort();
+    var chosenSet = chosen.slice().sort();
+    var isCorrect = correctSet.length === chosenSet.length && correctSet.every(function (v, i) { return v === chosenSet[i]; });
+    buttons.forEach(function (btn, idx) {
+      btn.disabled = true;
+      var isRight = item.correct.indexOf(idx) !== -1;
+      var wasChosen = chosen.indexOf(idx) !== -1;
+      if (isRight) btn.classList.add('correct');
+      else if (wasChosen) btn.classList.add('wrong');
+    });
+    quizFinishQuestion(qi, isCorrect, quizCorrectLabel(item));
+  }
+
+  function quizNext() {
+    if (quizIndex < quizOrder.length - 1) {
+      quizIndex++;
+      quizRenderQuestion();
+    } else {
+      quizShowResult();
+    }
+  }
+
+  function quizShowResult() {
+    document.getElementById('quiz-progress-fill').style.width = '100%';
+    document.getElementById('quiz-progress-text').textContent = '完了 ' + quizOrder.length + ' / ' + quizOrder.length;
+    document.getElementById('quiz-cat-badge').textContent = '';
+    document.getElementById('quiz-type-badge').style.display = 'none';
+    document.getElementById('quiz-question-area').style.display = 'none';
+
+    var correctCount = 0;
+    var byCategory = {};
+    quizOrder.forEach(function (qi) {
+      var item = QUIZ[qi];
+      if (!byCategory[item.category]) byCategory[item.category] = { correct: 0, total: 0 };
+      byCategory[item.category].total++;
+      var ans = quizAnswers[qi];
+      var isCorrect;
+      if (item.type === 'multi') {
+        var correctSet = item.correct.slice().sort();
+        var chosenSet = (ans || []).slice().sort();
+        isCorrect = correctSet.length === chosenSet.length && correctSet.every(function (v, i) { return v === chosenSet[i]; });
+      } else {
+        isCorrect = ans === item.correct;
+      }
+      if (isCorrect) { correctCount++; byCategory[item.category].correct++; }
+    });
+    var pct = Math.round((correctCount / quizOrder.length) * 100);
+
+    var catHtml = '';
+    Object.keys(byCategory).forEach(function (cat) {
+      var c = byCategory[cat];
+      var p = Math.round((c.correct / c.total) * 100);
+      catHtml += '<div class="cat-result-row"><span class="text-xs" style="width:150px; flex-shrink:0;">' + cat + '</span>' +
+        '<div class="cat-result-bar"><div class="cat-result-fill" style="width:' + p + '%"></div></div>' +
+        '<span class="text-xs muted" style="width:56px; text-align:right;">' + c.correct + '/' + c.total + '</span></div>';
+    });
+
+    var reviewHtml = '';
+    quizOrder.forEach(function (qi) {
+      var item = QUIZ[qi];
+      var ans = quizAnswers[qi];
+      var isCorrect;
+      var yourAnswerText;
+      if (item.type === 'multi') {
+        var correctSet = item.correct.slice().sort();
+        var chosenSet = (ans || []).slice().sort();
+        isCorrect = correctSet.length === chosenSet.length && correctSet.every(function (v, i) { return v === chosenSet[i]; });
+        yourAnswerText = (ans && ans.length) ? ans.map(function (i) { return item.choices[i]; }).join(' ＋ ') : '(未回答)';
+      } else {
+        isCorrect = ans === item.correct;
+        yourAnswerText = (ans != null) ? item.choices[ans] : '(未回答)';
+      }
+      if (!isCorrect) {
+        reviewHtml += '<div class="review-item">' +
+          '<div class="text-sm font-semibold mb-1">' + item.q + '</div>' +
+          '<div class="text-xs muted mb-2">あなたの回答: ' + yourAnswerText + ' / 正解: ' + quizCorrectLabel(item) + '</div>' +
+          '<div class="text-xs" style="line-height:1.6;">' + (item.explain || '') + '</div>' +
+          '</div>';
+      }
+    });
+    if (!reviewHtml) reviewHtml = '<p class="text-sm secondary">全問正解です。見直しの必要な項目はありません 🎉</p>';
+
+    var goodCount = 0, badCount = 0;
+    Object.keys(quizFeedback).forEach(function (k) {
+      if (quizFeedback[k] === 'good') goodCount++;
+      else if (quizFeedback[k] === 'bad') badCount++;
+    });
+
+    var resultArea = document.getElementById('quiz-result-area');
+    resultArea.style.display = 'block';
+    resultArea.innerHTML =
+      '<div class="text-center mb-6">' +
+        '<div class="score-ring-num" style="color:var(--series-new);">' + correctCount + ' / ' + quizOrder.length + '</div>' +
+        '<div class="text-sm muted mt-1">正答率 ' + pct + '%(全' + QUIZ.length + '問プールから今回ランダム抽出された' + quizOrder.length + '問)</div>' +
+      '</div>' +
+      '<div class="mb-6"><div class="text-sm font-semibold mb-3">カテゴリ別正答率(今回出題分)</div>' + catHtml + '</div>' +
+      '<div class="mb-2 text-sm font-semibold">見直し(不正解・未回答の問題)</div>' +
+      '<div class="mb-6">' + reviewHtml + '</div>' +
+      '<div class="mb-6 pt-4 border-t" style="border-color:var(--gridline);">' +
+        '<div class="text-sm font-semibold mb-2">問題の評価状況(全50問プール通算)</div>' +
+        '<div class="text-xs muted mb-3">👍 良問 ' + goodCount + '件 ・ 👎 悪問 ' + badCount + '件</div>' +
+        '<div class="flex flex-wrap gap-3">' +
+          '<button type="button" class="quiz-btn-outline" onclick="quizExportFeedback()">📋 フィードバックをエクスポート(チャットに貼り付け用)</button>' +
+          '<button type="button" class="quiz-btn-outline" onclick="quizResetFeedback()" style="border-color:var(--critical); color:var(--critical);">🗑 評価をリセット</button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="flex flex-wrap gap-3 justify-center">' +
+        '<button type="button" class="quiz-btn" onclick="quizRestart()">🔀 新しい10問でもう一度</button>' +
+        '<a href="infusion-reaction.html" class="quiz-btn-outline" style="text-decoration:none; display:inline-block;">レポート本文に戻る</a>' +
+      '</div>';
+  }
+
+  function quizRestart() {
+    quizPickSession();
+    quizIndex = 0;
+    quizAnswers = [];
+    quizRenderQuestion();
+  }
+
+  quizLoadFeedback();
+  quizPickSession();
+  quizRenderQuestion();
+</script>
+
+<footer class="text-center text-xs pb-4" style="color: var(--text-muted);">
+  本クイズは学習・自己点検を目的とした資料です。臨床判断には利用せず、最新の添付文書・ガイドライン原文を優先してください。
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>心毒性モニタリング理解度クイズ 全50問(ランダム10問出題)</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+:root, .viz-root {
+  color-scheme: light;
+  --surface-1: #fcfcfb; --page-plane: #f9f9f7;
+  --text-primary: #0b0b0b; --text-secondary: #52514e; --text-muted: #898781;
+  --gridline: #e1e0d9; --baseline: #c3c2b7;
+  --series-new: #2a78d6; --series-control: #b9b7ae;
+  --good: #0ca30c; --warning: #b9790a; --critical: #d03b3b;
+  --border: rgba(11,11,11,0.10);
+}
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) {
+    color-scheme: dark;
+    --surface-1: #1a1a19; --page-plane: #0d0d0d;
+    --text-primary: #ffffff; --text-secondary: #c3c2b7; --text-muted: #898781;
+    --gridline: #2c2c2a; --baseline: #383835;
+    --series-new: #3987e5; --series-control: #55534c;
+    --good: #0ca30c; --warning: #eab116; --critical: #e66767;
+    --border: rgba(255,255,255,0.10);
+  }
+}
+body { background: var(--page-plane); color: var(--text-primary); font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+.card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+.secondary { color: var(--text-secondary); }
+.muted { color: var(--text-muted); }
+.cat-badge { display:inline-flex; align-items:center; padding:3px 10px; border-radius:9999px; font-size:0.72rem; font-weight:700; background: color-mix(in srgb, var(--series-new) 14%, transparent); color: var(--series-new); }
+.type-badge { display:inline-flex; align-items:center; padding:3px 10px; border-radius:9999px; font-size:0.68rem; font-weight:700; background: color-mix(in srgb, var(--warning) 16%, transparent); color: var(--warning); margin-left:6px; }
+.progress-track { background: var(--gridline); border-radius: 9999px; height: 8px; overflow: hidden; }
+.progress-fill { background: var(--series-new); height: 100%; border-radius: 9999px; transition: width .25s; }
+.quiz-choice { display:block; width:100%; text-align:left; background: var(--page-plane); border: 1.5px solid var(--gridline); border-radius: 10px; padding: 12px 16px; font-size: 0.92rem; cursor: pointer; transition: border-color .12s, background .12s; margin-bottom: 10px; }
+.quiz-choice:last-child { margin-bottom: 0; }
+.quiz-choice:hover:not(:disabled) { border-color: var(--series-new); }
+.quiz-choice:disabled { cursor: default; }
+.quiz-choice.correct { border-color: var(--good); background: color-mix(in srgb, var(--good) 12%, transparent); font-weight: 700; }
+.quiz-choice.wrong { border-color: var(--critical); background: color-mix(in srgb, var(--critical) 10%, transparent); }
+.quiz-choice.selected { border-color: var(--series-new); background: color-mix(in srgb, var(--series-new) 10%, transparent); }
+.quiz-choice-check { display:inline-block; width:16px; }
+.quiz-explain { background: var(--page-plane); border: 1px solid var(--gridline); border-radius: 10px; padding: 14px 16px; margin-top: 14px; font-size: 0.85rem; line-height: 1.7; }
+.quiz-btn { background: var(--series-new); color: #fff; border: none; border-radius: 8px; padding: 10px 22px; font-size: 0.88rem; font-weight: 700; cursor: pointer; }
+.quiz-btn:hover { opacity: 0.9; }
+.quiz-btn:disabled { opacity: 0.4; cursor: default; }
+.quiz-btn-outline { background: transparent; color: var(--series-new); border: 1.5px solid var(--series-new); border-radius: 8px; padding: 9px 20px; font-size: 0.88rem; font-weight: 700; cursor: pointer; }
+.quiz-btn-outline:hover { background: color-mix(in srgb, var(--series-new) 10%, transparent); }
+.score-ring-num { font-size: 2.6rem; font-weight: 800; }
+.cat-result-row { display:flex; align-items:center; gap:10px; margin-bottom: 8px; }
+.cat-result-bar { flex:1; background: var(--gridline); border-radius: 9999px; height: 10px; overflow:hidden; }
+.cat-result-fill { background: var(--series-new); height:100%; border-radius: 9999px; }
+.review-item { border: 1px solid var(--gridline); border-radius: 10px; padding: 12px 14px; margin-bottom: 10px; }
+.review-item:last-child { margin-bottom: 0; }
+.rate-row { display:flex; align-items:center; gap:8px; margin-top:14px; flex-wrap:wrap; }
+.rate-label { font-size:0.75rem; color: var(--text-muted); }
+.rate-btn { background: var(--page-plane); border: 1.5px solid var(--gridline); border-radius: 8px; padding: 6px 12px; font-size: 0.78rem; font-weight:600; cursor:pointer; color: var(--text-secondary); }
+.rate-btn:hover { border-color: var(--series-new); }
+.rate-btn.active-good { border-color: var(--good); background: color-mix(in srgb, var(--good) 14%, transparent); color: var(--good); }
+.rate-btn.active-bad { border-color: var(--critical); background: color-mix(in srgb, var(--critical) 12%, transparent); color: var(--critical); }
+
+/* Compact monitoring-schedule timeline diagram, used inside quiz-diagram-area (see cardiotox.html .dg-timeline for the full version) */
+.quiz-diagram-area:empty { display: none; }
+.quiz-diagram-area .dg-timeline { border: 1px solid var(--gridline); border-radius: 8px; padding: 10px 12px 12px; background: var(--page-plane); margin-bottom: 14px; }
+.quiz-diagram-area .dg-tl-title { font-size: 0.76rem; font-weight: 700; color: var(--text-primary); margin-bottom: 8px; }
+.quiz-diagram-area table.dg-tl-table { width: 100%; border-collapse: separate; border-spacing: 3px; font-size: 0.66rem; }
+.quiz-diagram-area table.dg-tl-table th { color: var(--text-muted); font-weight: 700; font-size: 0.58rem; text-transform: uppercase; letter-spacing: .03em; padding: 2px 3px 5px; text-align: center; }
+.quiz-diagram-area table.dg-tl-table th:first-child { text-align: left; }
+.quiz-diagram-area table.dg-tl-table td:first-child { text-align: left; font-weight: 600; color: var(--text-secondary); white-space: nowrap; padding-right: 6px; font-size: 0.64rem; }
+.quiz-diagram-area table.dg-tl-table td { text-align: center; padding: 6px 4px; border-radius: 6px; vertical-align: middle; line-height: 1.25; }
+.quiz-diagram-area td.dg-tl-on { background: color-mix(in srgb, var(--series-new) 14%, transparent); border: 1px solid var(--series-new); color: var(--text-primary); font-weight: 700; }
+.quiz-diagram-area td.dg-tl-on-alt { background: color-mix(in srgb, var(--warning) 16%, transparent); border: 1px dashed var(--warning); color: var(--text-primary); font-weight: 700; }
+.quiz-diagram-area td.dg-tl-off { background: var(--surface-1); border: 1px dashed var(--gridline); color: var(--text-muted); font-weight: 400; }
+.quiz-diagram-area .dg-tl-note { font-size: 0.62rem; color: var(--text-muted); margin-top: 6px; line-height: 1.5; }
+.quiz-diagram-area .dg-tl-legend { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 6px; font-size: 0.6rem; color: var(--text-muted); }
+.quiz-diagram-area .dg-tl-legend span { display: inline-flex; align-items: center; gap: 4px; }
+.quiz-diagram-area .dg-tl-legend i { display: inline-block; width: 9px; height: 9px; border-radius: 3px; }
+.quiz-diagram-area .dg-tl-legend i.on { background: color-mix(in srgb, var(--series-new) 30%, transparent); border: 1px solid var(--series-new); }
+.quiz-diagram-area .dg-tl-legend i.alt { background: color-mix(in srgb, var(--warning) 30%, transparent); border: 1px dashed var(--warning); }
+.quiz-diagram-area .dg-tl-legend i.off { background: var(--surface-1); border: 1px dashed var(--gridline); }
+</style>
+</head>
+<body class="viz-root">
+<div class="max-w-3xl mx-auto px-4 py-8 space-y-5">
+
+  <header class="card">
+    <div class="flex items-center justify-between gap-2 flex-wrap">
+      <div>
+        <h1 class="text-xl font-bold">🧠 心毒性モニタリング理解度クイズ</h1>
+        <p class="text-sm mt-1 secondary">全50問のプールからランダムに10問出題・4択/複数選択混在・医療従事者向け(リスク層別化とモニタリング方針の選択・モニタリングのタイミング/頻度・合併症/重症度への対応・薬剤選択の根拠[適応内/適応外の区別]・コスト制度)</p>
+      </div>
+      <a href="cardiotox.html" class="text-xs" style="color:var(--series-new); text-decoration:none; font-weight:600;">← レポート本文に戻る</a>
+    </div>
+    <p class="text-xs mt-3 muted">出題内容はすべて <a href="cardiotox.html" style="color:var(--series-new);">心毒性モニタリング(アントラサイクリン系薬剤・HER2標的薬等)レポート</a>(本文および「6. 主要薬剤の添付文書情報」)に記載の情報に基づきます。臨床判断には利用せず、学習・自己点検の目的でご利用ください。ページを再読み込みする、または結果画面の「新しい10問でもう一度」を押すたびに、新しい10問がランダムに選ばれます。</p>
+  </header>
+
+  <!-- Quiz card -->
+  <section class="card" id="quiz-card">
+    <div class="flex items-center justify-between mb-2">
+      <span id="quiz-progress-text" class="text-xs font-semibold muted"></span>
+      <span><span id="quiz-cat-badge" class="cat-badge"></span><span id="quiz-type-badge" class="type-badge" style="display:none;">複数選択</span></span>
+    </div>
+    <div class="progress-track mb-5"><div class="progress-fill" id="quiz-progress-fill" style="width:0%"></div></div>
+
+    <div id="quiz-question-area">
+      <div id="quiz-question-text" class="text-base font-semibold mb-4" style="line-height:1.6;"></div>
+      <div id="quiz-diagram-area" class="quiz-diagram-area"></div>
+      <div id="quiz-choices"></div>
+      <div id="quiz-submit-row" style="display:none;" class="mt-3">
+        <button type="button" class="quiz-btn" id="quiz-submit-btn" onclick="quizSubmitMulti()">この内容で回答する</button>
+      </div>
+      <div id="quiz-explain-area" style="display:none;"></div>
+      <div class="mt-5 flex justify-end">
+        <button type="button" id="quiz-next-btn" class="quiz-btn" style="display:none;" onclick="quizNext()">次の問題 →</button>
+      </div>
+    </div>
+
+    <div id="quiz-result-area" style="display:none;"></div>
+  </section>
+
+</div>
+
+<script>
+  var QUIZ = [
+    // ══════════ リスク層別化とモニタリング方針の選択(14問) ══════════
+    { category: "リスク層別化とモニタリング方針の選択", type: "single", q: "「Onco-cardiologyガイドライン」(2023年)はどの学会が共同編集したか?",
+      choices: ["日本臨床腫瘍学会と日本腫瘍循環器学会", "日本癌治療学会単独", "日本循環器学会単独", "日本心エコー図学会単独"], correct: 0,
+      explain: "本邦初のOnco-cardiologyガイドラインは、日本臨床腫瘍学会と日本腫瘍循環器学会が共同編集し、日本癌治療学会・日本循環器学会・日本心エコー図学会が作成に協力しました。" },
+    { category: "リスク層別化とモニタリング方針の選択", type: "single", q: "Onco-cardiologyガイドラインの発刊時期・発行元として正しいものは?",
+      choices: ["2023年3月10日、南江堂から発売", "2010年、医学書院から発売", "2022年、PMDAが発行", "未刊行でありWeb版のみ存在する"], correct: 0,
+      explain: "本ガイドラインは2023年3月10日、第87回日本循環器学会学術集会・第20回日本臨床腫瘍学会学術集会に合わせて南江堂から発売されました。" },
+    { category: "リスク層別化とモニタリング方針の選択", type: "single", q: "Onco-cardiologyガイドラインが明記している、欧米で用いられる心保護薬・抗血栓薬の一部(デクスラゾキサンの心保護目的、低分子ヘパリン等)に関する記載は?",
+      choices: ["本邦では保険適応がなく使用することはできない", "本邦でも保険適応があり自由に使用できる", "これらの薬剤についての言及はない", "本邦でのみ承認され欧米では未承認である"], correct: 0,
+      explain: "本ガイドラインは、2022年ESCガイドラインで用いられているデクスラゾキサン(心保護目的)や低分子ヘパリン等が本邦では保険適応がなく使用できないことを明記し、本邦の実臨床に即した内容として作成されました。" },
+    { category: "リスク層別化とモニタリング方針の選択", type: "single", q: "HFA-ICOSベースラインリスクスコアにおいて、アントラサイクリンの累積投与量に関する高リスク因子の目安は?",
+      choices: ["ドキソルビシン換算で累積投与量250mg/m²以上", "ドキソルビシン換算で累積投与量10mg/m²以上", "累積投与量にかかわらずリスクは一定である", "累積投与量が多いほどリスクは低下する"], correct: 0,
+      explain: "HFA-ICOSスコアでは、ドキソルビシン換算累積投与量250mg/m²以上が高リスク因子の一つとされています。" },
+    { category: "リスク層別化とモニタリング方針の選択", type: "single", q: "HFA-ICOSベースラインリスク評価は患者をどのように分類するか?",
+      choices: ["低リスク・中等度リスク・高リスク・超高リスクの4段階", "リスクあり・リスクなしの2段階のみ", "年齢のみによる3段階", "分類は行わず一律の対応とする"], correct: 0,
+      explain: "HFA-ICOSスコアは低リスク・中等度リスク・高リスク・超高リスクの4段階に患者を分類し、リスクに応じてモニタリングの強度を調整する考え方を採用しています。" },
+    { category: "リスク層別化とモニタリング方針の選択", type: "single", q: "ASCO 2017ガイドラインが、心毒性を有しうるがん薬物療法を開始するすべての患者に推奨する評価内容は?",
+      choices: ["病歴・身体所見・心血管危険因子スクリーニング・治療開始前の心エコー", "心臓カテーテル検査を全例に実施すること", "心臓MRI検査を全例に実施すること", "特別な評価は不要である"], correct: 0,
+      explain: "ASCO 2017ガイドラインは、心毒性を有しうるがん薬物療法を開始するすべての患者に、病歴・身体所見の確認、心血管危険因子(高血圧、糖尿病、脂質異常症、肥満、喫煙)のスクリーニング、及び治療開始前の心エコーを含む包括的評価を推奨しています。" },
+    { category: "リスク層別化とモニタリング方針の選択", type: "single", q: "HFA-ICOSスコアで高リスク(high)と判定された患者への対応として適切なものは?",
+      choices: ["治療開始前に心エコー(LVEF・GLS)に加え心臓バイオマーカーを測定し、循環器医への事前コンサルトを検討する", "リスク評価を無視し標準リスクと同じ対応とする", "アントラサイクリンの投与を一律に中止する", "心エコーを含むすべての心機能評価を省略する"], correct: 0,
+      explain: "高リスクと判定された場合は、治療開始前の心エコー(LVEF・GLS)に加え心臓バイオマーカー(トロポニン、NT-proBNP等)の測定、腫瘍循環器外来・循環器医への事前コンサルトの検討が推奨されます。" },
+    { category: "リスク層別化とモニタリング方針の選択", type: "single", q: "超高リスク因子(治療前LVEF低下、心不全の既往、縦隔・左胸部への放射線治療歴等)に該当する患者への対応として適切なものは?",
+      choices: ["循環器専門医と協議し、レジメン変更や心保護薬の予防投与を個別に検討する", "リスク因子を無視してそのまま標準レジメンを開始する", "がん薬物療法自体を一律に中止する", "モニタリング頻度をむしろ減らす"], correct: 0,
+      explain: "超高リスク因子に該当する場合は、循環器専門医との協議のうえ、非アントラサイクリンレジメンへの変更、代替製剤、心保護薬(いずれも適応外使用)の予防投与を個別に検討することが提案されます。" },
+    { category: "リスク層別化とモニタリング方針の選択", type: "single", q: "がん治療関連心機能障害の患者側高リスク因子として適切でないものは?",
+      choices: ["若年で心血管危険因子のないこと", "65歳以上であること", "心疾患の既往・家族歴があること", "縦隔・左胸部への放射線治療歴があること"], correct: 0,
+      explain: "65歳以上又は18歳未満、心疾患の既往・家族歴、縦隔・左胸部への放射線治療歴、高血圧・糖尿病等の心血管危険因子は高リスク因子とされますが、若年で心血管危険因子のないことはむしろ低リスクの特徴です。" },
+    { category: "リスク層別化とモニタリング方針の選択", type: "single", q: "ドキソルビシンとエピルビシンの添付文書上の累積投与量上限の違いとして正しいものは?",
+      choices: ["ドキソルビシンは500mg/m²以下、エピルビシンは900mg/m²を超えるとうっ血性心不全が多くなるとされる", "両薬剤とも上限は同じ250mg/m²である", "エピルビシンには累積投与量の目安の記載が一切ない", "ドキソルビシンの方がエピルビシンより高い上限が設定されている"], correct: 0,
+      explain: "ドキソルビシンの国内添付文書は総投与量500mg/m²以下とすることを求め、エピルビシンはアントラサイクリン未治療例で総投与量900mg/m²を超えるとうっ血性心不全が多くなるとされています。両者の数値をそのまま同一視しないことが重要です。" },
+    { category: "リスク層別化とモニタリング方針の選択", type: "single", q: "アントラサイクリンに続けてトラスツズマブを投与するレジメンにおける心毒性リスクの考え方として適切なものは?",
+      choices: ["アントラサイクリンの先行・併用によりトラスツズマブによる心機能障害のリスクが増加するとされる", "両薬剤の心毒性は完全に独立しており相互に影響しない", "トラスツズマブを先に投与すればアントラサイクリンの心毒性は消失する", "併用によりむしろ心毒性リスクは低下する"], correct: 0,
+      explain: "アントラサイクリンの先行投与・併用は、トラスツズマブ等抗HER2薬による心機能障害のリスクを増加させるとされており、逐次投与するレジメンでは特に注意深いモニタリングが必要です。" },
+    { category: "リスク層別化とモニタリング方針の選択", type: "single", q: "Onco-cardiologyガイドラインにおけるCTRCD(がん治療関連心機能障害)の定義は?",
+      choices: ["LVEFがベースラインから10%以上低下し、かつ施設基準の下限値を下回った状態(心不全症状の有無を問わない)", "心不全症状を伴う場合のみをCTRCDと呼ぶ", "LVEFの変化にかかわらず心電図異常があればCTRCDとする", "血圧が20mmHg以上上昇した状態を指す"], correct: 0,
+      explain: "Onco-cardiologyガイドラインでは、LVEFがベースラインから10%以上低下し、かつ施設基準の下限値を下回った状態をCTRCDと定義し、心不全症状の有無は問いません。" },
+    { category: "リスク層別化とモニタリング方針の選択", type: "single", q: "2022年ESCガイドライン(European Heart Journal 2022;43(41):4229-4361)の作成に協力した学会・団体として正しい組み合わせは?",
+      choices: ["欧州血液学会(EHA)、欧州放射線腫瘍学会(ESTRO)、国際腫瘍循環器学会(IC-OS)", "日本臨床腫瘍学会、日本腫瘍循環器学会のみ", "米国心臓協会(AHA)単独", "世界保健機関(WHO)単独"], correct: 0,
+      explain: "2022年ESCガイドラインは、欧州血液学会(EHA)、欧州放射線腫瘍学会(ESTRO)、国際腫瘍循環器学会(IC-OS)と共同で作成されました。" },
+    { category: "リスク層別化とモニタリング方針の選択", type: "multi", q: "HFA-ICOSベースラインリスクスコアにおける高リスク因子として適切なものをすべて選べ(2つ選択)",
+      choices: ["65歳以上であること", "心疾患の既往があること", "20歳未満での軽度の食物アレルギー", "非喫煙者であること"], correct: [0, 1],
+      explain: "65歳以上であることや心疾患の既往は高リスク因子とされます。食物アレルギーの既往や非喫煙であることは、HFA-ICOSスコアにおける心血管リスク因子としては扱われません。" },
+
+    // ══════════ モニタリングのタイミング・頻度(9問、うち2問は図表付き) ══════════
+    { category: "モニタリングのタイミング・頻度", type: "single", q: "抗HER2薬(トラスツズマブ等)投与患者の心機能モニタリングについて、2022年ESCガイドラインが全患者共通で推奨する頻度は?(下図参照)",
+      choices: ["ベースライン及び治療中3ヶ月ごとのLVEF評価(心エコー)", "治療開始時の1回のみでよい", "1週間ごとの心エコー検査", "治療終了後にのみ心エコーを行う"], correct: 0,
+      explain: "2022年ESCガイドラインは、リスクの高低によらず全患者で、ベースライン及び抗HER2薬投与中3ヶ月ごとのLVEF評価(心エコー)を推奨しています。",
+      diagram: '<div class="dg-timeline"><div class="dg-tl-title">AC療法→術後トラスツズマブ療法のLVEF測定タイミング(代表例)</div><div class="table-scroll"><table class="dg-tl-table"><thead><tr><th>検査</th><th>化学療法開始前</th><th>AC療法終了時</th><th>トラスツズマブ投与中(3ヶ月ごと)</th><th>終了後6~12ヶ月</th></tr></thead><tbody>' +
+        '<tr><td>心エコー(LVEF)</td><td class="dg-tl-on">ベースライン</td><td class="dg-tl-on">累積投与量確認</td><td class="dg-tl-on">反復測定</td><td class="dg-tl-on">フォローアップ</td></tr>' +
+        '</tbody></table></div><div class="dg-tl-legend"><span><i class="on"></i>心エコー実施</span></div></div>' },
+    { category: "モニタリングのタイミング・頻度", type: "single", q: "トラスツズマブ等抗HER2薬の日本の添付文書における心機能モニタリング頻度の表現として正しいものは?",
+      choices: ["「適宜」心機能検査を行い、リスクの高い患者には「頻回に」行うとされ、具体的な間隔の数値規定はない", "「3ヶ月に1回」と数値で明確に規定されている", "「1年に1回」と数値で明確に規定されている", "モニタリングに関する記載は一切ない"], correct: 0,
+      explain: "日本の添付文書は「適宜」心機能検査を行うこと、アントラサイクリン投与歴等のある患者では「頻回に」行うことを求めていますが、具体的な間隔の数値規定はありません。国際的な目安としては2022年ESCガイドラインの3ヶ月ごとという推奨があります。" },
+    { category: "モニタリングのタイミング・頻度", type: "single", q: "ASCO 2017ガイドラインが高リスク患者に推奨する、アントラサイクリン投与終了後の心機能フォローアップの目安は?(下図参照)",
+      choices: ["治療終了後6~12ヶ月後を目安に心エコーを実施する", "治療終了直後の1回のみで以降は不要", "治療終了後10年経過してから初めて実施する", "フォローアップに関する推奨は存在しない"], correct: 0,
+      explain: "ASCO 2017ガイドラインは、高用量アントラサイクリンや胸部放射線治療歴等の高リスク因子を有する患者に対し、治療終了後6~12ヶ月を目安とした心エコーによるフォローアップを推奨しています。",
+      diagram: '<div class="dg-timeline"><div class="dg-tl-title">アントラサイクリン投与終了後のフォローアップ(高リスク患者、代表例)</div><div class="table-scroll"><table class="dg-tl-table"><thead><tr><th>検査</th><th>治療終了時</th><th>終了後6~12ヶ月</th><th>以降</th></tr></thead><tbody>' +
+        '<tr><td>心エコー(LVEF)</td><td class="dg-tl-on">評価</td><td class="dg-tl-on">フォローアップ</td><td class="dg-tl-on-alt">リスクに応じ<br>継続を検討</td></tr>' +
+        '</tbody></table></div><div class="dg-tl-legend"><span><i class="on"></i>実施を推奨</span><span><i class="alt"></i>個別判断</span></div></div>' },
+    { category: "モニタリングのタイミング・頻度", type: "single", q: "HFA-ICOSで高・超高リスクと判定された患者に対して、2022年ESCガイドラインが心エコーに加えて推奨するモニタリング項目は?",
+      choices: ["心臓バイオマーカー(トロポニン、ナトリウム利尿ペプチド等)", "頭部MRI検査", "腹部超音波検査", "骨密度検査"], correct: 0,
+      explain: "2022年ESCガイドラインは、高・超高リスク患者において心エコーに加えたバイオマーカー(トロポニン、NT-proBNP等)によるモニタリングを推奨しています。標準リスク患者への一律のバイオマーカー測定は必須とされていません。" },
+    { category: "モニタリングのタイミング・頻度", type: "single", q: "高リスクのアントラサイクリン投与患者において、心臓トロポニンを測定するタイミングの代表例として適切なものは?",
+      choices: ["各アントラサイクリンサイクルの投与前", "初回投与の1年後にのみ測定する", "がん薬物療法を完全に終了してから初めて測定する", "測定するタイミングに関する目安は存在しない"], correct: 0,
+      explain: "高リスク患者では、各アントラサイクリンサイクルの投与前に心臓トロポニンを測定し、心筋障害の早期徴候を捉えるモニタリング方針が提案されています。" },
+    { category: "モニタリングのタイミング・頻度", type: "single", q: "GLS(global longitudinal strain)がベースラインと比較して低下した場合、心毒性の早期徴候と判断される目安として紹介されている変化率は?",
+      choices: ["相対的に15%以上の低下", "相対的に1%未満のわずかな低下", "相対的に90%以上の低下", "GLSの低下と心毒性には関連がないとされる"], correct: 0,
+      explain: "GLSがベースラインと比較して相対的に15%以上低下した場合、たとえLVEFの有意な低下を認めなくても、抗がん剤による心毒性が始まっている徴候と判断する考え方が紹介されています。" },
+    { category: "モニタリングのタイミング・頻度", type: "single", q: "Onco-cardiologyガイドラインのClinical Question(CQ1)が扱うテーマは?",
+      choices: ["心エコー図検査でのglobal longitudinal strain(GLS)測定の有用性", "デクスラゾキサンの心保護効果の有用性", "免疫チェックポイント阻害薬の投与量調整", "放射線治療の総線量の設定方法"], correct: 0,
+      explain: "Onco-cardiologyガイドラインのCQ1は、心エコー図検査でのGLS測定の有用性を扱っており、システマティックレビューで推奨文が記載された5つのCQのひとつです。" },
+    { category: "モニタリングのタイミング・頻度", type: "single", q: "LVEFが軽度低下(49~50%程度)した無症候性の患者に対する国際的な議論の方向性として紹介されているものは?",
+      choices: ["心保護療法を開始したうえでトラスツズマブ等の治療継続を支持する意見がある(具体的な数値基準は原著ガイドラインで要確認)", "軽度の低下であっても直ちに永続的に投与を中止すべきとの意見で統一されている", "LVEFが低下してもモニタリング自体が不要になる", "軽度低下であれば心保護薬は一切使用すべきでない"], correct: 0,
+      explain: "無症候性の軽度LVEF低下(49~50%程度)であれば、心保護療法(適応外使用を含む)を開始したうえで治療継続を支持する国際的な議論がありますが、具体的な数値基準は原著ガイドラインで確認する必要があります。" },
+    { category: "モニタリングのタイミング・頻度", type: "multi", q: "標準スケジュールに加えて追加のバイオマーカーモニタリングを検討すべき状況として適切なものをすべて選べ(2つ選択)",
+      choices: ["ドキソルビシン換算で累積投与量250mg/m²以上のアントラサイクリンを投与する場合", "心血管危険因子が複数重複している場合", "若年でリスク因子のない患者の場合", "飲酒歴が全くない場合"], correct: [0, 1],
+      explain: "累積投与量が高リスク因子の閾値(ドキソルビシン換算250mg/m²以上)に達する場合や、心血管危険因子が複数重複している場合は、標準スケジュールに加えた追加モニタリングの検討対象となります。" },
+
+    // ══════════ 合併症・重症度への対応(12問) ══════════
+    { category: "合併症・重症度への対応", type: "single", q: "急性心毒性の一般的な特徴として適切なものは?",
+      choices: ["投与中~投与後数日以内に出現し、不整脈等が中心で、多くは投与中止・対症療法で可逆的である", "投与終了後数十年を経てから初めて出現する", "必ず不可逆的な心筋症に進行する", "アントラサイクリン系薬剤特有ではなくすべての抗がん剤で同一の頻度である"], correct: 0,
+      explain: "急性心毒性は投与中~投与後数日以内に出現し、不整脈(洞性頻脈、心房細動等)や心膜炎様症状が中心で、多くは投与中止・対症療法により可逆的とされます。" },
+    { category: "合併症・重症度への対応", type: "single", q: "亜急性・早期発症慢性心毒性(Type I型、アントラサイクリン型)の特徴として適切なものは?",
+      choices: ["治療終了後1年以内に多く出現する用量依存性の心筋障害で、不可逆的とされることが多い", "用量に関係なく一定の頻度で発現する", "常に無症候性で経過し治療介入は不要である", "トラスツズマブに特有の病型である"], correct: 0,
+      explain: "Type I型(アントラサイクリン型)の心毒性は用量依存性で、治療終了後1年以内に多く出現し、不可逆的とされることが多いとされます。" },
+    { category: "合併症・重症度への対応", type: "single", q: "遅発性慢性心毒性について適切な記述は?",
+      choices: ["治療終了後1年以降、小児がんサバイバー等では治療終了後数十年を経て顕在化することがある", "治療開始前にのみ発現する", "投与直後の数分間にのみ問題となる", "アントラサイクリン以外の薬剤ではみられない"], correct: 0,
+      explain: "遅発性慢性心毒性は治療終了後1年以降に顕在化する進行性の左室機能障害で、小児がんサバイバー等では治療終了後数十年を経て問題となることがあり、長期にわたるフォローアップが重要とされます。" },
+    { category: "合併症・重症度への対応", type: "single", q: "トラスツズマブ等抗HER2薬による心機能障害(Type II型)の一般的な特徴は?",
+      choices: ["用量非依存性で、休薬・治療により多くは可逆的とされる", "用量依存性で、アントラサイクリンと全く同じ機序で発現する", "常に致死的な経過をたどる", "モニタリングを行っても早期発見は不可能である"], correct: 0,
+      explain: "トラスツズマブ等による心機能障害(Type II型)は用量非依存性で、休薬・治療により多くは可逆的とされていますが、アントラサイクリンの先行投与・併用によりリスクが増加するとされています。" },
+    { category: "合併症・重症度への対応", type: "single", q: "がん治療関連心毒性のType I/II分類の考え方を提唱した文献は?",
+      choices: ["Ewer MS, Lippman SM. J Clin Oncol. 2005", "Von Hoff DD, et al. Ann Intern Med. 1979", "Swain SM, et al. J Clin Oncol. 1997", "Armenian SH, et al. J Clin Oncol. 2017"], correct: 0,
+      explain: "Ewer MSとLippman SMによる2005年のJournal of Clinical Oncology掲載論文が、Type I(アントラサイクリン型)とType II(トラスツズマブ型)の分類の考え方を提唱したものとして広く引用されています。" },
+    { category: "合併症・重症度への対応", type: "single", q: "CTRCDの重症度に応じた対応として適切な考え方は?",
+      choices: ["無症候性から症候性心不全まで重症度に応じて対応を調整する", "重症度にかかわらず全例で同一の対応を行う", "無症候性であれば一切の対応・経過観察も不要である", "症候性になるまでは検査自体を行わない"], correct: 0,
+      explain: "CTRCDは無症候性(mild~moderate)から症候性心不全まで幅があり、重症度に応じて経過観察の強化から心不全治療への移行まで対応を調整することが基本方針です。" },
+    { category: "合併症・重症度への対応", type: "single", q: "心エコーでLVEF低下を確認した場合の基本的な対応の考え方として適切なものは?",
+      choices: ["休薬や循環器コンサルトを検討するが、休薬・中止の具体的な数値基準は添付文書に明記されておらず個別に判断する", "LVEFの数値にかかわらず必ず治療を完全に中止する", "LVEF低下は無視して同一レジメンを継続する", "循環器医への相談は不要である"], correct: 0,
+      explain: "抗HER2薬の添付文書上、LVEF低下時の休薬・中止に関する具体的な数値基準の明記はなく、個々の症例で循環器医と連携しながら判断することが求められます。" },
+    { category: "合併症・重症度への対応", type: "single", q: "急性心毒性(不整脈等)への対応としてまず検討されることが多いものは?",
+      choices: ["投与中止・対症療法による経過観察", "直ちに心臓移植を検討する", "アントラサイクリンの累積投与量を倍量に増やす", "モニタリングを完全に中止する"], correct: 0,
+      explain: "急性心毒性は多くの場合、投与中止・対症療法により可逆的に軽快するとされ、まずはこれらの対応が検討されます。" },
+    { category: "合併症・重症度への対応", type: "single", q: "超高リスク患者において心保護薬(ACE阻害薬/ARB、β遮断薬)の予防投与を検討する際の位置づけとして正しいものは?",
+      choices: ["国内でがん治療関連心機能障害の予防を効能・効果とする承認はなく、適応外使用として個別に検討される", "国内で正式にこの適応の承認を取得している", "禁忌に該当するため一切使用できない", "予防投与の効果は確立しておらず一切検討の余地がない"], correct: 0,
+      explain: "ACE阻害薬/ARB・β遮断薬は、国内でがん治療関連心機能障害の予防を効能・効果とする承認を取得しておらず、PRADA試験・CECCY試験等のエビデンスに基づき適応外使用として個別に検討されます。" },
+    { category: "合併症・重症度への対応", type: "single", q: "Swain試験(J Clin Oncol 1997)で示された、デクスラゾキサン併用による心イベント発現に関する結果は?",
+      choices: ["プラセボ群の心イベント発現ハザード比がデクスラゾキサン群よりそれぞれ2.63倍、2.00倍高かった", "デクスラゾキサン群とプラセボ群で心イベント発現率に全く差がなかった", "デクスラゾキサン群の方が心イベント発現率が高かった", "心イベントについては評価されていない"], correct: 0,
+      explain: "2つの第III相RCTの統合解析で、プラセボ群の心イベント(駆出率低下・うっ血性心不全)発現ハザード比がデクスラゾキサン群よりそれぞれ2.63倍(p<.001)、2.00倍(p=.038)高いことが示され、心保護効果が確認されました。" },
+    { category: "合併症・重症度への対応", type: "single", q: "Swain試験(088001試験)でデクスラゾキサン併用に関して懸念された点は?",
+      choices: ["デクスラゾキサン群で奏効率が有意に低下した(46.8% vs 60.5%)", "デクスラゾキサン群で重篤な感染症が著増した", "デクスラゾキサン群で全例に心毒性が発現した", "特に懸念された点はなかった"], correct: 0,
+      explain: "088001試験ではデクスラゾキサン群の奏効率が46.8%、プラセボ群が60.5%と有意に低下しており(p=.019)、抗腫瘍効果への影響が懸念されました。このため、デクスラゾキサンは治療開始当初からではなく一定の累積投与量に達した後に導入することが一般的とされる一因となっています。" },
+    { category: "合併症・重症度への対応", type: "multi", q: "Onco-cardiologyガイドラインにおけるCTRCDの定義に含まれる要素として適切なものをすべて選べ(2つ選択)",
+      choices: ["LVEFがベースラインから10%以上低下すること", "施設基準の下限値を下回ること", "必ず心不全症状を伴うこと", "心電図でQT延長を伴うこと"], correct: [0, 1],
+      explain: "CTRCDは、LVEFがベースラインから10%以上低下し、かつ施設基準の下限値を下回った状態と定義され、心不全症状の有無やQT延長の有無は定義に含まれません。" },
+
+    // ══════════ 薬剤選択の根拠(9問) ══════════
+    { category: "薬剤選択の根拠", type: "single", q: "サビーン点滴静注用500mg(デクスラゾキサン)の日本国内での承認された効能・効果は?",
+      choices: ["アントラサイクリン系抗悪性腫瘍剤の血管外漏出(心保護目的の適応はない)", "アントラサイクリン系抗がん剤による心筋症の予防", "すべてのがん化学療法誘発性心機能障害の治療", "本態性高血圧症"], correct: 0,
+      explain: "サビーンの国内承認効能・効果は「アントラサイクリン系抗悪性腫瘍剤の血管外漏出」に限定されており、心保護(心筋症予防)目的の適応は取得していません。" },
+    { category: "薬剤選択の根拠", type: "single", q: "海外でアントラサイクリン系抗がん剤による心筋症予防として承認されているデクスラゾキサン製品の名称として正しいものは?",
+      choices: ["Zinecard®(米国)・Cardioxane®(米国以外)", "Herceptin®(米国)", "Savene®(米国、心保護適応)", "日本でも同一商品名で心保護適応が承認されている"], correct: 0,
+      explain: "海外ではZinecard®(米国)・Cardioxane®(米国以外)の商品名で心筋症予防が承認されていますが、日本国内で承認されているのは血管外漏出治療薬としてのサビーンのみで、心保護適応は未承認です。" },
+    { category: "薬剤選択の根拠", type: "single", q: "カルベジロール(アーチスト)の国内で承認されている効能・効果に含まれないものは?",
+      choices: ["がん治療関連心機能障害(CTRCD)の予防", "虚血性心疾患又は拡張型心筋症に基づく慢性心不全", "本態性高血圧症", "頻脈性心房細動"], correct: 0,
+      explain: "カルベジロールの承認適応は慢性心不全・高血圧症・腎実質性高血圧症・狭心症・頻脈性心房細動であり、CTRCDの予防を効能・効果とする承認はなく、この目的での使用は適応外使用にあたります。" },
+    { category: "薬剤選択の根拠", type: "single", q: "エナラプリルマレイン酸塩(レニベース)の国内で承認されている効能・効果に含まれるものは?",
+      choices: ["本態性高血圧症、慢性心不全(軽症~中等症)", "がん治療関連心機能障害(CTRCD)の予防", "アントラサイクリン系抗悪性腫瘍剤の血管外漏出", "気管支喘息"], correct: 0,
+      explain: "エナラプリルマレイン酸塩の承認適応は本態性高血圧症・腎性高血圧症・腎血管性高血圧症・悪性高血圧・慢性心不全(軽症~中等症)であり、CTRCDの予防は適応外使用にあたります。" },
+    { category: "薬剤選択の根拠", type: "single", q: "カルベジロールの添付文書における警告として明記されている内容は?",
+      choices: ["慢性心不全治療の経験が十分にある医師のもとで使用すること", "小児には絶対に使用しないこと", "妊婦には積極的に使用を推奨すること", "警告に該当する記載はない"], correct: 0,
+      explain: "カルベジロールの添付文書には「慢性心不全治療の経験が十分にある医師のもとで使用すること」という警告が明記されています。" },
+    { category: "薬剤選択の根拠", type: "single", q: "カルベジロールを慢性心不全に用いる際の開始用量・漸増方法として添付文書に記載されている内容は?",
+      choices: ["1回1.25mgを1日2回食後経口投与から開始し、1週間以上の間隔で段階的に増量する", "初回から1回20mgを1日2回投与する", "1回1.25mgを1回のみ投与し、以降は増量しない", "開始用量に関する規定はない"], correct: 0,
+      explain: "慢性心不全に対しては、1回1.25mgを1日2回食後経口投与から開始し、忍容性がある場合には1週間以上の間隔で段階的に増量することとされています。" },
+    { category: "薬剤選択の根拠", type: "single", q: "エナラプリルマレイン酸塩の添付文書上の禁忌として正しいものは?",
+      choices: ["妊婦又は妊娠している可能性のある女性、及びサクビトリルバルサルタン等ARNI製剤の併用", "小児への投与全般", "高血圧症の患者全般", "特に禁忌に該当する患者はない"], correct: 0,
+      explain: "エナラプリルは妊婦又は妊娠している可能性のある女性への投与が禁忌であり、血管浮腫のリスクからサクビトリルバルサルタンナトリウム水和物等のARNI製剤との併用も禁忌とされています。" },
+    { category: "薬剤選択の根拠", type: "single", q: "PRADA試験(Eur Heart J 2016)における主な結果として正しいものは?",
+      choices: ["カンデサルタン(ARB)はLVEF低下を有意に抑制したが、メトプロロール(β遮断薬)には有意な効果が示されなかった", "メトプロロールのみがLVEF低下を有意に抑制した", "カンデサルタンとメトプロロールの両方に有意な効果が示された", "どちらの薬剤にも全く効果が示されなかった"], correct: 0,
+      explain: "PRADA試験では、カンデサルタン群でLVEF低下がプラセボ群より有意に抑制されました(-0.8ポイント vs -2.6ポイント)が、メトプロロール群には有意な効果は示されませんでした。" },
+    { category: "薬剤選択の根拠", type: "multi", q: "CECCY試験(カルベジロール、JACC 2018)の結果として適切なものをすべて選べ(2つ選択)",
+      choices: ["心毒性(LVEF低下等の複合エンドポイント)発現率に有意差はなかった", "トロポニン上昇が抑制された", "LVEFが有意に改善した", "対象患者全員に重篤な副作用が発現した"], correct: [0, 1],
+      explain: "CECCY試験では心毒性発現率はカルベジロール群10.4%、プラセボ群11.4%で有意差はありませんでしたが(p>0.99)、トロポニン上昇や左室拡張末期径の拡大は抑制されたと報告されています。" },
+
+    // ══════════ コスト制度・その他(6問) ══════════
+    { category: "コスト制度・その他", type: "single", q: "サビーン点滴静注用500mgの薬価目安は?",
+      choices: ["約46,437円/瓶(500mg)", "約464円/瓶", "約4,643,700円/瓶", "薬価収載されていない"], correct: 0,
+      explain: "サビーン点滴静注用500mgの薬価は約46,437円/瓶とされています(公開薬価情報データベースより)。" },
+    { category: "コスト制度・その他", type: "single", q: "カルベジロール後発品の薬価目安は?",
+      choices: ["約10.1円/錠", "約1,010円/錠", "約101,000円/錠", "無償で提供される"], correct: 0,
+      explain: "カルベジロール後発品の薬価は約10.1円/錠とされ、先発品(アーチスト、約10.8円/錠)と大きな差はありません。" },
+    { category: "コスト制度・その他", type: "single", q: "エナラプリルマレイン酸塩(レニベース、5mg)の薬価目安は?",
+      choices: ["約10.8円/錠(先発品・後発品ともほぼ同水準)", "約1,080円/錠", "約108,000円/錠", "約0.1円/錠"], correct: 0,
+      explain: "レニベース錠5mg及び対応する後発品の薬価は約10.8円/錠とされ、心保護薬全体の中でも安価な部類に入ります。" },
+    { category: "コスト制度・その他", type: "single", q: "トラスツズマブ(ハーセプチン注射用60)の薬価目安は?",
+      choices: ["約9,807円/瓶(60mg)", "約98円/瓶", "約980,700円/瓶", "薬価収載されていない"], correct: 0,
+      explain: "ハーセプチン注射用60の薬価は約9,807円/瓶、150mg製剤は約22,063円/瓶とされています。" },
+    { category: "コスト制度・その他", type: "single", q: "心毒性モニタリング・心保護療法と高額療養費制度の関係として適切な説明は?",
+      choices: ["心保護薬単独よりも、主として併用されるアントラサイクリン系薬剤・HER2標的薬自体の薬剤費が制度適用の主因となることが多い", "心保護薬(カルベジロール等)のみで必ず高額療養費制度の対象になる", "高額療養費制度は心毒性モニタリング関連の費用には一切適用されない", "心保護薬は保険適用外である"], correct: 0,
+      explain: "心保護薬(カルベジロール、エナラプリル等)自体の薬剤費は安価であることが多く、高額療養費制度の適用は主として併用されるアントラサイクリン系薬剤・HER2標的薬(トラスツズマブ、ペルツズマブ等)自体の薬剤費が主因となることが一般的です。" },
+    { category: "コスト制度・その他", type: "multi", q: "がん治療関連心機能障害(CTRCD)の予防目的での使用が国内で適応外使用にあたる薬剤をすべて選べ(2つ選択)",
+      choices: ["カルベジロール", "エナラプリルマレイン酸塩", "トラスツズマブ(HER2陽性乳癌への通常使用)", "サビーン(血管外漏出への通常使用)"], correct: [0, 1],
+      explain: "カルベジロール・エナラプリルは、CTRCDの予防を効能・効果とする承認を国内で取得しておらず、この目的での使用は適応外使用にあたります。トラスツズマブのHER2陽性乳癌への通常使用や、サビーンの血管外漏出への通常使用は、それぞれの承認された適応内の使用であり適応外にはあたりません。" }
+  ];
+
+  var QUIZ_SESSION_SIZE = 10;
+  var quizOrder = [];     // indices into QUIZ for THIS session (random subset)
+  var quizIndex = 0;
+  var quizAnswers = [];   // per-question(by original index): selected choice index (single) or array of indices (multi)
+  var quizFeedback = {};  // { [questionIndex]: 'good' | 'bad' }
+
+  function quizPickSession() {
+    var all = QUIZ.map(function (_, i) { return i; });
+    quizShuffle(all);
+    quizOrder = all.slice(0, QUIZ_SESSION_SIZE);
+  }
+  function quizShuffle(arr) {
+    for (var i = arr.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = arr[i]; arr[i] = arr[j]; arr[j] = t;
+    }
+    return arr;
+  }
+
+  function quizLoadFeedback() {
+    try {
+      var raw = localStorage.getItem('cardiotoxQuizFeedback_v2');
+      quizFeedback = raw ? JSON.parse(raw) : {};
+    } catch (e) { quizFeedback = {}; }
+  }
+  function quizSaveFeedback() {
+    try { localStorage.setItem('cardiotoxQuizFeedback_v2', JSON.stringify(quizFeedback)); } catch (e) {}
+  }
+  function quizBuildRatingRow(qi) {
+    var row = document.createElement('div');
+    row.className = 'rate-row';
+    var label = document.createElement('span');
+    label.className = 'rate-label';
+    label.textContent = 'この問題の評価:';
+    var goodBtn = document.createElement('button');
+    goodBtn.type = 'button'; goodBtn.className = 'rate-btn'; goodBtn.textContent = '👍 良問';
+    var badBtn = document.createElement('button');
+    badBtn.type = 'button'; badBtn.className = 'rate-btn'; badBtn.textContent = '👎 悪問';
+    function refresh() {
+      goodBtn.classList.toggle('active-good', quizFeedback[qi] === 'good');
+      badBtn.classList.toggle('active-bad', quizFeedback[qi] === 'bad');
+    }
+    goodBtn.onclick = function () {
+      quizFeedback[qi] = (quizFeedback[qi] === 'good') ? null : 'good';
+      if (!quizFeedback[qi]) delete quizFeedback[qi];
+      quizSaveFeedback(); refresh();
+    };
+    badBtn.onclick = function () {
+      quizFeedback[qi] = (quizFeedback[qi] === 'bad') ? null : 'bad';
+      if (!quizFeedback[qi]) delete quizFeedback[qi];
+      quizSaveFeedback(); refresh();
+    };
+    refresh();
+    row.appendChild(label); row.appendChild(goodBtn); row.appendChild(badBtn);
+    return row;
+  }
+  function quizFallbackCopy(text, done) {
+    var ta = document.createElement('textarea');
+    ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); } catch (e) {}
+    document.body.removeChild(ta);
+    done();
+  }
+  function quizChoiceLabel(item) {
+    return item.choices.join(' / ');
+  }
+  function quizCorrectLabel(item) {
+    if (item.type === 'multi') return item.correct.map(function (i) { return item.choices[i]; }).join(' ＋ ');
+    return item.choices[item.correct];
+  }
+  function quizExportFeedback() {
+    var ratedIdx = Object.keys(quizFeedback);
+    if (ratedIdx.length === 0) {
+      alert('まだ評価された問題がありません。各問題に回答した後に表示される「👍 良問」「👎 悪問」ボタンで評価してから、もう一度お試しください。');
+      return;
+    }
+    var goodList = [], badList = [];
+    ratedIdx.forEach(function (idxStr) {
+      var idx = parseInt(idxStr, 10);
+      var item = QUIZ[idx];
+      if (!item) return;
+      var entry = '・[' + item.category + (item.type === 'multi' ? '/複数選択' : '') + '] ' + item.q + '\n  選択肢: ' + quizChoiceLabel(item) + '\n  正解: ' + quizCorrectLabel(item);
+      if (quizFeedback[idx] === 'good') goodList.push(entry);
+      else if (quizFeedback[idx] === 'bad') badList.push(entry);
+    });
+    var text = '【心毒性モニタリングクイズ(quiz-cardiotox.html、全50問プール)フィードバック】\n\n' +
+      '良問と評価された問題(' + goodList.length + '件):\n' + (goodList.length ? goodList.join('\n\n') : '(なし)') + '\n\n' +
+      '悪問と評価された問題(' + badList.length + '件) — 改善・差し替えを検討してください:\n' + (badList.length ? badList.join('\n\n') : '(なし)') + '\n\n' +
+      '参照ファイル: artifacts/html/oncology-reports/quiz-cardiotox.html\n\n' +
+      '上記フィードバックを踏まえて、「悪問」と評価された問題をレポート本文(artifacts/html/oncology-reports/cardiotox.html、添付文書情報セクション含む)の内容に基づいて改善・差し替えてください。「良問」と評価された問題は現状を維持してください。';
+    var notify = function () { alert('フィードバックをコピーしました。MulmoClaudeのチャットに貼り付けて送信してください。問題の改善に使います。'); };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(notify).catch(function () { quizFallbackCopy(text, notify); });
+    } else { quizFallbackCopy(text, notify); }
+  }
+  function quizResetFeedback() {
+    if (!confirm('すべての評価をリセットします。よろしいですか?')) return;
+    quizFeedback = {};
+    quizSaveFeedback();
+    alert('評価をリセットしました。');
+  }
+
+  function quizRenderQuestion() {
+    document.getElementById('quiz-result-area').style.display = 'none';
+    document.getElementById('quiz-question-area').style.display = 'block';
+    var qi = quizOrder[quizIndex];
+    var item = QUIZ[qi];
+    document.getElementById('quiz-progress-text').textContent = '問 ' + (quizIndex + 1) + ' / ' + quizOrder.length + '(全' + QUIZ.length + '問中からランダム出題)';
+    document.getElementById('quiz-cat-badge').textContent = item.category;
+    document.getElementById('quiz-type-badge').style.display = (item.type === 'multi') ? 'inline-flex' : 'none';
+    document.getElementById('quiz-progress-fill').style.width = Math.round((quizIndex / quizOrder.length) * 100) + '%';
+    document.getElementById('quiz-question-text').textContent = item.q;
+    document.getElementById('quiz-diagram-area').innerHTML = item.diagram || '';
+    document.getElementById('quiz-explain-area').style.display = 'none';
+    document.getElementById('quiz-explain-area').innerHTML = '';
+    document.getElementById('quiz-next-btn').style.display = 'none';
+    document.getElementById('quiz-submit-row').style.display = 'none';
+
+    var wrap = document.getElementById('quiz-choices');
+    wrap.innerHTML = '';
+
+    if (item.type === 'multi') {
+      var selected = {};
+      item.choices.forEach(function (choiceText, idx) {
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'quiz-choice';
+        btn.innerHTML = '<span class="quiz-choice-check">☐</span> ' + choiceText.replace(/</g, '&lt;');
+        btn.onclick = function () {
+          selected[idx] = !selected[idx];
+          btn.classList.toggle('selected', !!selected[idx]);
+          btn.querySelector('.quiz-choice-check').textContent = selected[idx] ? '☑' : '☐';
+        };
+        wrap.appendChild(btn);
+      });
+      document.getElementById('quiz-submit-row').style.display = 'block';
+      document.getElementById('quiz-submit-btn').onclick = function () {
+        var chosen = Object.keys(selected).filter(function (k) { return selected[k]; }).map(Number);
+        quizAnswerMulti(chosen);
+      };
+    } else {
+      item.choices.forEach(function (choiceText, idx) {
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'quiz-choice';
+        btn.textContent = choiceText;
+        btn.onclick = function () { quizAnswerSingle(idx); };
+        wrap.appendChild(btn);
+      });
+    }
+  }
+
+  function quizFinishQuestion(qi, isCorrect, correctText) {
+    var item = QUIZ[qi];
+    var explainArea = document.getElementById('quiz-explain-area');
+    explainArea.className = 'quiz-explain';
+    explainArea.style.display = 'block';
+    explainArea.innerHTML = '<div style="font-weight:700; margin-bottom:4px; color:' + (isCorrect ? 'var(--good)' : 'var(--critical)') + ';">' +
+      (isCorrect ? '✅ 正解' : '❌ 不正解(正解: ' + correctText + ')') + '</div>' +
+      '<div>' + (item.explain || '') + '</div>';
+    explainArea.appendChild(quizBuildRatingRow(qi));
+    document.getElementById('quiz-submit-row').style.display = 'none';
+    document.getElementById('quiz-next-btn').style.display = 'inline-block';
+    document.getElementById('quiz-next-btn').textContent = (quizIndex === quizOrder.length - 1) ? '結果を見る →' : '次の問題 →';
+  }
+
+  function quizAnswerSingle(selectedIdx) {
+    var qi = quizOrder[quizIndex];
+    var item = QUIZ[qi];
+    quizAnswers[qi] = selectedIdx;
+    var buttons = document.getElementById('quiz-choices').querySelectorAll('.quiz-choice');
+    buttons.forEach(function (btn, idx) {
+      btn.disabled = true;
+      if (idx === item.correct) btn.classList.add('correct');
+      else if (idx === selectedIdx) btn.classList.add('wrong');
+    });
+    quizFinishQuestion(qi, selectedIdx === item.correct, item.choices[item.correct]);
+  }
+
+  function quizSubmitMulti() {
+    var qi = quizOrder[quizIndex];
+    var item = QUIZ[qi];
+    var buttons = document.getElementById('quiz-choices').querySelectorAll('.quiz-choice');
+    var chosen = [];
+    buttons.forEach(function (btn, idx) {
+      if (btn.classList.contains('selected')) chosen.push(idx);
+    });
+    quizAnswerMulti(chosen, buttons, item, qi);
+  }
+
+  function quizAnswerMulti(chosen, buttons, item, qi) {
+    qi = (qi === undefined) ? quizOrder[quizIndex] : qi;
+    item = item || QUIZ[qi];
+    buttons = buttons || document.getElementById('quiz-choices').querySelectorAll('.quiz-choice');
+    quizAnswers[qi] = chosen;
+    var correctSet = item.correct.slice().sort();
+    var chosenSet = chosen.slice().sort();
+    var isCorrect = correctSet.length === chosenSet.length && correctSet.every(function (v, i) { return v === chosenSet[i]; });
+    buttons.forEach(function (btn, idx) {
+      btn.disabled = true;
+      var isRight = item.correct.indexOf(idx) !== -1;
+      var wasChosen = chosen.indexOf(idx) !== -1;
+      if (isRight) btn.classList.add('correct');
+      else if (wasChosen) btn.classList.add('wrong');
+    });
+    quizFinishQuestion(qi, isCorrect, quizCorrectLabel(item));
+  }
+
+  function quizNext() {
+    if (quizIndex < quizOrder.length - 1) {
+      quizIndex++;
+      quizRenderQuestion();
+    } else {
+      quizShowResult();
+    }
+  }
+
+  function quizShowResult() {
+    document.getElementById('quiz-progress-fill').style.width = '100%';
+    document.getElementById('quiz-progress-text').textContent = '完了 ' + quizOrder.length + ' / ' + quizOrder.length;
+    document.getElementById('quiz-cat-badge').textContent = '';
+    document.getElementById('quiz-type-badge').style.display = 'none';
+    document.getElementById('quiz-question-area').style.display = 'none';
+
+    var correctCount = 0;
+    var byCategory = {};
+    quizOrder.forEach(function (qi) {
+      var item = QUIZ[qi];
+      if (!byCategory[item.category]) byCategory[item.category] = { correct: 0, total: 0 };
+      byCategory[item.category].total++;
+      var ans = quizAnswers[qi];
+      var isCorrect;
+      if (item.type === 'multi') {
+        var correctSet = item.correct.slice().sort();
+        var chosenSet = (ans || []).slice().sort();
+        isCorrect = correctSet.length === chosenSet.length && correctSet.every(function (v, i) { return v === chosenSet[i]; });
+      } else {
+        isCorrect = ans === item.correct;
+      }
+      if (isCorrect) { correctCount++; byCategory[item.category].correct++; }
+    });
+    var pct = Math.round((correctCount / quizOrder.length) * 100);
+
+    var catHtml = '';
+    Object.keys(byCategory).forEach(function (cat) {
+      var c = byCategory[cat];
+      var p = Math.round((c.correct / c.total) * 100);
+      catHtml += '<div class="cat-result-row"><span class="text-xs" style="width:150px; flex-shrink:0;">' + cat + '</span>' +
+        '<div class="cat-result-bar"><div class="cat-result-fill" style="width:' + p + '%"></div></div>' +
+        '<span class="text-xs muted" style="width:56px; text-align:right;">' + c.correct + '/' + c.total + '</span></div>';
+    });
+
+    var reviewHtml = '';
+    quizOrder.forEach(function (qi) {
+      var item = QUIZ[qi];
+      var ans = quizAnswers[qi];
+      var isCorrect;
+      var yourAnswerText;
+      if (item.type === 'multi') {
+        var correctSet = item.correct.slice().sort();
+        var chosenSet = (ans || []).slice().sort();
+        isCorrect = correctSet.length === chosenSet.length && correctSet.every(function (v, i) { return v === chosenSet[i]; });
+        yourAnswerText = (ans && ans.length) ? ans.map(function (i) { return item.choices[i]; }).join(' ＋ ') : '(未回答)';
+      } else {
+        isCorrect = ans === item.correct;
+        yourAnswerText = (ans != null) ? item.choices[ans] : '(未回答)';
+      }
+      if (!isCorrect) {
+        reviewHtml += '<div class="review-item">' +
+          '<div class="text-sm font-semibold mb-1">' + item.q + '</div>' +
+          '<div class="text-xs muted mb-2">あなたの回答: ' + yourAnswerText + ' / 正解: ' + quizCorrectLabel(item) + '</div>' +
+          '<div class="text-xs" style="line-height:1.6;">' + (item.explain || '') + '</div>' +
+          '</div>';
+      }
+    });
+    if (!reviewHtml) reviewHtml = '<p class="text-sm secondary">全問正解です。見直しの必要な項目はありません 🎉</p>';
+
+    var goodCount = 0, badCount = 0;
+    Object.keys(quizFeedback).forEach(function (k) {
+      if (quizFeedback[k] === 'good') goodCount++;
+      else if (quizFeedback[k] === 'bad') badCount++;
+    });
+
+    var resultArea = document.getElementById('quiz-result-area');
+    resultArea.style.display = 'block';
+    resultArea.innerHTML =
+      '<div class="text-center mb-6">' +
+        '<div class="score-ring-num" style="color:var(--series-new);">' + correctCount + ' / ' + quizOrder.length + '</div>' +
+        '<div class="text-sm muted mt-1">正答率 ' + pct + '%(全' + QUIZ.length + '問プールから今回ランダム抽出された' + quizOrder.length + '問)</div>' +
+      '</div>' +
+      '<div class="mb-6"><div class="text-sm font-semibold mb-3">カテゴリ別正答率(今回出題分)</div>' + catHtml + '</div>' +
+      '<div class="mb-2 text-sm font-semibold">見直し(不正解・未回答の問題)</div>' +
+      '<div class="mb-6">' + reviewHtml + '</div>' +
+      '<div class="mb-6 pt-4 border-t" style="border-color:var(--gridline);">' +
+        '<div class="text-sm font-semibold mb-2">問題の評価状況(全50問プール通算)</div>' +
+        '<div class="text-xs muted mb-3">👍 良問 ' + goodCount + '件 ・ 👎 悪問 ' + badCount + '件</div>' +
+        '<div class="flex flex-wrap gap-3">' +
+          '<button type="button" class="quiz-btn-outline" onclick="quizExportFeedback()">📋 フィードバックをエクスポート(チャットに貼り付け用)</button>' +
+          '<button type="button" class="quiz-btn-outline" onclick="quizResetFeedback()" style="border-color:var(--critical); color:var(--critical);">🗑 評価をリセット</button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="flex flex-wrap gap-3 justify-center">' +
+        '<button type="button" class="quiz-btn" onclick="quizRestart()">🔀 新しい10問でもう一度</button>' +
+        '<a href="cardiotox.html" class="quiz-btn-outline" style="text-decoration:none; display:inline-block;">レポート本文に戻る</a>' +
+      '</div>';
+  }
+
+  function quizRestart() {
+    quizPickSession();
+    quizIndex = 0;
+    quizAnswers = [];
+    quizRenderQuestion();
+  }
+
+  quizLoadFeedback();
+  quizPickSession();
+  quizRenderQuestion();
+</script>
+
+<footer class="text-center text-xs pb-4" style="color: var(--text-muted);">
+  本クイズは学習・自己点検を目的とした資料です。臨床判断には利用せず、最新の添付文書・ガイドライン原文を優先してください。
+</footer>
+
+</body>
+</html>

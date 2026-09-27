@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>免疫関連有害事象(irAE)理解度クイズ 全50問(ランダム10問出題)</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+:root, .viz-root {
+  color-scheme: light;
+  --surface-1: #fcfcfb; --page-plane: #f9f9f7;
+  --text-primary: #0b0b0b; --text-secondary: #52514e; --text-muted: #898781;
+  --gridline: #e1e0d9; --baseline: #c3c2b7;
+  --series-new: #2a78d6; --series-control: #b9b7ae;
+  --good: #0ca30c; --warning: #b9790a; --critical: #d03b3b;
+  --border: rgba(11,11,11,0.10);
+}
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) {
+    color-scheme: dark;
+    --surface-1: #1a1a19; --page-plane: #0d0d0d;
+    --text-primary: #ffffff; --text-secondary: #c3c2b7; --text-muted: #898781;
+    --gridline: #2c2c2a; --baseline: #383835;
+    --series-new: #3987e5; --series-control: #55534c;
+    --good: #0ca30c; --warning: #eab116; --critical: #e66767;
+    --border: rgba(255,255,255,0.10);
+  }
+}
+body { background: var(--page-plane); color: var(--text-primary); font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+.card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+.secondary { color: var(--text-secondary); }
+.muted { color: var(--text-muted); }
+.cat-badge { display:inline-flex; align-items:center; padding:3px 10px; border-radius:9999px; font-size:0.72rem; font-weight:700; background: color-mix(in srgb, var(--series-new) 14%, transparent); color: var(--series-new); }
+.type-badge { display:inline-flex; align-items:center; padding:3px 10px; border-radius:9999px; font-size:0.68rem; font-weight:700; background: color-mix(in srgb, var(--warning) 16%, transparent); color: var(--warning); margin-left:6px; }
+.progress-track { background: var(--gridline); border-radius: 9999px; height: 8px; overflow: hidden; }
+.progress-fill { background: var(--series-new); height: 100%; border-radius: 9999px; transition: width .25s; }
+.quiz-choice { display:block; width:100%; text-align:left; background: var(--page-plane); border: 1.5px solid var(--gridline); border-radius: 10px; padding: 12px 16px; font-size: 0.92rem; cursor: pointer; transition: border-color .12s, background .12s; margin-bottom: 10px; }
+.quiz-choice:last-child { margin-bottom: 0; }
+.quiz-choice:hover:not(:disabled) { border-color: var(--series-new); }
+.quiz-choice:disabled { cursor: default; }
+.quiz-choice.correct { border-color: var(--good); background: color-mix(in srgb, var(--good) 12%, transparent); font-weight: 700; }
+.quiz-choice.wrong { border-color: var(--critical); background: color-mix(in srgb, var(--critical) 10%, transparent); }
+.quiz-choice.selected { border-color: var(--series-new); background: color-mix(in srgb, var(--series-new) 10%, transparent); }
+.quiz-choice-check { display:inline-block; width:16px; }
+.quiz-explain { background: var(--page-plane); border: 1px solid var(--gridline); border-radius: 10px; padding: 14px 16px; margin-top: 14px; font-size: 0.85rem; line-height: 1.7; }
+.quiz-btn { background: var(--series-new); color: #fff; border: none; border-radius: 8px; padding: 10px 22px; font-size: 0.88rem; font-weight: 700; cursor: pointer; }
+.quiz-btn:hover { opacity: 0.9; }
+.quiz-btn:disabled { opacity: 0.4; cursor: default; }
+.quiz-btn-outline { background: transparent; color: var(--series-new); border: 1.5px solid var(--series-new); border-radius: 8px; padding: 9px 20px; font-size: 0.88rem; font-weight: 700; cursor: pointer; }
+.quiz-btn-outline:hover { background: color-mix(in srgb, var(--series-new) 10%, transparent); }
+.score-ring-num { font-size: 2.6rem; font-weight: 800; }
+.cat-result-row { display:flex; align-items:center; gap:10px; margin-bottom: 8px; }
+.cat-result-bar { flex:1; background: var(--gridline); border-radius: 9999px; height: 10px; overflow:hidden; }
+.cat-result-fill { background: var(--series-new); height:100%; border-radius: 9999px; }
+.review-item { border: 1px solid var(--gridline); border-radius: 10px; padding: 12px 14px; margin-bottom: 10px; }
+.review-item:last-child { margin-bottom: 0; }
+.rate-row { display:flex; align-items:center; gap:8px; margin-top:14px; flex-wrap:wrap; }
+.rate-label { font-size:0.75rem; color: var(--text-muted); }
+.rate-btn { background: var(--page-plane); border: 1.5px solid var(--gridline); border-radius: 8px; padding: 6px 12px; font-size: 0.78rem; font-weight:600; cursor:pointer; color: var(--text-secondary); }
+.rate-btn:hover { border-color: var(--series-new); }
+.rate-btn.active-good { border-color: var(--good); background: color-mix(in srgb, var(--good) 14%, transparent); color: var(--good); }
+.rate-btn.active-bad { border-color: var(--critical); background: color-mix(in srgb, var(--critical) 12%, transparent); color: var(--critical); }
+
+/* Compact dosing/taper schedule timeline diagram, used inside quiz-diagram-area (see irae.html .dg-timeline for the full version) */
+.quiz-diagram-area:empty { display: none; }
+.quiz-diagram-area .dg-timeline { border: 1px solid var(--gridline); border-radius: 8px; padding: 10px 12px 12px; background: var(--page-plane); margin-bottom: 14px; }
+.quiz-diagram-area .dg-tl-title { font-size: 0.76rem; font-weight: 700; color: var(--text-primary); margin-bottom: 8px; }
+.quiz-diagram-area table.dg-tl-table { width: 100%; border-collapse: separate; border-spacing: 3px; font-size: 0.66rem; }
+.quiz-diagram-area table.dg-tl-table th { color: var(--text-muted); font-weight: 700; font-size: 0.58rem; text-transform: uppercase; letter-spacing: .03em; padding: 2px 3px 5px; text-align: center; }
+.quiz-diagram-area table.dg-tl-table th:first-child { text-align: left; }
+.quiz-diagram-area table.dg-tl-table td:first-child { text-align: left; font-weight: 600; color: var(--text-secondary); white-space: nowrap; padding-right: 6px; font-size: 0.64rem; }
+.quiz-diagram-area table.dg-tl-table td { text-align: center; padding: 6px 4px; border-radius: 6px; vertical-align: middle; line-height: 1.25; }
+.quiz-diagram-area td.dg-tl-on { background: color-mix(in srgb, var(--series-new) 14%, transparent); border: 1px solid var(--series-new); color: var(--text-primary); font-weight: 700; }
+.quiz-diagram-area td.dg-tl-on-alt { background: color-mix(in srgb, var(--warning) 16%, transparent); border: 1px dashed var(--warning); color: var(--text-primary); font-weight: 700; }
+.quiz-diagram-area td.dg-tl-off { background: var(--surface-1); border: 1px dashed var(--gridline); color: var(--text-muted); font-weight: 400; }
+.quiz-diagram-area .dg-tl-note { font-size: 0.62rem; color: var(--text-muted); margin-top: 6px; line-height: 1.5; }
+.quiz-diagram-area .dg-tl-legend { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 6px; font-size: 0.6rem; color: var(--text-muted); }
+.quiz-diagram-area .dg-tl-legend span { display: inline-flex; align-items: center; gap: 4px; }
+.quiz-diagram-area .dg-tl-legend i { display: inline-block; width: 9px; height: 9px; border-radius: 3px; }
+.quiz-diagram-area .dg-tl-legend i.on { background: color-mix(in srgb, var(--series-new) 30%, transparent); border: 1px solid var(--series-new); }
+.quiz-diagram-area .dg-tl-legend i.alt { background: color-mix(in srgb, var(--warning) 30%, transparent); border: 1px dashed var(--warning); }
+.quiz-diagram-area .dg-tl-legend i.off { background: var(--surface-1); border: 1px dashed var(--gridline); }
+</style>
+</head>
+<body class="viz-root">
+<div class="max-w-3xl mx-auto px-4 py-8 space-y-5">
+
+  <header class="card">
+    <div class="flex items-center justify-between gap-2 flex-wrap">
+      <div>
+        <h1 class="text-xl font-bold">🧠 免疫関連有害事象(irAE)理解度クイズ</h1>
+        <p class="text-sm mt-1 secondary">全50問のプールからランダムに10問出題・4択/複数選択混在・医療従事者向け(重症度分類とステロイド治療選択・用法用量/漸減スケジュール・臓器別合併症への対応・薬剤選択の根拠[免疫抑制薬追加の判断]・コスト制度)</p>
+      </div>
+      <a href="irae.html" class="text-xs" style="color:var(--series-new); text-decoration:none; font-weight:600;">← レポート本文に戻る</a>
+    </div>
+    <p class="text-xs mt-3 muted">出題内容はすべて <a href="irae.html" style="color:var(--series-new);">免疫関連有害事象(irAE)全般レポート</a>(本文および「7. 主要薬剤の添付文書情報」)に記載の情報に基づきます。臨床判断には利用せず、学習・自己点検の目的でご利用ください。ページを再読み込みする、または結果画面の「シャッフルしてもう一度」を押すたびに、新しい10問がランダムに選ばれます。</p>
+  </header>
+
+  <!-- Quiz card -->
+  <section class="card" id="quiz-card">
+    <div class="flex items-center justify-between mb-2">
+      <span id="quiz-progress-text" class="text-xs font-semibold muted"></span>
+      <span><span id="quiz-cat-badge" class="cat-badge"></span><span id="quiz-type-badge" class="type-badge" style="display:none;">複数選択</span></span>
+    </div>
+    <div class="progress-track mb-5"><div class="progress-fill" id="quiz-progress-fill" style="width:0%"></div></div>
+
+    <div id="quiz-question-area">
+      <div id="quiz-question-text" class="text-base font-semibold mb-4" style="line-height:1.6;"></div>
+      <div id="quiz-diagram-area" class="quiz-diagram-area"></div>
+      <div id="quiz-choices"></div>
+      <div id="quiz-submit-row" style="display:none;" class="mt-3">
+        <button type="button" class="quiz-btn" id="quiz-submit-btn" onclick="quizSubmitMulti()">この内容で回答する</button>
+      </div>
+      <div id="quiz-explain-area" style="display:none;"></div>
+      <div class="mt-5 flex justify-end">
+        <button type="button" id="quiz-next-btn" class="quiz-btn" style="display:none;" onclick="quizNext()">次の問題 →</button>
+      </div>
+    </div>
+
+    <div id="quiz-result-area" style="display:none;"></div>
+  </section>
+
+</div>
+
+<script>
+  var QUIZ = [
+    // ══════════ 重症度分類とステロイド治療選択(14問) ══════════
+    { category: "重症度分類とステロイド治療選択", type: "single", q: "CTCAE Grade1のirAEに対する基本的な管理方針は?",
+      choices: ["ICIを継続し、経過観察・局所治療を中心とする(全身ステロイドは基本的に不要)", "ICIを永続中止し、直ちに静注ステロイドパルス療法を行う", "Grade4と同じ集中治療管理を行う", "無条件でICIを休止し、全例に経口ステロイドを開始する"], correct: 0,
+      explain: "Grade1(軽度)ではICI投与を継続しつつモニタリングを強化し、経過観察・局所治療を中心に対応します。全身ステロイド投与は基本的に不要です。" },
+    { category: "重症度分類とステロイド治療選択", type: "single", q: "CTCAE Grade2のirAEに対し、ASCOガイドライン更新(2021年)が推奨する初期対応は?",
+      choices: ["ICIを休止し、経口プレドニゾロン0.5~1mg/kg/日(又は同等量)を開始する", "ICIを継続したまま経過観察のみを行う", "ICIを永続中止し、静注ステロイドパルス療法を直ちに開始する", "抗菌薬投与のみで経過をみる"], correct: 0,
+      explain: "Schneider et al(J Clin Oncol 2021)のASCOガイドライン更新では、Grade2毒性の初期対応としてICIを休止し、経口プレドニゾロン(又は同等量)0.5~1mg/kg/日を開始することが推奨されています。" },
+    { category: "重症度分類とステロイド治療選択", type: "single", q: "CTCAE Grade3のirAEに対する基本的な管理方針は?",
+      choices: ["ICIを休止し、静注メチルプレドニゾロン1~2mg/kg/日を開始。3~5日で改善が乏しければステロイド抵抗性と判断し追加免疫抑制薬を検討する", "ICIを継続したまま外用薬のみで対応する", "ステロイドは一切使用せず抗菌薬のみで対応する", "無条件で追加免疫抑制薬を最初から併用する"], correct: 0,
+      explain: "Grade3では臓器・重症度によりICIを休止(又は中止を検討)し、静注メチルプレドニゾロン1~2mg/kg/日を開始します。3~5日で改善が乏しければステロイド抵抗性と判断し、臓器特異的な追加免疫抑制薬を検討します。" },
+    { category: "重症度分類とステロイド治療選択", type: "single", q: "CTCAE Grade4のirAEに対する基本的な管理方針は?",
+      choices: ["ICIを永続中止し、高用量ステロイド(病態によりパルス療法を考慮)を開始。ステロイド抵抗性なら速やかに追加免疫抑制薬を検討する", "ICIを継続しながら経過観察のみでよい", "外用ステロイドのみで管理する", "軽快を待ってICIを速やかに再開する"], correct: 0,
+      explain: "Grade4(生命を脅かす)ではICIを永続中止し、静注メチルプレドニゾロン1~2mg/kg/日(病態によりパルス療法を考慮)を開始します。ステロイド抵抗性であれば速やかに追加免疫抑制薬を検討し、多くは集中治療レベルでの管理を要します。" },
+    { category: "重症度分類とステロイド治療選択", type: "single", q: "irAEにおいて「ステロイド抵抗性」と判断する一般的な目安の期間は?",
+      choices: ["ステロイド開始から3~5日で改善が乏しい場合", "ステロイド開始から6時間以内", "ステロイド開始から6ヵ月以上", "ステロイド開始から数分以内"], correct: 0,
+      explain: "irAE管理の基本原則として、静注メチルプレドニゾロン等のステロイド治療を開始してから3~5日で改善が乏しい場合にステロイド抵抗性と判断し、臓器特異的な追加免疫抑制薬の導入を検討します。" },
+    { category: "重症度分類とステロイド治療選択", type: "single", q: "大腸炎(下痢・腸炎)のGrade1(排便回数がベースラインから<4回/日増加)に対する対応は?",
+      choices: ["ICIを継続し、止瀉薬による対症療法と感染性腸炎の除外を優先する", "ICIを永続中止し、静注ステロイドを直ちに開始する", "インフリキシマブを第一選択で投与する", "全身ステロイドパルス療法を行う"], correct: 0,
+      explain: "Grade1の大腸炎ではICIを継続し、止瀉薬による対症療法を行いつつ、便培養やClostridioides difficile毒素等による感染性腸炎の除外を優先します。" },
+    { category: "重症度分類とステロイド治療選択", type: "single", q: "大腸炎のGrade2(4~6回/日増加、腹痛・粘液便)に対する治療は?",
+      choices: ["ICIを休止し、経口プレドニゾロン0.5~1mg/kg/日を開始する", "ICIを継続し経過観察のみとする", "直ちにインフリキシマブを投与する", "ミコフェノール酸モフェチルを第一選択とする"], correct: 0,
+      explain: "大腸炎Grade2では、ICIを休止したうえで経口プレドニゾロン0.5~1mg/kg/日を開始します。" },
+    { category: "重症度分類とステロイド治療選択", type: "single", q: "大腸炎Grade3-4(≥7回/日増加、腹膜刺激症状・穿孔・生命を脅かす状態)の治療の流れとして適切なものは?",
+      choices: ["ICIを休止/中止し、静注メチルプレドニゾロン1~2mg/kg/日を開始。3~5日で無効ならインフリキシマブ追加を検討する", "外用ステロイドのみで管理する", "ICIを継続しながら止瀉薬のみで様子を見る", "抗菌薬のみで経過観察する"], correct: 0,
+      explain: "大腸炎Grade3-4ではICIを休止/中止し、静注メチルプレドニゾロン1~2mg/kg/日を開始します。下部消化管内視鏡検査を検討し、3~5日で無効なら追加免疫抑制薬としてインフリキシマブ(適応外使用)を検討します。" },
+    { category: "重症度分類とステロイド治療選択", type: "single", q: "irAE肝炎のGrade分類は主に何に基づいて評価されるか?",
+      choices: ["AST/ALT・総ビリルビンの基準値上限(ULN)に対する倍率(CTCAE基準)", "体重減少率", "皮疹の罹患体表面積", "排便回数の増加度"], correct: 0,
+      explain: "irAE肝炎のCTCAE Grade分類は、AST/ALT及び総ビリルビンの基準値上限(ULN)に対する倍率(例: Grade1は>ULN~3倍等)に基づいて評価されます。" },
+    { category: "重症度分類とステロイド治療選択", type: "single", q: "irAE肝炎Grade3-4に対する治療の流れとして適切なものは?",
+      choices: ["ICIを永続中止し、静注メチルプレドニゾロン1~2mg/kg/日を開始。3日程度で無効ならミコフェノール酸モフェチルを追加する", "インフリキシマブを第一選択の追加免疫抑制薬とする", "経口プレドニゾロンのみで生涯管理する", "肝生検を行わずに経過観察のみとする"], correct: 0,
+      explain: "irAE肝炎Grade3-4ではICIを永続中止し、静注メチルプレドニゾロン1~2mg/kg/日を開始します。3日程度で無効ならミコフェノール酸モフェチルを追加します(適応外使用)。インフリキシマブは薬剤性肝障害のリスクがあり肝炎への使用は一般的に推奨されません。" },
+    { category: "重症度分類とステロイド治療選択", type: "single", q: "肺臓炎Grade1(無症状、画像所見のみ)に対する対応は?",
+      choices: ["ICI休止を検討し、経過観察・胸部CTでの画像フォローを行う(全身ステロイドは通常不要)", "直ちに静注ステロイドパルス療法を行う", "追加免疫抑制薬を第一選択で導入する", "ICIを永続中止する"], correct: 0,
+      explain: "肺臓炎Grade1では無症状で画像所見のみのため、ICI休止を検討しつつ経過観察・胸部CTでの画像フォローを行います。全身ステロイドは通常不要です。" },
+    { category: "重症度分類とステロイド治療選択", type: "single", q: "皮膚障害の重症度評価は主に何に基づくか?",
+      choices: ["罹患体表面積(BSA)、及びSJS/TEN等重篤な皮膚障害を疑う所見の有無", "血清クレアチニン値", "排便回数", "AST/ALT値"], correct: 0,
+      explain: "皮膚障害の重症度は罹患体表面積(例: Grade1は<10%、Grade2は10~30%、Grade3は>30%)、及びSJS/TEN(Stevens-Johnson症候群/中毒性表皮壊死融解症)等の重篤な皮膚障害を疑う所見の有無に基づいて評価されます。" },
+    { category: "重症度分類とステロイド治療選択", type: "single", q: "皮膚障害のGrade4に相当する病態は?",
+      choices: ["SJS/TEN(Stevens-Johnson症候群/中毒性表皮壊死融解症)が確定し、生命を脅かす状態", "軽度のそう痒感のみ", "体表面積5%未満の軽度皮疹", "無症状の色素沈着のみ"], correct: 0,
+      explain: "皮膚障害のGrade4はSJS/TENが確定し生命を脅かす状態にあたり、ICIの永続中止と熱傷に準じた全身管理、専門施設への転送が検討されます。" },
+    { category: "重症度分類とステロイド治療選択", type: "multi", q: "CTCAE Grade3のirAEに対する管理として適切なものをすべて選べ(2つ選択)",
+      choices: ["静注メチルプレドニゾロン1~2mg/kg/日を開始する", "原則入院管理とし専門診療科と連携する", "ICIを必ず再開しながら経過観察のみとする", "全身ステロイドは一切使用しない"], correct: [0, 1],
+      explain: "Grade3では静注メチルプレドニゾロン1~2mg/kg/日を開始し、原則入院管理のうえ専門診療科と密に連携することが基本方針です。" },
+
+    // ══════════ 用法用量・漸減スケジュール(9問、うち2問は図表付き) ══════════
+    { category: "用法用量・漸減スケジュール", type: "single", q: "Grade3-4のirAEに対する静注メチルプレドニゾロンの標準的な用量は?(下図参照)",
+      choices: ["1~2mg/kg/日", "0.01~0.02mg/kg/日", "10~20mg/kg/日", "100~200mg/kg/日"], correct: 0,
+      explain: "Grade3-4の重度irAEに対しては、静注メチルプレドニゾロン1~2mg/kg/日を開始することがASCO/NCCN/ESMOに概ね共通する原則です。",
+      diagram: '<div class="dg-timeline"><div class="dg-tl-title">Grade3-4: 静注ステロイドからの切替・漸減スケジュール(代表的なイメージ)</div><div class="table-scroll"><table class="dg-tl-table"><thead><tr><th>治療</th><th>Day1~3</th><th>Day3~5(判定)</th><th>Week1~2</th><th>Week3~6</th></tr></thead><tbody>' +
+        '<tr><td>ステロイド</td><td class="dg-tl-on">静注メチルプレドニゾロン<br>1~2mg/kg/日</td><td class="dg-tl-on-alt">効果判定<br>(ステロイド抵抗性の判断)</td><td class="dg-tl-on">経口ステロイドへ切替</td><td class="dg-tl-on">漸減し中止(4~6週間以上)</td></tr>' +
+        '</tbody></table></div><div class="dg-tl-legend"><span><i class="on"></i>投与する</span><span><i class="alt"></i>判断のポイント</span></div></div>' },
+    { category: "用法用量・漸減スケジュール", type: "single", q: "irAEに対する全身ステロイドについて、ASCO/NCCN/ESMOに共通して推奨される漸減期間の目安は?(下図参照)",
+      choices: ["症状改善後も少なくとも4~6週間程度かけて緩徐に漸減する", "症状が改善した時点で直ちに中止してよい", "1週間で急速に中止する", "漸減という概念自体が推奨されていない"], correct: 0,
+      explain: "急激な減量・中止によるirAEの再燃(フレア)を防ぐため、症状がGrade1以下に改善した後も少なくとも4~6週間程度かけて緩徐に漸減することが共通して推奨されています。",
+      diagram: '<div class="dg-timeline"><div class="dg-tl-title">Grade2: 経口プレドニゾロン単独での漸減スケジュール(代表的なイメージ)</div><div class="table-scroll"><table class="dg-tl-table"><thead><tr><th>治療</th><th>Week1</th><th>Week2</th><th>Week3</th><th>Week4以降</th></tr></thead><tbody>' +
+        '<tr><td>経口プレドニゾロン</td><td class="dg-tl-on">0.5~1mg/kg/日<br>で開始</td><td class="dg-tl-on">症状改善を<br>確認し漸減開始</td><td class="dg-tl-on">さらに漸減</td><td class="dg-tl-on">4週間以上かけ<br>て中止</td></tr>' +
+        '</tbody></table></div><div class="dg-tl-legend"><span><i class="on"></i>投与する</span></div></div>' },
+    { category: "用法用量・漸減スケジュール", type: "single", q: "インフリキシマブをirAE大腸炎に用いる際、潰瘍性大腸炎の承認用量を準用した場合の投与スケジュールは?",
+      choices: ["5mg/kgを初回・2週・6週に投与し、以後8週間隔で投与する", "1mg/kgを毎日連日投与する", "50mg/kgを1回のみ投与する", "5mg/kgを1週間ごとに無期限に投与する"], correct: 0,
+      explain: "インフリキシマブの潰瘍性大腸炎・クローン病に対する承認用法用量は、5mg/kgを初回投与後、2週、6週に投与し、以後8週間の間隔で投与するというものです。irAE大腸炎への使用ではこの用量を準用することが多いとされます。" },
+    { category: "用法用量・漸減スケジュール", type: "single", q: "インフリキシマブをクローン病に用いる場合、6週の投与以降に効果が減弱した際の増量規定は?",
+      choices: ["10mg/kgまで増量可能(潰瘍性大腸炎にはこの増量規定はない)", "50mg/kgまで増量可能", "増量規定は一切ない", "半量の2.5mg/kgに減量する"], correct: 0,
+      explain: "クローン病では、6週の投与以降に効果が減弱した場合、投与量を10mg/kgまで増量する、又は投与間隔を短縮することが可能です。潰瘍性大腸炎の承認用法用量にはこの増量規定はありません。" },
+    { category: "用法用量・漸減スケジュール", type: "single", q: "ミコフェノール酸モフェチルの腎移植における拒絶反応抑制(成人)の承認用法用量は?",
+      choices: ["1回1,000mgを1日2回、12時間ごとに食後経口投与", "1回10mgを1日1回経口投与", "1回5,000mgを週1回経口投与", "経口投与ではなく静脈内投与のみ"], correct: 0,
+      explain: "ミコフェノール酸モフェチルの腎移植における拒絶反応抑制(成人)の承認用法用量は、1回1,000mgを1日2回、12時間ごとに食後経口投与するというものです。irAE肝炎への用量はこれを参考に個別設定されます。" },
+    { category: "用法用量・漸減スケジュール", type: "single", q: "ソル・メドロール(メチルプレドニゾロン)の、ネフローゼ症候群・治療抵抗性リウマチ性疾患に対する添付文書上の用法用量は?",
+      choices: ["1日500~1000mgを緩徐に静注又は点滴静注", "1日5~10mgを緩徐に静注", "1日5,000~10,000mgを緩徐に静注", "経口投与のみで注射剤の適応はない"], correct: 0,
+      explain: "ソル・メドロールのネフローゼ症候群・治療抵抗性リウマチ性疾患に対する添付文書上の用法用量は、成人には1日500~1000mgを緩徐に静注又は点滴静注するというものです。" },
+    { category: "用法用量・漸減スケジュール", type: "single", q: "プレドニゾロン(プレドニン)の添付文書に記載された成人の一般的な用法用量の範囲は?",
+      choices: ["1日5~60mgを1~4回に分割経口投与", "1日500~600mgを1回で経口投与", "1日0.5~0.6mgを1回で経口投与", "1日5,000~6,000mgを分割経口投与"], correct: 0,
+      explain: "プレドニゾロンの添付文書上の用法用量は、通常成人には1日5~60mgを1~4回に分割経口投与するというもので、年齢・症状により適宜増減します。irAE Grade2の0.5~1mg/kg/日という用量は、多くの場合この範囲に収まります。" },
+    { category: "用法用量・漸減スケジュール", type: "multi", q: "irAEに対する全身ステロイドの急激な減量・中止によって生じうる問題として適切なものをすべて選べ(2つ選択)",
+      choices: ["irAEの再燃(フレア)", "続発性副腎皮質機能不全の顕在化", "ICIの効果が永久に消失する", "薬価が急激に上昇する"], correct: [0, 1],
+      explain: "ステロイドの急激な減量・中止は、irAEの再燃(フレア)や、視床下部-下垂体-副腎系の抑制からくる続発性副腎皮質機能不全の顕在化を招くおそれがあるため、少なくとも4~6週間程度かけた緩徐な漸減が推奨されます。" },
+    { category: "用法用量・漸減スケジュール", type: "single", q: "ソル・メドロールの用法及び用量に関連する注意として、投与量が250mgを超える場合に推奨される投与時間は?",
+      choices: ["少なくとも30分間以上かけて投与する", "5秒以内の急速静注でよい", "24時間かけて投与する", "投与時間に関する注意はない"], correct: 0,
+      explain: "ソル・メドロールの添付文書には、投与量が250mgを超えるときには少なくとも30分間以上かけて投与することが望ましいと記載されています。" },
+
+    // ══════════ 臓器別合併症への対応(12問) ══════════
+    { category: "臓器別合併症への対応", type: "single", q: "irAE甲状腺炎の典型的な経過として最も一般的なものは?",
+      choices: ["無痛性(破壊性)甲状腺炎の経過をとり、一過性の甲状腺中毒期の後に機能低下期へ移行することが多い", "常に甲状腺機能亢進症のみが持続する", "常に甲状腺機能低下症のみが突然発症する", "甲状腺には影響が及ばない"], correct: 0,
+      explain: "irAE甲状腺炎の多くは無痛性(破壊性)甲状腺炎の経過をとり、一過性の甲状腺中毒期の後に機能低下期へ移行することが多いとされます。" },
+    { category: "臓器別合併症への対応", type: "single", q: "irAE甲状腺炎の中毒期(甲状腺中毒症状が出現している時期)の一般的な対応は?",
+      choices: ["β遮断薬等による対症療法で経過観察する(全身ステロイドは通常不要)", "直ちに甲状腺全摘術を行う", "レボチロキシンを大量投与する", "静注ステロイドパルス療法を行う"], correct: 0,
+      explain: "irAE甲状腺炎の中毒期は多くの場合β遮断薬等の対症療法で経過観察し、その後の機能低下期にはレボチロキシンを補充します。全身ステロイドは通常不要です。" },
+    { category: "臓器別合併症への対応", type: "single", q: "irAE下垂体炎で続発性副腎不全が疑われる場合、優先すべき対応は?",
+      choices: ["ヒドロコルチゾン補充を先行させる", "レボチロキシンのみを先行投与する", "インスリン投与を先行させる", "ICIを直ちに再開する"], correct: 0,
+      explain: "下垂体炎で続発性副腎不全が疑われる場合は、他のホルモン補充に先立ってヒドロコルチゾン補充を先行させることが重要です(副腎不全を未治療のまま甲状腺ホルモンを補充すると急性副腎不全を誘発しうるため)。" },
+    { category: "臓器別合併症への対応", type: "single", q: "急性副腎クリーゼが疑われる場合の対応として適切なものは?",
+      choices: ["確認検査の結果を待たずヒドロコルチゾンを緊急投与し、補液・電解質補正を行う", "確認検査(コルチゾール値等)の結果が出るまで治療を開始しない", "経口プレドニゾロンの少量投与のみで十分である", "抗菌薬投与のみで経過をみる"], correct: 0,
+      explain: "急性副腎クリーゼは生命を脅かす病態であるため、疑ったら確認検査の結果を待たずヒドロコルチゾンを緊急投与し、補液・電解質補正を行うことが原則です。" },
+    { category: "臓器別合併症への対応", type: "single", q: "ICI関連1型糖尿病の管理において、全身ステロイド投与は一般にどのように位置づけられるか?",
+      choices: ["この内分泌障害自体の回復には無効であり推奨されない", "第一選択の治療として推奨される", "インスリンの代替として使用できる", "DKAの予防に必須である"], correct: 0,
+      explain: "ICI関連1型糖尿病はいったん膵β細胞が破壊されると回復が期待できず、全身ステロイド投与はこの内分泌障害自体の回復には無効であり推奨されません。インスリン補充療法が生涯必須となります。" },
+    { category: "臓器別合併症への対応", type: "single", q: "ICI関連1型糖尿病が糖尿病性ケトアシドーシス(DKA)で発症した場合、最優先すべき対応は?",
+      choices: ["補液・インスリン・電解質補正", "全身ステロイドパルス療法", "経口血糖降下薬の開始", "ICIの再開"], correct: 0,
+      explain: "DKAが疑われる場合は、糖尿病の急性合併症としての標準治療である補液・インスリン投与・電解質補正を最優先します。" },
+    { category: "臓器別合併症への対応", type: "single", q: "ステロイド抵抗性のirAE大腸炎で、インフリキシマブ導入前に検討することが望ましい検査は?",
+      choices: ["下部消化管内視鏡検査", "頭部MRI検査", "甲状腺エコー検査", "骨密度検査"], correct: 0,
+      explain: "ステロイド抵抗性の大腸炎では、下部消化管内視鏡検査により炎症の範囲・重症度を評価し、他疾患(感染性腸炎等)との鑑別を行ったうえで追加免疫抑制薬導入の判断につなげることが望ましいとされます。" },
+    { category: "臓器別合併症への対応", type: "single", q: "irAE肝炎のGrade1(AST/ALTが基準値上限の3倍以下)に対するモニタリングの目安は?",
+      choices: ["週1~2回程度の肝機能検査によるフォロー", "1年に1回の肝機能検査で十分", "モニタリングは不要", "毎日の肝生検"], correct: 0,
+      explain: "irAE肝炎Grade1ではICIを継続しつつ、週1~2回程度の肝機能検査によるフォローが目安とされます。" },
+    { category: "臓器別合併症への対応", type: "single", q: "皮膚障害でSJS/TENが疑われた場合の対応として適切なものは?",
+      choices: ["直ちに専門医(皮膚科)へ紹介し、被疑薬(ICI)を中止する", "外用ステロイドのみで経過観察を継続する", "ICIを増量して経過をみる", "抗ヒスタミン薬のみで対応し専門医への紹介は不要である"], correct: 0,
+      explain: "SJS/TEN(Stevens-Johnson症候群/中毒性表皮壊死融解症)が疑われる場合は生命に関わる重篤な病態であるため、直ちに専門医への紹介と被疑薬の中止が必要です。" },
+    { category: "臓器別合併症への対応", type: "single", q: "肺臓炎で典型的にみられる症状の組み合わせとして適切なものは?",
+      choices: ["乾性咳嗽、労作時呼吸困難、発熱", "排便回数の増加、腹痛、血便", "口渇、多飲多尿、体重減少", "頭痛、視野障害、倦怠感"], correct: 0,
+      explain: "肺臓炎の典型的な症状は乾性咳嗽、労作時呼吸困難、発熱です。排便回数増加・腹痛・血便は大腸炎、口渇・多飲多尿は1型糖尿病、頭痛・視野障害は下垂体炎に典型的な症状です。" },
+    { category: "臓器別合併症への対応", type: "single", q: "irAE大腸炎の発症時期として一般的に典型とされる時期は?(報告により幅がある)",
+      choices: ["投与開始後6~8週間程度", "投与開始後1時間以内", "投与開始後5年以降のみ", "投与終了後は絶対に発症しない"], correct: 0,
+      explain: "irAE大腸炎は投与開始後6~8週間程度で出現することが典型的とされますが、報告によって幅があります。また、ICI投与終了後、数ヶ月以上経過してから新規に発症する遅発性の例も報告されています。" },
+    { category: "臓器別合併症への対応", type: "multi", q: "irAE甲状腺炎の管理に関する記述として適切なものをすべて選べ(2つ選択)",
+      choices: ["中毒期はβ遮断薬等の対症療法で経過観察することが多い", "全身ステロイドは通常不要である", "機能低下期には全例で甲状腺全摘術が必要である", "中毒期には必ず放射性ヨウ素内用療法を行う"], correct: [0, 1],
+      explain: "irAE甲状腺炎(多くは無痛性甲状腺炎の経過)では、中毒期はβ遮断薬等の対症療法で経過観察し、機能低下期にはレボチロキシンを補充します。全身ステロイドは通常不要で、甲状腺全摘術や放射性ヨウ素内用療法が一律に必要となるわけではありません。" },
+
+    // ══════════ 薬剤選択の根拠(免疫抑制薬追加の判断)(9問) ══════════
+    { category: "薬剤選択の根拠(免疫抑制薬追加の判断)", type: "single", q: "インフリキシマブ(レミケード)のirAE大腸炎への使用は、日本の添付文書上どのように位置づけられるか?",
+      choices: ["適応外使用である(承認適応は潰瘍性大腸炎・クローン病・関節リウマチ等)", "irAE大腸炎に対する正式な承認適応があり適応内使用である", "インフリキシマブは日本未承認の薬剤である", "禁忌に該当し一切使用できない"], correct: 0,
+      explain: "インフリキシマブの添付文書上の承認適応には潰瘍性大腸炎・クローン病・関節リウマチ等が含まれますが、免疫チェックポイント阻害薬誘発性大腸炎(irAE大腸炎)を効能又は効果に含む記載はなく、irAE大腸炎への使用は適応外使用にあたります。" },
+    { category: "薬剤選択の根拠(免疫抑制薬追加の判断)", type: "single", q: "ミコフェノール酸モフェチル(セルセプト)のirAE肝炎への使用は、日本の添付文書上どのように位置づけられるか?",
+      choices: ["適応外使用である(承認適応は臓器移植の拒絶反応抑制・ループス腎炎等)", "irAE肝炎に対する正式な承認適応があり適応内使用である", "セルセプトは日本未承認の薬剤である", "妊婦にのみ使用が許可されている"], correct: 0,
+      explain: "ミコフェノール酸モフェチルの添付文書上の承認適応は臓器移植の拒絶反応抑制・ループス腎炎・造血幹細胞移植でのGVHD抑制等であり、免疫チェックポイント阻害薬誘発性肝炎(irAE肝炎)を効能又は効果に含む記載はなく、適応外使用にあたります。" },
+    { category: "薬剤選択の根拠(免疫抑制薬追加の判断)", type: "single", q: "デンマークの全国後ろ向きコホート研究(Dahl et al, 2022)で報告された、irAE大腸炎に対するインフリキシマブの完全寛解率(初回投与後→2回以上投与後)は?",
+      choices: ["52%→73%", "5%→10%", "99%→100%", "報告されていない"], correct: 0,
+      explain: "Dahl et al(Aliment Pharmacol Ther 2022)のデンマーク全国後ろ向きコホート研究(n=140)では、インフリキシマブによる完全寛解率は初回投与後52%、2回以上の投与後は73%まで上昇したと報告されています。" },
+    { category: "薬剤選択の根拠(免疫抑制薬追加の判断)", type: "single", q: "Dahl試験(2022)で、死亡率上昇と関連していたと報告された因子は?",
+      choices: ["ステロイド減量開始時点でのプレドニゾロン換算高用量(1日75mg以上)", "インフリキシマブの投与回数が少ないこと", "患者の年齢が若いこと", "がん種が固形がんであること"], correct: 0,
+      explain: "Dahl試験では、ステロイド減量開始時点でプレドニゾロン換算1日75mg以上という高用量であったことが、死亡率上昇と関連していたと報告されています。" },
+    { category: "薬剤選択の根拠(免疫抑制薬追加の判断)", type: "single", q: "九州大学の後ろ向き解析(Hioki et al, 2025)で、ステロイド抵抗性irAE肝炎(プレドニゾロン+ミコフェノール酸モフェチル併用、n=10)における改善例の割合は?",
+      choices: ["9/10例(改善)、1/10例(不応)", "1/10例(改善)、9/10例(不応)", "10/10例全例が不応であった", "改善率は報告されていない"], correct: 0,
+      explain: "Hioki et al(BMC Gastroenterol 2025)の後ろ向き解析では、肝生検で確定診断された免疫関連肝障害33例のうちステロイド抵抗性の10例にプレドニゾロン+ミコフェノール酸モフェチルが投与され、9例が改善し、1例が不応でした。" },
+    { category: "薬剤選択の根拠(免疫抑制薬追加の判断)", type: "single", q: "Hioki試験(2025)において、ミコフェノール酸モフェチルの反応が乏しかった症例に見られた特徴は?",
+      choices: ["初回ステロイド開始からMMF導入までの間隔がより長かった(中央値29日 vs 反応良好例20日)", "初回ステロイド開始からMMF導入までの間隔がより短かった", "全例で肝生検を実施していなかった", "全例が若年患者であった"], correct: 0,
+      explain: "Hioki試験では、MMFの反応が乏しかった症例は初回ステロイド開始からMMF導入までの間隔がより長く(中央値29日)、反応良好例(同20日)より遅れて導入されていたことが報告されており、早期の追加免疫抑制薬導入の重要性が示唆されています。" },
+    { category: "薬剤選択の根拠(免疫抑制薬追加の判断)", type: "single", q: "インフリキシマブの添付文書に禁忌として明記されている病態はどれか?",
+      choices: ["活動性結核の患者", "軽度の花粉症患者", "健康な妊婦", "軽度の高血圧患者"], correct: 0,
+      explain: "インフリキシマブの禁忌には、重篤な感染症(敗血症等)の患者、活動性結核の患者、本剤又はマウス由来蛋白質に対する過敏症の既往歴のある患者、脱髄疾患(多発性硬化症等)及びその既往歴のある患者、うっ血性心不全の患者が含まれます。" },
+    { category: "薬剤選択の根拠(免疫抑制薬追加の判断)", type: "single", q: "ミコフェノール酸モフェチルの添付文書に禁忌として明記されている対象は?",
+      choices: ["妊婦又は妊娠している可能性のある女性", "60歳以上の高齢者全般", "軽度の高血圧患者", "健康な小児"], correct: 0,
+      explain: "ミコフェノール酸モフェチルは催奇形性が知られており、妊婦又は妊娠している可能性のある女性への投与が禁忌とされています。また本剤投与中は生ワクチンの接種も避けることとされています。" },
+    { category: "薬剤選択の根拠(免疫抑制薬追加の判断)", type: "multi", q: "ステロイド抵抗性irAEへの追加免疫抑制薬の臓器別組み合わせとして、本レポートで紹介されているエビデンスに基づく正しい組み合わせをすべて選べ(2つ選択)",
+      choices: ["大腸炎 → インフリキシマブ(適応外使用)", "肝炎 → ミコフェノール酸モフェチル(適応外使用)", "1型糖尿病 → インフリキシマブ", "肝炎 → インフリキシマブ"], correct: [0, 1],
+      explain: "ステロイド抵抗性のirAE大腸炎にはインフリキシマブ、irAE肝炎にはミコフェノール酸モフェチルが追加免疫抑制薬として位置づけられます(いずれも適応外使用)。1型糖尿病は全身ステロイド・免疫抑制薬ではなくインスリン補充が中心で、インフリキシマブは薬剤性肝障害のリスクから肝炎への使用は一般的に推奨されません。" },
+
+    // ══════════ コスト制度・その他(6問) ══════════
+    { category: "コスト制度・その他", type: "single", q: "プレドニゾロン(プレドニン錠5mg)の薬価目安は?",
+      choices: ["約10.5円/錠", "約1,050円/錠", "約105,000円/錠", "薬価収載されていない"], correct: 0,
+      explain: "プレドニン錠5mgの薬価は約10.5円/錠と、ステロイド治療の中でも安価な薬剤です。" },
+    { category: "コスト制度・その他", type: "single", q: "インフリキシマブ(レミケード点滴静注用100mg)の薬価目安は?",
+      choices: ["約35,981円/瓶", "約359円/瓶", "約3,598,100円/瓶", "無償で提供される"], correct: 0,
+      explain: "レミケード点滴静注用100mgの薬価は約35,981円/瓶とされ、体重換算で複数瓶を要することが多いため、1回投与あたりの薬剤費は高額になりやすい薬剤です。" },
+    { category: "コスト制度・その他", type: "single", q: "ソル・メドロール静注用500mgの薬価目安は?",
+      choices: ["約1,610円/瓶", "約16円/瓶", "約161,000円/瓶", "約16,100,000円/瓶"], correct: 0,
+      explain: "ソル・メドロール静注用500mgの薬価は約1,610円/瓶とされています(情報源により差異あり)。高用量静注ステロイドを数日間投与しても、薬剤費自体は比較的少額です。" },
+    { category: "コスト制度・その他", type: "multi", q: "irAE治療薬のコスト・保険審査に関する記述として適切なものをすべて選べ(2つ選択)",
+      choices: ["インフリキシマブは体重換算で複数瓶を要することが多く、1回投与あたりの薬剤費が高額になりやすい", "高額療養費制度は主に併用されるICI(免疫チェックポイント阻害薬)自体の薬剤費が適用の主因となることが多い", "プレドニゾロンの薬剤費が高額療養費制度適用の主な要因になることが多い", "ミコフェノール酸モフェチルはirAE肝炎に対する正式な承認適応があるため保険審査上の問題は生じない"], correct: [0, 1],
+      explain: "インフリキシマブは体重換算で複数瓶を要することが多く1回投与あたりの薬剤費が高額になりやすく、高額療養費制度は主に併用されるICI自体の薬剤費が適用の主因となることが多いとされます。プレドニゾロンは安価であり主因にはなりにくく、ミコフェノール酸モフェチルのirAE肝炎への使用は添付文書上の適応外使用にあたるため、保険審査上の取り扱いには院内での確認が必要です。" },
+    { category: "コスト制度・その他", type: "single", q: "高額療養費制度とirAE治療薬のコストの関係として適切な説明は?",
+      choices: ["irAE治療薬単独よりも、主として併用される免疫チェックポイント阻害薬(ICI)自体の薬剤費が制度適用の主因となることが多い", "irAE治療薬のみで必ず高額療養費制度の対象になる", "高額療養費制度はirAE治療薬には一切適用されない", "irAE治療薬は保険適用外である"], correct: 0,
+      explain: "高額療養費制度は暦月ごとの医療費自己負担合計額に対して適用されるものであり、irAE治療薬(ステロイド・追加免疫抑制薬)単独よりも、主として併用されるICI自体の薬剤費が制度適用の主因となることが多いとされます。" },
+    { category: "コスト制度・その他", type: "single", q: "本レポート作成時点でのNCCN「Management of Immune Checkpoint Inhibitor-Related Toxicities」ガイドラインの最新版は?",
+      choices: ["Version 1.2026(2025年10月23日公開)", "Version 1.2015", "初版のみで以降改訂されていない", "日本語版のみが存在する"], correct: 0,
+      explain: "NCCNガイドライン「Management of Immune Checkpoint Inhibitor-Related Toxicities」は、本レポート作成時点でVersion 1.2026(2025年10月23日公開)が最新版です。旧名称は「Management of Immunotherapy-Related Toxicities」でした。" }
+  ];
+
+  var QUIZ_SESSION_SIZE = 10;
+  var quizOrder = [];     // indices into QUIZ for THIS session (random subset)
+  var quizIndex = 0;
+  var quizAnswers = [];   // per-question(by original index): selected choice index (single) or array of indices (multi)
+  var quizFeedback = {};  // { [questionIndex]: 'good' | 'bad' }
+
+  function quizPickSession() {
+    var all = QUIZ.map(function (_, i) { return i; });
+    quizShuffle(all);
+    quizOrder = all.slice(0, QUIZ_SESSION_SIZE);
+  }
+  function quizShuffle(arr) {
+    for (var i = arr.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = arr[i]; arr[i] = arr[j]; arr[j] = t;
+    }
+    return arr;
+  }
+
+  function quizLoadFeedback() {
+    try {
+      var raw = localStorage.getItem('iraeQuizFeedback_v2');
+      quizFeedback = raw ? JSON.parse(raw) : {};
+    } catch (e) { quizFeedback = {}; }
+  }
+  function quizSaveFeedback() {
+    try { localStorage.setItem('iraeQuizFeedback_v2', JSON.stringify(quizFeedback)); } catch (e) {}
+  }
+  function quizBuildRatingRow(qi) {
+    var row = document.createElement('div');
+    row.className = 'rate-row';
+    var label = document.createElement('span');
+    label.className = 'rate-label';
+    label.textContent = 'この問題の評価:';
+    var goodBtn = document.createElement('button');
+    goodBtn.type = 'button'; goodBtn.className = 'rate-btn'; goodBtn.textContent = '👍 良問';
+    var badBtn = document.createElement('button');
+    badBtn.type = 'button'; badBtn.className = 'rate-btn'; badBtn.textContent = '👎 悪問';
+    function refresh() {
+      goodBtn.classList.toggle('active-good', quizFeedback[qi] === 'good');
+      badBtn.classList.toggle('active-bad', quizFeedback[qi] === 'bad');
+    }
+    goodBtn.onclick = function () {
+      quizFeedback[qi] = (quizFeedback[qi] === 'good') ? null : 'good';
+      if (!quizFeedback[qi]) delete quizFeedback[qi];
+      quizSaveFeedback(); refresh();
+    };
+    badBtn.onclick = function () {
+      quizFeedback[qi] = (quizFeedback[qi] === 'bad') ? null : 'bad';
+      if (!quizFeedback[qi]) delete quizFeedback[qi];
+      quizSaveFeedback(); refresh();
+    };
+    refresh();
+    row.appendChild(label); row.appendChild(goodBtn); row.appendChild(badBtn);
+    return row;
+  }
+  function quizFallbackCopy(text, done) {
+    var ta = document.createElement('textarea');
+    ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); } catch (e) {}
+    document.body.removeChild(ta);
+    done();
+  }
+  function quizChoiceLabel(item) {
+    return item.choices.join(' / ');
+  }
+  function quizCorrectLabel(item) {
+    if (item.type === 'multi') return item.correct.map(function (i) { return item.choices[i]; }).join(' ＋ ');
+    return item.choices[item.correct];
+  }
+  function quizExportFeedback() {
+    var ratedIdx = Object.keys(quizFeedback);
+    if (ratedIdx.length === 0) {
+      alert('まだ評価された問題がありません。各問題に回答した後に表示される「👍 良問」「👎 悪問」ボタンで評価してから、もう一度お試しください。');
+      return;
+    }
+    var goodList = [], badList = [];
+    ratedIdx.forEach(function (idxStr) {
+      var idx = parseInt(idxStr, 10);
+      var item = QUIZ[idx];
+      if (!item) return;
+      var entry = '・[' + item.category + (item.type === 'multi' ? '/複数選択' : '') + '] ' + item.q + '\n  選択肢: ' + quizChoiceLabel(item) + '\n  正解: ' + quizCorrectLabel(item);
+      if (quizFeedback[idx] === 'good') goodList.push(entry);
+      else if (quizFeedback[idx] === 'bad') badList.push(entry);
+    });
+    var text = '【irAE(免疫関連有害事象)クイズ(quiz-irae.html、全50問プール)フィードバック】\n\n' +
+      '良問と評価された問題(' + goodList.length + '件):\n' + (goodList.length ? goodList.join('\n\n') : '(なし)') + '\n\n' +
+      '悪問と評価された問題(' + badList.length + '件) — 改善・差し替えを検討してください:\n' + (badList.length ? badList.join('\n\n') : '(なし)') + '\n\n' +
+      '参照ファイル: artifacts/html/oncology-reports/quiz-irae.html\n\n' +
+      '上記フィードバックを踏まえて、「悪問」と評価された問題をレポート本文(artifacts/html/oncology-reports/irae.html、添付文書情報セクション含む)の内容に基づいて改善・差し替えてください。「良問」と評価された問題は現状を維持してください。';
+    var notify = function () { alert('フィードバックをコピーしました。MulmoClaudeのチャットに貼り付けて送信してください。問題の改善に使います。'); };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(notify).catch(function () { quizFallbackCopy(text, notify); });
+    } else { quizFallbackCopy(text, notify); }
+  }
+  function quizResetFeedback() {
+    if (!confirm('すべての評価をリセットします。よろしいですか?')) return;
+    quizFeedback = {};
+    quizSaveFeedback();
+    alert('評価をリセットしました。');
+  }
+
+  function quizRenderQuestion() {
+    document.getElementById('quiz-result-area').style.display = 'none';
+    document.getElementById('quiz-question-area').style.display = 'block';
+    var qi = quizOrder[quizIndex];
+    var item = QUIZ[qi];
+    document.getElementById('quiz-progress-text').textContent = '問 ' + (quizIndex + 1) + ' / ' + quizOrder.length + '(全' + QUIZ.length + '問中からランダム出題)';
+    document.getElementById('quiz-cat-badge').textContent = item.category;
+    document.getElementById('quiz-type-badge').style.display = (item.type === 'multi') ? 'inline-flex' : 'none';
+    document.getElementById('quiz-progress-fill').style.width = Math.round((quizIndex / quizOrder.length) * 100) + '%';
+    document.getElementById('quiz-question-text').textContent = item.q;
+    document.getElementById('quiz-diagram-area').innerHTML = item.diagram || '';
+    document.getElementById('quiz-explain-area').style.display = 'none';
+    document.getElementById('quiz-explain-area').innerHTML = '';
+    document.getElementById('quiz-next-btn').style.display = 'none';
+    document.getElementById('quiz-submit-row').style.display = 'none';
+
+    var wrap = document.getElementById('quiz-choices');
+    wrap.innerHTML = '';
+
+    if (item.type === 'multi') {
+      var selected = {};
+      item.choices.forEach(function (choiceText, idx) {
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'quiz-choice';
+        btn.innerHTML = '<span class="quiz-choice-check">☐</span> ' + choiceText.replace(/</g, '&lt;');
+        btn.onclick = function () {
+          selected[idx] = !selected[idx];
+          btn.classList.toggle('selected', !!selected[idx]);
+          btn.querySelector('.quiz-choice-check').textContent = selected[idx] ? '☑' : '☐';
+        };
+        wrap.appendChild(btn);
+      });
+      document.getElementById('quiz-submit-row').style.display = 'block';
+      document.getElementById('quiz-submit-btn').onclick = function () {
+        var chosen = Object.keys(selected).filter(function (k) { return selected[k]; }).map(Number);
+        quizAnswerMulti(chosen);
+      };
+    } else {
+      item.choices.forEach(function (choiceText, idx) {
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'quiz-choice';
+        btn.textContent = choiceText;
+        btn.onclick = function () { quizAnswerSingle(idx); };
+        wrap.appendChild(btn);
+      });
+    }
+  }
+
+  function quizFinishQuestion(qi, isCorrect, correctText) {
+    var item = QUIZ[qi];
+    var explainArea = document.getElementById('quiz-explain-area');
+    explainArea.className = 'quiz-explain';
+    explainArea.style.display = 'block';
+    explainArea.innerHTML = '<div style="font-weight:700; margin-bottom:4px; color:' + (isCorrect ? 'var(--good)' : 'var(--critical)') + ';">' +
+      (isCorrect ? '✅ 正解' : '❌ 不正解(正解: ' + correctText + ')') + '</div>' +
+      '<div>' + (item.explain || '') + '</div>';
+    explainArea.appendChild(quizBuildRatingRow(qi));
+    document.getElementById('quiz-submit-row').style.display = 'none';
+    document.getElementById('quiz-next-btn').style.display = 'inline-block';
+    document.getElementById('quiz-next-btn').textContent = (quizIndex === quizOrder.length - 1) ? '結果を見る →' : '次の問題 →';
+  }
+
+  function quizAnswerSingle(selectedIdx) {
+    var qi = quizOrder[quizIndex];
+    var item = QUIZ[qi];
+    quizAnswers[qi] = selectedIdx;
+    var buttons = document.getElementById('quiz-choices').querySelectorAll('.quiz-choice');
+    buttons.forEach(function (btn, idx) {
+      btn.disabled = true;
+      if (idx === item.correct) btn.classList.add('correct');
+      else if (idx === selectedIdx) btn.classList.add('wrong');
+    });
+    quizFinishQuestion(qi, selectedIdx === item.correct, item.choices[item.correct]);
+  }
+
+  function quizSubmitMulti() {
+    var qi = quizOrder[quizIndex];
+    var item = QUIZ[qi];
+    var buttons = document.getElementById('quiz-choices').querySelectorAll('.quiz-choice');
+    var chosen = [];
+    buttons.forEach(function (btn, idx) {
+      if (btn.classList.contains('selected')) chosen.push(idx);
+    });
+    quizAnswerMulti(chosen, buttons, item, qi);
+  }
+
+  function quizAnswerMulti(chosen, buttons, item, qi) {
+    qi = (qi === undefined) ? quizOrder[quizIndex] : qi;
+    item = item || QUIZ[qi];
+    buttons = buttons || document.getElementById('quiz-choices').querySelectorAll('.quiz-choice');
+    quizAnswers[qi] = chosen;
+    var correctSet = item.correct.slice().sort();
+    var chosenSet = chosen.slice().sort();
+    var isCorrect = correctSet.length === chosenSet.length && correctSet.every(function (v, i) { return v === chosenSet[i]; });
+    buttons.forEach(function (btn, idx) {
+      btn.disabled = true;
+      var isRight = item.correct.indexOf(idx) !== -1;
+      var wasChosen = chosen.indexOf(idx) !== -1;
+      if (isRight) btn.classList.add('correct');
+      else if (wasChosen) btn.classList.add('wrong');
+    });
+    quizFinishQuestion(qi, isCorrect, quizCorrectLabel(item));
+  }
+
+  function quizNext() {
+    if (quizIndex < quizOrder.length - 1) {
+      quizIndex++;
+      quizRenderQuestion();
+    } else {
+      quizShowResult();
+    }
+  }
+
+  function quizShowResult() {
+    document.getElementById('quiz-progress-fill').style.width = '100%';
+    document.getElementById('quiz-progress-text').textContent = '完了 ' + quizOrder.length + ' / ' + quizOrder.length;
+    document.getElementById('quiz-cat-badge').textContent = '';
+    document.getElementById('quiz-type-badge').style.display = 'none';
+    document.getElementById('quiz-question-area').style.display = 'none';
+
+    var correctCount = 0;
+    var byCategory = {};
+    quizOrder.forEach(function (qi) {
+      var item = QUIZ[qi];
+      if (!byCategory[item.category]) byCategory[item.category] = { correct: 0, total: 0 };
+      byCategory[item.category].total++;
+      var ans = quizAnswers[qi];
+      var isCorrect;
+      if (item.type === 'multi') {
+        var correctSet = item.correct.slice().sort();
+        var chosenSet = (ans || []).slice().sort();
+        isCorrect = correctSet.length === chosenSet.length && correctSet.every(function (v, i) { return v === chosenSet[i]; });
+      } else {
+        isCorrect = ans === item.correct;
+      }
+      if (isCorrect) { correctCount++; byCategory[item.category].correct++; }
+    });
+    var pct = Math.round((correctCount / quizOrder.length) * 100);
+
+    var catHtml = '';
+    Object.keys(byCategory).forEach(function (cat) {
+      var c = byCategory[cat];
+      var p = Math.round((c.correct / c.total) * 100);
+      catHtml += '<div class="cat-result-row"><span class="text-xs" style="width:190px; flex-shrink:0;">' + cat + '</span>' +
+        '<div class="cat-result-bar"><div class="cat-result-fill" style="width:' + p + '%"></div></div>' +
+        '<span class="text-xs muted" style="width:56px; text-align:right;">' + c.correct + '/' + c.total + '</span></div>';
+    });
+
+    var reviewHtml = '';
+    quizOrder.forEach(function (qi) {
+      var item = QUIZ[qi];
+      var ans = quizAnswers[qi];
+      var isCorrect;
+      var yourAnswerText;
+      if (item.type === 'multi') {
+        var correctSet = item.correct.slice().sort();
+        var chosenSet = (ans || []).slice().sort();
+        isCorrect = correctSet.length === chosenSet.length && correctSet.every(function (v, i) { return v === chosenSet[i]; });
+        yourAnswerText = (ans && ans.length) ? ans.map(function (i) { return item.choices[i]; }).join(' ＋ ') : '(未回答)';
+      } else {
+        isCorrect = ans === item.correct;
+        yourAnswerText = (ans != null) ? item.choices[ans] : '(未回答)';
+      }
+      if (!isCorrect) {
+        reviewHtml += '<div class="review-item">' +
+          '<div class="text-sm font-semibold mb-1">' + item.q + '</div>' +
+          '<div class="text-xs muted mb-2">あなたの回答: ' + yourAnswerText + ' / 正解: ' + quizCorrectLabel(item) + '</div>' +
+          '<div class="text-xs" style="line-height:1.6;">' + (item.explain || '') + '</div>' +
+          '</div>';
+      }
+    });
+    if (!reviewHtml) reviewHtml = '<p class="text-sm secondary">全問正解です。見直しの必要な項目はありません 🎉</p>';
+
+    var goodCount = 0, badCount = 0;
+    Object.keys(quizFeedback).forEach(function (k) {
+      if (quizFeedback[k] === 'good') goodCount++;
+      else if (quizFeedback[k] === 'bad') badCount++;
+    });
+
+    var resultArea = document.getElementById('quiz-result-area');
+    resultArea.style.display = 'block';
+    resultArea.innerHTML =
+      '<div class="text-center mb-6">' +
+        '<div class="score-ring-num" style="color:var(--series-new);">' + correctCount + ' / ' + quizOrder.length + '</div>' +
+        '<div class="text-sm muted mt-1">正答率 ' + pct + '%(全' + QUIZ.length + '問プールから今回ランダム抽出された' + quizOrder.length + '問)</div>' +
+      '</div>' +
+      '<div class="mb-6"><div class="text-sm font-semibold mb-3">カテゴリ別正答率(今回出題分)</div>' + catHtml + '</div>' +
+      '<div class="mb-2 text-sm font-semibold">見直し(不正解・未回答の問題)</div>' +
+      '<div class="mb-6">' + reviewHtml + '</div>' +
+      '<div class="mb-6 pt-4 border-t" style="border-color:var(--gridline);">' +
+        '<div class="text-sm font-semibold mb-2">問題の評価状況(全50問プール通算)</div>' +
+        '<div class="text-xs muted mb-3">👍 良問 ' + goodCount + '件 ・ 👎 悪問 ' + badCount + '件</div>' +
+        '<div class="flex flex-wrap gap-3">' +
+          '<button type="button" class="quiz-btn-outline" onclick="quizExportFeedback()">📋 フィードバックをエクスポート(チャットに貼り付け用)</button>' +
+          '<button type="button" class="quiz-btn-outline" onclick="quizResetFeedback()" style="border-color:var(--critical); color:var(--critical);">🗑 評価をリセット</button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="flex flex-wrap gap-3 justify-center">' +
+        '<button type="button" class="quiz-btn" onclick="quizRestart()">🔀 新しい10問でもう一度</button>' +
+        '<a href="irae.html" class="quiz-btn-outline" style="text-decoration:none; display:inline-block;">レポート本文に戻る</a>' +
+      '</div>';
+  }
+
+  function quizRestart() {
+    quizPickSession();
+    quizIndex = 0;
+    quizAnswers = [];
+    quizRenderQuestion();
+  }
+
+  quizLoadFeedback();
+  quizPickSession();
+  quizRenderQuestion();
+</script>
+
+<footer class="text-center text-xs pb-4" style="color: var(--text-muted);">
+  本クイズは学習・自己点検を目的とした資料です。臨床判断には利用せず、最新の添付文書・ガイドライン原文を優先してください。
+</footer>
+
+</body>
+</html>

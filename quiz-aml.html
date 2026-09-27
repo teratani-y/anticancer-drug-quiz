@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>急性骨髄性白血病(AML)理解度クイズ 全50問(ランダム10問出題)</title>
+<title>急性骨髄性白血病(AML)理解度クイズ 全52問(ランダム10問出題)</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
 :root, .viz-root {
@@ -60,6 +60,20 @@ body { background: var(--page-plane); color: var(--text-primary); font-family: s
 .rate-btn:hover { border-color: var(--series-new); }
 .rate-btn.active-good { border-color: var(--good); background: color-mix(in srgb, var(--good) 14%, transparent); color: var(--good); }
 .rate-btn.active-bad { border-color: var(--critical); background: color-mix(in srgb, var(--critical) 12%, transparent); color: var(--critical); }
+
+/* Compact dosing schedule timeline diagram, used inside quiz-diagram-area (see cinv.html/aml.html .dg-timeline for the full version) */
+.quiz-diagram-area:empty { display: none; }
+.quiz-diagram-area .dg-timeline { border: 1px solid var(--gridline); border-radius: 8px; padding: 10px 12px 12px; background: var(--page-plane); margin-bottom: 14px; }
+.quiz-diagram-area .dg-tl-title { font-size: 0.76rem; font-weight: 700; color: var(--text-primary); margin-bottom: 8px; }
+.quiz-diagram-area table.dg-tl-table { width: 100%; border-collapse: separate; border-spacing: 3px; font-size: 0.66rem; }
+.quiz-diagram-area table.dg-tl-table th { color: var(--text-muted); font-weight: 700; font-size: 0.58rem; text-transform: uppercase; letter-spacing: .03em; padding: 2px 3px 5px; text-align: center; }
+.quiz-diagram-area table.dg-tl-table th:first-child { text-align: left; }
+.quiz-diagram-area table.dg-tl-table td:first-child { text-align: left; font-weight: 600; color: var(--text-secondary); white-space: nowrap; padding-right: 6px; font-size: 0.64rem; }
+.quiz-diagram-area table.dg-tl-table td { text-align: center; padding: 6px 4px; border-radius: 6px; vertical-align: middle; line-height: 1.25; }
+.quiz-diagram-area td.dg-tl-on { background: color-mix(in srgb, var(--series-new) 14%, transparent); border: 1px solid var(--series-new); color: var(--text-primary); font-weight: 700; }
+.quiz-diagram-area td.dg-tl-on-alt { background: color-mix(in srgb, var(--warning) 16%, transparent); border: 1px dashed var(--warning); color: var(--text-primary); font-weight: 700; }
+.quiz-diagram-area td.dg-tl-off { background: var(--surface-1); border: 1px dashed var(--gridline); color: var(--text-muted); font-weight: 400; }
+.quiz-diagram-area .dg-tl-note { font-size: 0.62rem; color: var(--text-muted); margin-top: 6px; line-height: 1.5; }
 </style>
 </head>
 <body class="viz-root">
@@ -69,7 +83,7 @@ body { background: var(--page-plane); color: var(--text-primary); font-family: s
     <div class="flex items-center justify-between gap-2 flex-wrap">
       <div>
         <h1 class="text-xl font-bold">🧠 急性骨髄性白血病(AML)理解度クイズ</h1>
-        <p class="text-sm mt-1 secondary">全50問のプールからランダムに10問出題・4択/複数選択混在・医療従事者向け(治療ライン選択・用法用量・投与スケジュール・用量規制因子/モニタリング・特徴的な副作用・バイオマーカー・コスト制度)</p>
+        <p class="text-sm mt-1 secondary">全52問のプールからランダムに10問出題・4択/複数選択混在・医療従事者向け(治療ライン選択・用法用量・投与スケジュール・用量規制因子/モニタリング・特徴的な副作用・バイオマーカー・コスト制度)</p>
       </div>
       <a href="aml.html" class="text-xs" style="color:var(--series-new); text-decoration:none; font-weight:600;">← レポート本文に戻る</a>
     </div>
@@ -86,6 +100,7 @@ body { background: var(--page-plane); color: var(--text-primary); font-family: s
 
     <div id="quiz-question-area">
       <div id="quiz-question-text" class="text-base font-semibold mb-4" style="line-height:1.6;"></div>
+      <div id="quiz-diagram-area" class="quiz-diagram-area"></div>
       <div id="quiz-choices"></div>
       <div id="quiz-submit-row" style="display:none;" class="mt-3">
         <button type="button" class="quiz-btn" id="quiz-submit-btn" onclick="quizSubmitMulti()">この内容で回答する</button>
@@ -166,6 +181,22 @@ body { background: var(--page-plane); color: var(--text-primary); font-family: s
     { category: "用法用量・投与スケジュール", type: "single", q: "亜ヒ酸(トリセノックス、ATO)の用法用量は?",
       choices: ["0.15mg/kgを1〜2時間かけて点滴静注し、寛解まで連日(最大60回)投与", "1日1回500mgを経口投与", "9mg/m²を2週間隔で点滴静注", "週1回120mgを皮下投与"], correct: 0,
       explain: "地固め療法は寛解後3〜6週間の休薬を経て、5週間で25回投与します。" },
+    { category: "用法用量・投与スケジュール", type: "single", q: "AML17試験(国際標準、国内保険適用外)のコース1における亜ヒ酸(ATO)の投与パターンとして正しいものは?(下図参照)",
+      choices: ["Day1〜5に0.3mg/kgを連日点滴静注した後、Week2〜4は週2回0.25mg/kgに移行する", "コース1を通して1回0.15mg/kgを連日投与する", "Day1に単回投与するのみで、以後は投与しない", "地固め療法期にのみ投与し、コース1(寛解導入期)には投与しない"], correct: 0,
+      explain: "AML17試験(Lancet Oncol 2015、PMID 26384238)のコース1では、亜ヒ酸をDay1〜5に0.3mg/kg、Week2以降は週2回0.25mg/kgで点滴静注します。この用量は日本の亜ヒ酸(トリセノックス)添付文書の承認用量(1回0.15mg/kg連日投与、最大60回)とは異なる海外治験用量であり、両者を混同しないよう注意が必要です。",
+      diagram: '<div class="dg-timeline"><div class="dg-tl-title">AML17試験 コース1の投与パターン(Day1〜28、国内保険適用外)</div><div class="table-scroll"><table class="dg-tl-table"><thead><tr><th>薬剤</th><th>Week1<br>(Day1-7)</th><th>Week2<br>(Day8-14)</th><th>Week3<br>(Day15-21)</th><th>Week4<br>(Day22-28)</th></tr></thead><tbody>' +
+        '<tr><td>ATRA</td><td class="dg-tl-on">45mg/m²/日<br>分割経口・連日</td><td class="dg-tl-on">連日</td><td class="dg-tl-on">連日</td><td class="dg-tl-on">連日</td></tr>' +
+        '<tr><td>亜ヒ酸(ATO)</td><td class="dg-tl-on">0.3mg/kg<br>Day1〜5</td><td class="dg-tl-on-alt">0.25mg/kg<br>週2回</td><td class="dg-tl-on-alt">0.25mg/kg<br>週2回</td><td class="dg-tl-on-alt">0.25mg/kg<br>週2回</td></tr>' +
+        '<tr><td>GO(高リスクのみ・任意)</td><td class="dg-tl-on-alt">6mg/m²<br>Day1単回</td><td class="dg-tl-off">—</td><td class="dg-tl-off">—</td><td class="dg-tl-off">—</td></tr>' +
+        '</tbody></table></div><div class="dg-tl-note">ATO用量はAML17試験独自の海外治験用量で、日本の添付文書承認用量(0.15mg/kg連日投与)とは異なる。GO=ゲムツズマブ オゾガマイシン。</div></div>' },
+    { category: "用法用量・投与スケジュール", type: "single", q: "AML17試験における高リスクAPL(初診時WBC>10×10⁹/L)へのゲムツズマブ オゾガマイシン追加投与のタイミング・用量は?(下図参照)",
+      choices: ["コース1のDay1に、ATRA・ATO開始と同時に6mg/m²を単回投与", "地固め療法の全コース終了後に9mg/m²を投与", "コース1のWeek4以降に開始し複数回投与", "維持療法期に3ヶ月毎に投与"], correct: 0,
+      explain: "AML17試験(Lancet Oncol 2015、PMID 26384238)では、高リスク(初診時WBC>10×10⁹/L)の患者に対しコース開始日(Day1)にゲムツズマブ オゾガマイシン6mg/m²の単回投与が任意('could receive')で許容されました。この用量は日本のマイロターグ添付文書上の通常用量(9mg/m²を2時間かけて点滴、14日以上あけて最大2回投与)とは異なり、また初発APLへの上乗せという用途自体、日本の添付文書の適応(再発又は難治性のCD33陽性AML)には含まれていません。",
+      diagram: '<div class="dg-timeline"><div class="dg-tl-title">AML17試験 コース1の投与パターン(Day1〜28、国内保険適用外)</div><div class="table-scroll"><table class="dg-tl-table"><thead><tr><th>薬剤</th><th>Week1<br>(Day1-7)</th><th>Week2<br>(Day8-14)</th><th>Week3<br>(Day15-21)</th><th>Week4<br>(Day22-28)</th></tr></thead><tbody>' +
+        '<tr><td>ATRA</td><td class="dg-tl-on">45mg/m²/日<br>分割経口・連日</td><td class="dg-tl-on">連日</td><td class="dg-tl-on">連日</td><td class="dg-tl-on">連日</td></tr>' +
+        '<tr><td>亜ヒ酸(ATO)</td><td class="dg-tl-on">0.3mg/kg<br>Day1〜5</td><td class="dg-tl-on-alt">0.25mg/kg<br>週2回</td><td class="dg-tl-on-alt">0.25mg/kg<br>週2回</td><td class="dg-tl-on-alt">0.25mg/kg<br>週2回</td></tr>' +
+        '<tr><td>GO(高リスクのみ・任意)</td><td class="dg-tl-on-alt">6mg/m²<br>Day1単回</td><td class="dg-tl-off">—</td><td class="dg-tl-off">—</td><td class="dg-tl-off">—</td></tr>' +
+        '</tbody></table></div><div class="dg-tl-note">GOは高リスク(WBC>10×10⁹/L)のみを対象とした任意投与で、Day1にATRA・ATO開始と同時に単回投与する。GO=ゲムツズマブ オゾガマイシン。</div></div>' },
     { category: "用法用量・投与スケジュール", type: "single", q: "CPX-351(ビキセオス配合静注用)の寛解導入療法における用法用量は?",
       choices: ["100単位/m²を1、3、5日目に90分かけて点滴静注、最大2サイクル", "65単位/m²を1日1回、5日間連続点滴静注", "12mg/m²を1日1回、3日間連日静脈内投与", "2g/m²を12時間毎に6日間投与"], correct: 0,
       explain: "地固め療法では65単位/m²を最大2サイクル投与し、最後の寛解導入療法から5〜8週間後に開始します。" },
@@ -352,7 +383,7 @@ body { background: var(--page-plane); color: var(--text-primary); font-family: s
       if (quizFeedback[idx] === 'good') goodList.push(entry);
       else if (quizFeedback[idx] === 'bad') badList.push(entry);
     });
-    var text = '【AMLクイズ(quiz-aml.html、全50問プール)フィードバック】\n\n' +
+    var text = '【AMLクイズ(quiz-aml.html、全52問プール)フィードバック】\n\n' +
       '良問と評価された問題(' + goodList.length + '件):\n' + (goodList.length ? goodList.join('\n\n') : '(なし)') + '\n\n' +
       '悪問と評価された問題(' + badList.length + '件) — 改善・差し替えを検討してください:\n' + (badList.length ? badList.join('\n\n') : '(なし)') + '\n\n' +
       '参照ファイル: artifacts/html/oncology-reports/quiz-aml.html\n\n' +
@@ -379,6 +410,7 @@ body { background: var(--page-plane); color: var(--text-primary); font-family: s
     document.getElementById('quiz-type-badge').style.display = (item.type === 'multi') ? 'inline-flex' : 'none';
     document.getElementById('quiz-progress-fill').style.width = Math.round((quizIndex / quizOrder.length) * 100) + '%';
     document.getElementById('quiz-question-text').textContent = item.q;
+    document.getElementById('quiz-diagram-area').innerHTML = item.diagram || '';
     document.getElementById('quiz-explain-area').style.display = 'none';
     document.getElementById('quiz-explain-area').innerHTML = '';
     document.getElementById('quiz-next-btn').style.display = 'none';
@@ -560,7 +592,7 @@ body { background: var(--page-plane); color: var(--text-primary); font-family: s
       '<div class="mb-2 text-sm font-semibold">見直し(不正解・未回答の問題)</div>' +
       '<div class="mb-6">' + reviewHtml + '</div>' +
       '<div class="mb-6 pt-4 border-t" style="border-color:var(--gridline);">' +
-        '<div class="text-sm font-semibold mb-2">問題の評価状況(全50問プール通算)</div>' +
+        '<div class="text-sm font-semibold mb-2">問題の評価状況(全52問プール通算)</div>' +
         '<div class="text-xs muted mb-3">👍 良問 ' + goodCount + '件 ・ 👎 悪問 ' + badCount + '件</div>' +
         '<div class="flex flex-wrap gap-3">' +
           '<button type="button" class="quiz-btn-outline" onclick="quizExportFeedback()">📋 フィードバックをエクスポート(チャットに貼り付け用)</button>' +
